@@ -10,7 +10,9 @@ class NomorSuratGenerator
 {
     public static function generate(?int $klasifikasiId): string
     {
-        $tahun = Carbon::now()->year;
+        $now = Carbon::now();
+        $tahun = $now->year;
+        $bulan = $now->format('m');
 
         $urut = Surat::whereYear('created_at', $tahun)
             ->when($klasifikasiId, fn ($q) => $q->where('klasifikasi_id', $klasifikasiId))
@@ -21,8 +23,8 @@ class NomorSuratGenerator
             : 'UMUM';
 
         return str_replace(
-            ['{urut}', '{kode}', '{tahun}'],
-            [str_pad((string) $urut, 3, '0', STR_PAD_LEFT), $kode, $tahun],
+            ['{urut}', '{kode}', '{bulan}', '{tahun}'],
+            [str_pad((string) $urut, 3, '0', STR_PAD_LEFT), $kode, $bulan, $tahun],
             config('persuratan.format_nomor')
         );
     }

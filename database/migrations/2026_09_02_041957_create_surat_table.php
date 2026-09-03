@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('surat', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('jenis_surat_id')->constrained('jenis_surat_id');
-            $table->foreignId('klasifikasi_surat_id')->nullable()->constrained('klasifikasi_surat_id')->nullOnDelete();
-            $table->foreignId('template_surat_id')->nullable()->constrained('template_surat_id')->nullOnDelete();
+            $table->foreignId('jenis_surat_id')->constrained('jenis_surat');
+            $table->foreignId('klasifikasi_id')->nullable()->constrained('klasifikasi_surat')->nullOnDelete();
+            $table->foreignId('template_surat_id')->nullable()->constrained('template_surat')->nullOnDelete();
 
             $table->enum('arah',['masuk','keluar']);  //sbg pembeda, bukan pemisah
 
