@@ -61,98 +61,288 @@ class SuratController extends Controller
     /**
      * Langkah 4: Proses generate Word/PDF dan simpan ke DB.
      */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'template_surat_id' => 'required|exists:template_surat,id',
-            'klasifikasi_id'    => 'nullable|exists:klasifikasi_surat,id',
-            'perihal'           => 'required|string|max:255',
-            'tanggal_surat'     => 'required|date',
-            'tujuan'            => 'nullable|string|max:255',
-            'data'              => 'nullable|array',
-        ]);
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'template_surat_id' => [
+            'required',
+            'exists:template_surat,id',
+        ],
 
-        $template = TemplateSurat::findOrFail($validated['template_surat_id']);
+        'klasifikasi_id' => [
+            'nullable',
+            'exists:klasifikasi_surat,id',
+        ],
 
-        // --- Fix #1: cast klasifikasi_id ke int|null agar generator tidak error ---
-        $klasifikasiId = isset($validated['klasifikasi_id'])
-            ? (int) $validated['klasifikasi_id']
-            : null;
+        'perihal' => [
+            'required',
+            'string',
+            'max:255',
+        ],
 
-        $nomorSurat = NomorSuratGenerator::generate($klasifikasiId);
+        'tanggal_surat' => [
+            'required',
+            'date',
+        ],
 
-        // --- Fix #2: cek file template ada sebelum generate ---
-        $templateStoragePath = $template->file_template;
-        if (!$templateStoragePath || !Storage::disk('public')->exists($templateStoragePath)) {
-            return back()
-                ->withInput()
-                ->with('error', 'File template Word tidak ditemukan di storage. Hubungi administrator untuk mengupload ulang template "' . $template->nama_template . '".');
-        }
+        'tujuan' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
 
-        $templatePath = Storage::disk('public')->path($templateStoragePath);
+        'data' => [
+            'nullable',
+            'array',
+        ],
+    ]);
 
-        // --- Fix #3: wrap PhpWord dalam try/catch ---
-        try {
-            $processor = new TemplateProcessor($templatePath);
+    /*
+    |--------------------------------------------------------------------------
+    | Ambil Template
+    |--------------------------------------------------------------------------
+    */
 
-            $processor->setValue('nomor', $nomorSurat);
-            $processor->setValue('tanggal', \Carbon\Carbon::parse($validated['tanggal_surat'])->translatedFormat('d F Y'));
-            $processor->setValue('perihal', $validated['perihal']);
-            $processor->setValue('tujuan', $validated['tujuan'] ?? '');
+    $template = TemplateSurat::with('jenisSurat')
+        ->where('id', $validated['template_surat_id'])
+        ->where('status', 'aktif')
+        ->first();
 
-            foreach ($validated['data'] ?? [] as $key => $value) {
-                try {
-                    $processor->setValue($key, $value ?? '');
-                } catch (\Throwable) {
-                    // placeholder tidak ada di template, abaikan
-                }
+    if (!$template) {
+        return back()
+            ->withInput()
+            ->with(
+                'error',
+                'Template tidak ditemukan atau sudah tidak aktif.'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Klasifikasi
+    |--------------------------------------------------------------------------
+    */
+
+    $klasifikasiId = !empty($validated['klasifikasi_id'])
+        ? (int) $validated['klasifikasi_id']
+        : null;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Generate Nomor Surat
+    |--------------------------------------------------------------------------
+    */
+
+    $nomorSurat = NomorSuratGenerator::generate(
+        $klasifikasiId
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cek File Template
+    |--------------------------------------------------------------------------
+    */
+
+    $templateStoragePath = $template->file_template;
+
+    if (
+        !$templateStoragePath ||
+        !Storage::disk('public')->exists($templateStoragePath)
+    ) {
+        return back()
+            ->withInput()
+            ->with(
+                'error',
+                'File template Word tidak ditemukan. Silakan upload ulang template "' .
+                $template->nama_template .
+                '".'
+            );
+    }
+
+    $templatePath = Storage::disk('public')
+        ->path($templateStoragePath);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Generate Word
+    |--------------------------------------------------------------------------
+    */
+
+    try {
+
+        $processor = new TemplateProcessor(
+            $templatePath
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Placeholder Sistem
+        |--------------------------------------------------------------------------
+        */
+
+        $processor->setValue(
+            'nomor',
+            $nomorSurat
+        );
+
+        $processor->setValue(
+            'tanggal',
+            \Carbon\Carbon::parse(
+                $validated['tanggal_surat']
+            )->translatedFormat('d F Y')
+        );
+
+        $processor->setValue(
+            'perihal',
+            $validated['perihal']
+        );
+
+        $processor->setValue(
+            'tujuan',
+            $validated['tujuan'] ?? ''
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Placeholder Dinamis
+        |--------------------------------------------------------------------------
+        */
+
+        foreach ($validated['data'] ?? [] as $key => $value) {
+
+            // Hanya izinkan nama placeholder yang aman
+            if (!preg_match('/^[a-zA-Z0-9_]+$/', $key)) {
+                continue;
             }
 
-            Storage::disk('public')->makeDirectory('generated');
-            $fileName        = 'surat_' . time() . '_' . str()->random(6);
-            $wordRelativePath = 'generated/' . $fileName . '.docx';
-            $wordFullPath     = Storage::disk('public')->path($wordRelativePath);
-            $processor->saveAs($wordFullPath);
-
-        } catch (\Throwable $e) {
-            return back()
-                ->withInput()
-                ->with('error', 'Gagal memproses template Word: ' . $e->getMessage() . '. Pastikan file template valid dan tidak rusak.');
+            $processor->setValue(
+                $key,
+                is_scalar($value)
+                    ? (string) $value
+                    : ''
+            );
         }
 
-        // Konversi ke PDF via LibreOffice (opsional – hanya jika terpasang di server)
-        $pdfRelativePath = null;
-        $outputDir       = dirname($wordFullPath);
-        @shell_exec('soffice --headless --convert-to pdf --outdir ' . escapeshellarg($outputDir) . ' ' . escapeshellarg($wordFullPath) . ' 2>&1');
-        if (file_exists($outputDir . '/' . $fileName . '.pdf')) {
-            $pdfRelativePath = 'generated/' . $fileName . '.pdf';
-        }
+        /*
+        |--------------------------------------------------------------------------
+        | Folder Generated
+        |--------------------------------------------------------------------------
+        */
 
-        $surat = Surat::create([
-            'jenis_surat_id'   => $template->jenis_surat_id,
-            'klasifikasi_id'   => $klasifikasiId,
-            'template_surat_id'=> $template->id,
-            'arah'             => 'keluar',
-            'nomor_surat'      => $nomorSurat,
-            'tanggal_surat'    => $validated['tanggal_surat'],
-            'perihal'          => $validated['perihal'],
-            'tujuan'           => $validated['tujuan'] ?? null,
-            'file_word'        => $wordRelativePath,
-            'file_pdf'         => $pdfRelativePath,
-            'status'           => 'draft',
-            'created_by'       => auth()->id(),
-        ]);
+        Storage::disk('public')
+            ->makeDirectory('generated');
 
-        ActivityLog::create([
-            'user_id'   => auth()->id(),
-            'surat_id'  => $surat->id,
-            'aktivitas' => 'membuat surat (draft): ' . $surat->perihal,
-        ]);
+        $fileName = 'surat_' .
+            now()->format('Ymd_His') .
+            '_' .
+            str()->random(6);
 
-        return redirect()
-            ->route('buat-surat.show', $surat)
-            ->with('status', 'Surat berhasil dibuat. Silakan cek preview dan unduh dokumen.');
+        $wordRelativePath =
+            'generated/' . $fileName . '.docx';
+
+        $wordFullPath =
+            Storage::disk('public')
+                ->path($wordRelativePath);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Simpan DOCX
+        |--------------------------------------------------------------------------
+        */
+
+        $processor->saveAs(
+            $wordFullPath
+        );
+
+    } catch (\Throwable $e) {
+
+        report($e);
+
+        return back()
+            ->withInput()
+            ->with(
+                'error',
+                'Gagal membuat dokumen Word. Pastikan template .docx valid dan placeholder-nya benar.'
+            );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Convert DOCX → PDF
+    |--------------------------------------------------------------------------
+    */
+
+    $pdfRelativePath = null;
+
+    $outputDir = dirname(
+        $wordFullPath
+    );
+
+    $command =
+        'soffice --headless --convert-to pdf ' .
+        '--outdir ' .
+        escapeshellarg($outputDir) .
+        ' ' .
+        escapeshellarg($wordFullPath) .
+        ' 2>&1';
+
+    @shell_exec($command);
+
+    $pdfFullPath =
+        $outputDir .
+        DIRECTORY_SEPARATOR .
+        $fileName .
+        '.pdf';
+
+    if (file_exists($pdfFullPath)) {
+        $pdfRelativePath =
+            'generated/' .
+            $fileName .
+            '.pdf';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Simpan Surat
+    |--------------------------------------------------------------------------
+    */
+
+    $surat = Surat::create([
+        'jenis_surat_id' => $template->jenis_surat_id,
+        'klasifikasi_id' => $klasifikasiId,
+        'template_surat_id' => $template->id,
+        'arah' => 'keluar',
+        'nomor_surat' => $nomorSurat,
+        'tanggal_surat' => $validated['tanggal_surat'],
+        'perihal' => $validated['perihal'],
+        'tujuan' => $validated['tujuan'] ?? null,
+        'file_word' => $wordRelativePath,
+        'file_pdf' => $pdfRelativePath,
+        'status' => 'draft',
+        'created_by' => auth()->id(),
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Activity Log
+    |--------------------------------------------------------------------------
+    */
+
+    ActivityLog::create([
+        'user_id' => auth()->id(),
+        'surat_id' => $surat->id,
+        'aktivitas' =>
+            'membuat surat (draft): ' .
+            $surat->perihal,
+    ]);
+
+    return redirect()
+        ->route('buat-surat.show', $surat)
+        ->with(
+            'status',
+            'Surat berhasil dibuat. Silakan cek preview dan unduh dokumen.'
+        );
+}
 
     public function show(Surat $surat)
     {

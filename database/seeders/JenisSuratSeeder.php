@@ -20,7 +20,10 @@ class JenisSuratSeeder extends Seeder
             ['nama' => 'Surat Perintah', 'kode' => 'SP'],
             ['nama' => 'Surat Perjanjian Kerja Sama', 'kode' => 'SPK'],
             ['nama' => 'Surat Pemberitahuan', 'kode' => 'SPB'],
+            ['nama' => 'Surat Permohonan', 'kode' => 'SPM'],
+            ['nama' => 'Surat Peminjaman Barang', 'kode' => 'SPPB'],
         ];
+
             foreach ($data as $item) {
                 JenisSurat::firstOrCreate(['kode' => $item['kode']], $item);
             }

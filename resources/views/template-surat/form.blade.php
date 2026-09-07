@@ -78,15 +78,91 @@
                     @enderror
                 </div>
 
-                {{-- Placeholder --}}
-                <div class="form-group">
-                    <label class="form-label">Placeholder</label>
-                    <input type="text" name="placeholder"
-                           placeholder="nama, nip, jabatan, tanggal"
-                           value="{{ old('placeholder', implode(', ', $template->placeholder_json ?? [])) }}"
-                           class="form-control">
-                    <p style="font-size:12px; color:#94a3b8; margin:4px 0 0 0;">Pisahkan dengan koma. Contoh: nama, nip, jabatan</p>
-                </div>
+{{-- Placeholder --}}
+<div class="form-group">
+    <label class="form-label">
+        Placeholder Template
+    </label>
+
+    <input
+        type="text"
+        name="placeholder"
+        value="{{ old('placeholder', implode(', ', $template->placeholder_json ?? [])) }}"
+        class="form-control"
+        placeholder="nama_pegawai, nip, jabatan, keperluan"
+    >
+
+    <div style="
+        margin-top:10px;
+        padding:12px 14px;
+        background:#eff6ff;
+        border:1px solid #bfdbfe;
+        border-radius:10px;
+        font-size:12px;
+        color:#475569;
+        line-height:1.6;
+    ">
+        <strong style="color:#1d4ed8;">
+            Cara menggunakan placeholder
+        </strong>
+
+        <div style="margin-top:5px;">
+            Di file Word gunakan format:
+        </div>
+
+        <code style="
+            display:inline-block;
+            margin-top:5px;
+            padding:4px 8px;
+            background:white;
+            border-radius:6px;
+            color:#334155;
+        ">
+            ${nama_pegawai}
+        </code>
+
+        <code style="
+            display:inline-block;
+            margin-top:5px;
+            padding:4px 8px;
+            background:white;
+            border-radius:6px;
+            color:#334155;
+        ">
+            ${nip}
+        </code>
+
+        <code style="
+            display:inline-block;
+            margin-top:5px;
+            padding:4px 8px;
+            background:white;
+            border-radius:6px;
+            color:#334155;
+        ">
+            ${jabatan}
+        </code>
+
+        <div style="margin-top:6px;">
+            Kemudian masukkan nama placeholder tanpa
+            <code>${...}</code> di kolom ini, dipisahkan dengan koma.
+        </div>
+
+        <div style="
+            margin-top:8px;
+            padding:8px 10px;
+            background:white;
+            border-radius:8px;
+        ">
+            <strong>Contoh:</strong><br>
+            nama_pegawai, nip, jabatan, keperluan, tempat_tujuan
+        </div>
+    </div>
+
+    @error('placeholder')
+        <p class="form-error">{{ $message }}</p>
+    @enderror
+</div>
 
                 {{-- Status (edit only) --}}
                 @if ($template->exists)

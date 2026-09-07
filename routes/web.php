@@ -73,7 +73,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('laporan', [LaporanController::class, 'index'])->name('laporan.index');
 
     // Pengguna
-    Route::get('pengguna', [PenggunaController::class, 'index'])->name('pengguna.index');
+    Route::get('pengguna', [PenggunaController::class, 'index'])
+        ->middleware('role:admin')
+        ->name('pengguna.index');
 
     // Pengaturan
     Route::get('pengaturan', [PengaturanController::class, 'index'])->name('pengaturan.index');

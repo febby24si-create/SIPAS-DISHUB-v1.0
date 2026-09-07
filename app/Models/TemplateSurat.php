@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class TemplateSurat extends Model
 {
     protected $table = 'template_surat';
+
     protected $fillable = [
         'jenis_surat_id',
         'nama_template',
