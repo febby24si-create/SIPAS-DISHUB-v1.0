@@ -39,7 +39,7 @@ class Phase3WorkflowTest extends TestCase
 
     public function test_cuti_workflow_and_number_generation()
     {
-        $user = User::factory()->create(['role_id' => Role::where('name', 'staff')->first()->id]);
+        $user = User::factory()->create(['role_id' => Role::where('name', 'admin')->first()->id]);
         $pegawai = Pegawai::create([
             'nip' => '12345',
             'nama' => 'PNS Test',
@@ -65,7 +65,7 @@ class Phase3WorkflowTest extends TestCase
         $this->assertEquals(5, $cuti->lama_cuti);
         $this->assertNull($cuti->surat); // No surat yet
         
-        // 2. Transisi Status dan Activity Log
+        // 2. Transisi Status dan Activity Log (Diajukan)
         $this->put(route('kepegawaian.cuti.status', $cuti), ['status' => 'diajukan']);
         $cuti->refresh();
         $this->assertEquals('diajukan', $cuti->status);
@@ -73,8 +73,18 @@ class Phase3WorkflowTest extends TestCase
         $log = \App\Models\ActivityLog::where('subject_type', PengajuanCuti::class)->where('action', 'updated')->latest()->first();
         $this->assertNotNull($log);
         $this->assertEquals('diajukan', $log->new_values['status']);
+
+        // 3. Verifikasi
+        $this->put(route('kepegawaian.cuti.status', $cuti), ['status' => 'verifikasi']);
+        $cuti->refresh();
+        $this->assertEquals('verifikasi', $cuti->status);
+
+        // 4. Disetujui
+        $this->put(route('kepegawaian.cuti.status', $cuti), ['status' => 'disetujui']);
+        $cuti->refresh();
+        $this->assertEquals('disetujui', $cuti->status);
         
-        // 3. Diterbitkan (Generate Surat & Nomor)
+        // 5. Diterbitkan (Generate Surat & Nomor)
         $jenisSurat = JenisSurat::firstOrCreate(['kode' => 'CUTI', 'nama' => 'Surat Cuti']);
         $klasifikasi = KlasifikasiSurat::firstOrCreate(['kode' => '850', 'nama' => 'Kepegawaian', 'status' => 'aktif']);
         
@@ -88,11 +98,16 @@ class Phase3WorkflowTest extends TestCase
         $this->assertEquals($jenisSurat->id, $surat->jenis_surat_id);
         $this->assertNotNull($surat->nomor_surat);
         $this->assertStringContainsString('850', $surat->nomor_surat);
+
+        // 6. Selesai
+        $this->put(route('kepegawaian.cuti.status', $cuti), ['status' => 'selesai']);
+        $cuti->refresh();
+        $this->assertEquals('selesai', $cuti->status);
     }
 
     public function test_kenaikan_pangkat_auto_update_pegawai()
     {
-        $user = User::factory()->create(['role_id' => Role::where('name', 'staff')->first()->id]);
+        $user = User::factory()->create(['role_id' => Role::where('name', 'admin')->first()->id]);
         $pegawai = Pegawai::create([
             'nip' => '12345',
             'nama' => 'PNS Pangkat',
@@ -135,7 +150,7 @@ class Phase3WorkflowTest extends TestCase
 
     public function test_gaji_berkala_tmt_calculation()
     {
-        $user = User::factory()->create(['role_id' => Role::where('name', 'staff')->first()->id]);
+        $user = User::factory()->create(['role_id' => Role::where('name', 'admin')->first()->id]);
         $pegawai = Pegawai::create([
             'nip' => '12345',
             'nama' => 'PNS KGB',
