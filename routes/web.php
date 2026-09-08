@@ -15,6 +15,8 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\NomorSuratController;
 use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\PengaturanController;
+use App\Http\Controllers\UnitKerjaController;
+use App\Http\Controllers\PegawaiController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -31,6 +33,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('klasifikasi-surat', KlasifikasiSuratController::class)->except(['show']);
     Route::resource('template-surat', TemplateSuratController::class);
     Route::get('nomor-surat', [NomorSuratController::class, 'index'])->name('nomor-surat.index');
+    Route::resource('unit-kerja', UnitKerjaController::class)->except(['show']);
+    Route::resource('pegawai', PegawaiController::class);
 
     // Persuratan - Buat Surat
     // Alur: Pilih Jenis Surat -> Pilih Template -> Isi Form Dinamis -> Preview -> Generate -> Finalisasi -> Arsip
