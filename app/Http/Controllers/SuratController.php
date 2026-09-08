@@ -7,7 +7,7 @@ use App\Models\JenisSurat;
 use App\Models\KlasifikasiSurat;
 use App\Models\Surat;
 use App\Models\TemplateSurat;
-use App\Services\NomorSuratGenerator;
+use App\Services\DocumentNumberService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpWord\TemplateProcessor;
@@ -129,13 +129,13 @@ public function store(Request $request)
 
     /*
     |--------------------------------------------------------------------------
-    | Generate Nomor Surat
+    | Tunda Generate Nomor Surat
     |--------------------------------------------------------------------------
     */
 
-    $nomorSurat = NomorSuratGenerator::generate(
-        $klasifikasiId
-    );
+    // Nomor surat tidak digenerate saat draft, digenerate saat finalize.
+    // Memberikan placeholder untuk template processor.
+    $nomorSurat = 'DRAFT-' . str()->random(5);
 
     /*
     |--------------------------------------------------------------------------
@@ -312,7 +312,7 @@ public function store(Request $request)
         'klasifikasi_id' => $klasifikasiId,
         'template_surat_id' => $template->id,
         'arah' => 'keluar',
-        'nomor_surat' => $nomorSurat,
+        'nomor_surat' => null, // Biarkan null saat draft
         'tanggal_surat' => $validated['tanggal_surat'],
         'perihal' => $validated['perihal'],
         'tujuan' => $validated['tujuan'] ?? null,
@@ -351,7 +351,16 @@ public function store(Request $request)
 
     public function finalize(Surat $surat)
     {
-        $surat->update(['status' => 'final']);
+        // Jika dokumen belum memiliki nomor resmi, generate nomor
+        if (empty($surat->nomor_surat)) {
+            $nomorSurat = DocumentNumberService::generate($surat->klasifikasi_id, \Carbon\Carbon::parse($surat->tanggal_surat));
+            $surat->update([
+                'status' => 'final',
+                'nomor_surat' => $nomorSurat,
+            ]);
+        } else {
+            $surat->update(['status' => 'final']);
+        }
 
         ActivityLog::create([
             'user_id'   => auth()->id(),

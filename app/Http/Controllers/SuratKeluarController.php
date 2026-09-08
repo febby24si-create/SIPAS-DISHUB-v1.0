@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\JenisSurat;
 use App\Models\KlasifikasiSurat;
 use App\Models\Surat;
+use App\Services\DocumentNumberService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -71,16 +72,26 @@ class SuratKeluarController extends Controller
             $path = $request->file('file_dokumen')->store('surat-keluar', 'public');
         }
 
+        $nomorSurat = $validated['nomor_surat'] ?? null;
+        $status = $validated['status'] ?? 'final';
+        
+        // Auto-generate number if final and number is empty
+        if ($status === 'final' && empty($nomorSurat)) {
+            $nomorSurat = DocumentNumberService::generate($validated['klasifikasi_id'] ?? null, \Carbon\Carbon::parse($validated['tanggal_surat']));
+        } elseif ($status === 'draft') {
+            $nomorSurat = null; // Pastikan nomor kosong jika draft
+        }
+
         $surat = Surat::create([
             'jenis_surat_id' => $validated['jenis_surat_id'],
             'klasifikasi_id' => $validated['klasifikasi_id'] ?? null,
             'arah'           => 'keluar',
-            'nomor_surat'    => $validated['nomor_surat'] ?? null,
+            'nomor_surat'    => $nomorSurat,
             'perihal'        => $validated['perihal'],
             'tujuan'         => $validated['tujuan'] ?? null,
             'tanggal_surat'  => $validated['tanggal_surat'],
             'file_dokumen'   => $path,
-            'status'         => $validated['status'] ?? 'final',
+            'status'         => $status,
             'created_by'     => auth()->id(),
         ]);
 
@@ -133,6 +144,18 @@ class SuratKeluarController extends Controller
         } else {
             unset($validated['file_dokumen']);
         }
+
+        $nomorSurat = $validated['nomor_surat'] ?? $surat->nomor_surat;
+        $status = $validated['status'] ?? 'final';
+        
+        // Auto-generate number if finalizing a draft and number is still empty
+        if ($status === 'final' && empty($nomorSurat)) {
+            $nomorSurat = DocumentNumberService::generate($validated['klasifikasi_id'] ?? null, \Carbon\Carbon::parse($validated['tanggal_surat']));
+        } elseif ($status === 'draft') {
+            $nomorSurat = null; // Pastikan nomor kosong jika kembali ke draft (sesuai aturan)
+        }
+        
+        $validated['nomor_surat'] = $nomorSurat;
 
         $surat->update($validated);
 

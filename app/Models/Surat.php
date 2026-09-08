@@ -23,6 +23,8 @@ class Surat extends Model
         'file_dokumen',
         'status',
         'created_by',
+        'source_type',
+        'source_id',
     ];
 
     protected $casts = [
@@ -63,5 +65,15 @@ class Surat extends Model
     public function scopeKeluar($query)
     {
         return $query->where('arah', 'keluar');
+    }
+
+    public function source()
+    {
+        return $this->morphTo();
+    }
+
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
     }
 }

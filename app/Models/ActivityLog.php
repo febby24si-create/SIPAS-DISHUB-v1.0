@@ -10,7 +10,18 @@ class ActivityLog extends Model
     protected $fillable = [
         'user_id',
         'surat_id',
-        'aktivitas'
+        'aktivitas',
+        'subject_type',
+        'subject_id',
+        'action',
+        'description',
+        'old_values',
+        'new_values',
+    ];
+
+    protected $casts = [
+        'old_values' => 'array',
+        'new_values' => 'array',
     ];
 
     public function user()
@@ -21,5 +32,10 @@ class ActivityLog extends Model
     public function surat()
     {
         return $this->belongsTo(Surat::class);
+    }
+
+    public function subject()
+    {
+        return $this->morphTo();
     }
 }
