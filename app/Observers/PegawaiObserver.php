@@ -29,7 +29,7 @@ class PegawaiObserver
     public function updated(Pegawai $pegawai): void
     {
         // Career History
-        if ($pegawai->isDirty(['pangkat', 'golongan', 'jabatan'])) {
+        if ($pegawai->wasChanged(['pangkat', 'golongan', 'jabatan'])) {
             RiwayatJabatanPangkat::create([
                 'pegawai_id' => $pegawai->id,
                 'pangkat' => $pegawai->pangkat,

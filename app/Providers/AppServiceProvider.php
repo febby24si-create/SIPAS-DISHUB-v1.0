@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Models\Pegawai;
-use App\Models\ActivityLog;
+use App\Models\PengajuanCuti;
+use App\Models\KenaikanPangkat;
+use App\Models\GajiBerkala;
 use App\Observers\PegawaiObserver;
 use App\Observers\ActivityLogObserver;
 
@@ -24,6 +26,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Pegawai::observe(PegawaiObserver::class);
-        // Entitas lain seperti PengajuanCuti di Phase berikutnya akan diregister ke ActivityLogObserver di sini
+        PengajuanCuti::observe(ActivityLogObserver::class);
+        KenaikanPangkat::observe(ActivityLogObserver::class);
+        GajiBerkala::observe(ActivityLogObserver::class);
     }
 }

@@ -17,6 +17,9 @@ use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\PengaturanController;
 use App\Http\Controllers\UnitKerjaController;
 use App\Http\Controllers\PegawaiController;
+use App\Http\Controllers\Kepegawaian\CutiController;
+use App\Http\Controllers\Kepegawaian\KenaikanPangkatController;
+use App\Http\Controllers\Kepegawaian\GajiBerkalaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -74,7 +77,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('pencarian', [PencarianController::class, 'index'])->name('pencarian.index');
 
     // Laporan
-    Route::get('laporan', [LaporanController::class, 'index'])->name('laporan.index');
+    Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+    Route::post('/laporan/export', [LaporanController::class, 'export'])->name('laporan.export');
+
+    // Kepegawaian & Administrasi
+    Route::put('kepegawaian/cuti/{cuti}/status', [CutiController::class, 'updateStatus'])->name('kepegawaian.cuti.status');
+    Route::resource('kepegawaian/cuti', CutiController::class)->names('kepegawaian.cuti');
+
+    Route::put('kepegawaian/pangkat/{pangkat}/status', [KenaikanPangkatController::class, 'updateStatus'])->name('kepegawaian.pangkat.status');
+    Route::resource('kepegawaian/pangkat', KenaikanPangkatController::class)->names('kepegawaian.pangkat');
+
+    Route::put('kepegawaian/kgb/{kgb}/status', [GajiBerkalaController::class, 'updateStatus'])->name('kepegawaian.kgb.status');
+    Route::resource('kepegawaian/kgb', GajiBerkalaController::class)->names('kepegawaian.kgb');
 
     // Pengguna
     Route::get('pengguna', [PenggunaController::class, 'index'])
