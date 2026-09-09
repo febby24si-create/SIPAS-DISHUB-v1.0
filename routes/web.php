@@ -74,6 +74,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Arsip
     Route::get('arsip', [ArsipController::class, 'index'])->name('arsip.index');
+    Route::get('arsip/{surat}', [ArsipController::class, 'show'])->name('arsip.show');
     Route::get('pencarian', [PencarianController::class, 'index'])->name('pencarian.index');
 
     // Laporan
