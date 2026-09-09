@@ -77,7 +77,7 @@ class SuratMasukController extends Controller
         ActivityLog::create([
             'user_id'   => auth()->id(),
             'surat_id'  => $surat->id,
-            'aktivitas' => 'mencatat surat masuk: ' . $surat->perihal,
+            'aktivitas' => 'Mencatat surat masuk: ' . ($surat->nomor_surat ?? 'Tanpa Nomor'),
         ]);
 
         return redirect()->route('surat-masuk.show', $surat)->with('status', 'Surat masuk berhasil dicatat.');
@@ -131,7 +131,7 @@ class SuratMasukController extends Controller
         ActivityLog::create([
             'user_id'   => auth()->id(),
             'surat_id'  => $surat->id,
-            'aktivitas' => 'memperbarui surat masuk: ' . $surat->perihal,
+            'aktivitas' => 'Memperbarui surat masuk: ' . ($surat->nomor_surat ?? 'Tanpa Nomor'),
         ]);
 
         return redirect()->route('surat-masuk.show', $surat)->with('status', 'Surat masuk berhasil diperbarui.');
@@ -148,7 +148,7 @@ class SuratMasukController extends Controller
         ActivityLog::create([
             'user_id'   => auth()->id(),
             'surat_id'  => $surat->id,
-            'aktivitas' => 'menghapus surat masuk: ' . $surat->perihal,
+            'aktivitas' => 'Menghapus surat masuk: ' . ($surat->nomor_surat ?? 'Tanpa Nomor'),
         ]);
 
         $surat->delete();

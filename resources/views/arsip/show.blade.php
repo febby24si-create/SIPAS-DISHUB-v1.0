@@ -143,8 +143,8 @@
                     Dokumen Surat Resmi
                 </h3>
 
-                @if($surat->file_word || $surat->file_pdf)
-                    <div style="display:flex; gap:12px;">
+                @if($surat->file_word || $surat->file_pdf || $surat->file_dokumen)
+                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
                         @if($surat->file_pdf)
                             <a href="{{ Storage::url($surat->file_pdf) }}" target="_blank" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px; background:#fee2e2; color:#dc2626; border-radius:12px; font-size:14px; font-weight:600; text-decoration:none;">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -155,6 +155,12 @@
                             <a href="{{ Storage::url($surat->file_word) }}" target="_blank" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px; background:#e0f2fe; color:#0284c7; border-radius:12px; font-size:14px; font-weight:600; text-decoration:none;">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                                 Unduh Word
+                            </a>
+                        @endif
+                        @if($surat->file_dokumen)
+                            <a href="{{ Storage::url($surat->file_dokumen) }}" target="_blank" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px; background:#f0fdf4; color:#16a34a; border-radius:12px; font-size:14px; font-weight:600; text-decoration:none;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                Lihat Dokumen
                             </a>
                         @endif
                     </div>
