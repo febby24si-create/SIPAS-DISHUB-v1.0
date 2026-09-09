@@ -132,7 +132,10 @@ class Phase3WorkflowTest extends TestCase
         $pangkat = KenaikanPangkat::first();
         $this->assertEquals('draft', $pangkat->status);
         
-        // 2. Selesai -> trigger Pegawai update & history
+        // 2. Transisi bertahap sesuai validasi
+        $this->put(route('kepegawaian.pangkat.status', $pangkat), ['status' => 'diajukan']);
+        $this->put(route('kepegawaian.pangkat.status', $pangkat), ['status' => 'verifikasi']);
+        $this->put(route('kepegawaian.pangkat.status', $pangkat), ['status' => 'diproses']);
         $response = $this->put(route('kepegawaian.pangkat.status', $pangkat), ['status' => 'selesai']);
         $response->assertSessionHasNoErrors();
         

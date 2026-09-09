@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Kepegawaian;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\KenaikanPangkat;
 use App\Models\Pegawai;
 use Illuminate\Http\Request;
@@ -51,6 +52,11 @@ class KenaikanPangkatController extends Controller
             ]);
         }
 
+        $pangkat->activityLogs()->create([
+            'user_id' => auth()->id(),
+            'aktivitas' => 'Membuat pengajuan kenaikan pangkat: ' . $pangkat->nomor_usulan,
+        ]);
+
         return redirect()->route('kepegawaian.pangkat.show', $pangkat)->with('status', 'Usulan Kenaikan Pangkat (Draft) berhasil dibuat.');
     }
 
@@ -67,6 +73,21 @@ class KenaikanPangkatController extends Controller
             'catatan' => 'nullable|string',
         ]);
 
+        $allowedTransitions = [
+            'draft' => ['diajukan'],
+            'diajukan' => ['verifikasi', 'ditolak'],
+            'verifikasi' => ['diproses', 'ditolak'],
+            'diproses' => ['selesai'],
+            'selesai' => [],
+            'ditolak' => [],
+        ];
+
+        if (!in_array($validated['status'], $allowedTransitions[$pangkat->status] ?? [])) {
+            return back()->with('error', 'Transisi status tidak valid.');
+        }
+
+        $statusLama = $pangkat->status;
+
         if ($validated['status'] === 'selesai' && $pangkat->status !== 'selesai') {
             return $this->selesaikan($pangkat);
         }
@@ -74,6 +95,12 @@ class KenaikanPangkatController extends Controller
         $pangkat->update([
             'status' => $validated['status'],
             'catatan' => $validated['catatan'] ?? $pangkat->catatan,
+        ]);
+
+        $pangkat->activityLogs()->create([
+            'user_id' => auth()->id(),
+            'aktivitas' => "Status kenaikan pangkat {$pangkat->nomor_usulan}: {$statusLama} → {$validated['status']}",
+            'new_values' => ['status' => $validated['status']],
         ]);
 
         return back()->with('status', 'Status usulan berhasil diperbarui.');
@@ -92,7 +119,14 @@ class KenaikanPangkatController extends Controller
                 $pegawai->golongan = $pangkat->golongan_baru;
                 $pegawai->save(); // Ini akan memicu PegawaiObserver untuk mencatat riwayat
 
+                $statusLama = $pangkat->status;
                 $pangkat->update(['status' => 'selesai']);
+
+                $pangkat->activityLogs()->create([
+                    'user_id' => auth()->id(),
+                    'aktivitas' => "Status kenaikan pangkat {$pangkat->nomor_usulan}: {$statusLama} → selesai",
+                    'new_values' => ['status' => 'selesai'],
+                ]);
             });
 
             return back()->with('status', 'Kenaikan Pangkat Selesai. Data master pegawai dan riwayat telah diperbarui.');

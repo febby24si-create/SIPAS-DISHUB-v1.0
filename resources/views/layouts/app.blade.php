@@ -159,6 +159,17 @@
                     Pengajuan Cuti
                 </a>
 
+                {{-- Kenaikan Pangkat --}}
+                <a href="{{ route('kepegawaian.pangkat.index') }}"
+                   class="sidebar-link {{ request()->routeIs('kepegawaian.pangkat.*') ? 'active' : '' }}">
+                    <span class="icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+                        </svg>
+                    </span>
+                    Kenaikan Pangkat
+                </a>
+
                 <p class="sidebar-section-label">Laporan</p>
 
                 <a href="{{ route('laporan.index') }}"
