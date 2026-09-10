@@ -106,4 +106,46 @@ class DashboardTest extends TestCase
         $response->assertSee(route('pencarian.index'));
         $response->assertSee('name="q"', false);
     }
+
+    public function test_data_grafik_tren_berasal_dari_database()
+    {
+        $jenisSurat = \App\Models\JenisSurat::create(['kode' => 'UM', 'nama' => 'Umum']);
+        \App\Models\Surat::create([
+            'jenis_surat_id' => $jenisSurat->id,
+            'arah'           => 'masuk',
+            'perihal'        => 'Surat Tren Test',
+            'tanggal_surat'  => now(),
+            'status'         => 'final',
+            'created_by'     => $this->admin->id,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('dashboard'));
+        $response->assertViewHas('trendLabels');
+        $response->assertViewHas('trendMasuk');
+        $response->assertViewHas('trendKeluar');
+
+        // Harus ada 6 bulan di label tren
+        $this->assertCount(6, $response->viewData('trendLabels'));
+    }
+
+    public function test_data_distribusi_jenis_surat_berasal_dari_database()
+    {
+        $jenisSurat = \App\Models\JenisSurat::create(['kode' => 'SK', 'nama' => 'Surat Keputusan']);
+        \App\Models\Surat::create([
+            'jenis_surat_id' => $jenisSurat->id,
+            'arah'           => 'keluar',
+            'perihal'        => 'SK Test Distribusi',
+            'tanggal_surat'  => now(),
+            'status'         => 'final',
+            'created_by'     => $this->admin->id,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('dashboard'));
+        $response->assertViewHas('distribusiLabels');
+        $response->assertViewHas('distribusiData');
+
+        // SK harus muncul di label distribusi
+        $labels = $response->viewData('distribusiLabels');
+        $this->assertContains('SK', $labels);
+    }
 }

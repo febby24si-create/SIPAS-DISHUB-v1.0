@@ -329,13 +329,23 @@
             @isset($header)
             <header class="topbar">
                 <div>
+                    {{-- Breadcrumb --}}
+                    @isset($breadcrumb)
+                    <div style="font-size:11px; color:#94a3b8; margin-bottom:3px; display:flex; align-items:center; gap:4px;">
+                        <span>Aplikasi</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        <span>{{ $breadcrumb }}</span>
+                    </div>
+                    @endisset
                     <div class="topbar-title">{{ $header }}</div>
-                    <div class="topbar-subtitle">{{ now()->translatedFormat('l, d F Y') }}</div>
                 </div>
-                <div class="flex items-center gap-3">
-                    {{-- Notification Bell --}}
-                    <button class="relative p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-white border border-transparent hover:border-slate-200 transition-all duration-200" style="background:white; border:1px solid rgba(0,0,0,0.07);">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <div class="flex items-center gap-2">
+                    <div style="display:flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:7px 12px;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span style="font-size:12px; color:#475569; font-weight:500;">{{ now()->translatedFormat('l, d F Y') }}</span>
+                    </div>
+                    <button style="width:36px; height:36px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                     </button>
                 </div>
             </header>
@@ -347,5 +357,6 @@
             </main>
         </div>
 
+        @stack('scripts')
     </body>
 </html>
