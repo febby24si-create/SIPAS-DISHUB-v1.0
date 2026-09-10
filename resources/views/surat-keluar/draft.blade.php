@@ -32,7 +32,10 @@
                             </td>
                             <td style="color:#64748b; font-size:13px;">{{ $item->tanggal_surat?->format('d M Y') }}</td>
                             <td style="text-align:right; padding-right:16px;">
-                                <a href="{{ route('buat-surat.show', $item) }}" style="font-size:12px; font-weight:600; color:#1d4ed8; text-decoration:none;">Lanjutkan</a>
+                                <div style="display:inline-flex; gap:8px;">
+                                    <a href="{{ route('surat-keluar.edit', $item) }}" style="font-size:12px; font-weight:600; color:#1d4ed8; text-decoration:none;">Edit Draft</a>
+                                    <a href="{{ route('buat-surat.show', $item) }}" style="font-size:12px; font-weight:600; color:#64748b; text-decoration:none;">Preview</a>
+                                </div>
                             </td>
                         </tr>
                     @empty

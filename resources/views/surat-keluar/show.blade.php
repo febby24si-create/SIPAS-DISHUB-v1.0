@@ -47,11 +47,13 @@
                             Download
                         </a>
                     @endif
-                    <a href="{{ route('surat-keluar.edit', $surat) }}"
-                       style="display:inline-flex; align-items:center; gap:6px; padding:9px 16px; background:linear-gradient(135deg,#1d4ed8,#3b82f6); color:white; border-radius:10px; font-size:13px; font-weight:600; text-decoration:none;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                        Edit
-                    </a>
+                    @if($surat->status === 'draft')
+                        <a href="{{ route('surat-keluar.edit', $surat) }}"
+                           style="display:inline-flex; align-items:center; gap:6px; padding:9px 16px; background:linear-gradient(135deg,#1d4ed8,#3b82f6); color:white; border-radius:10px; font-size:13px; font-weight:600; text-decoration:none;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            Edit / Finalisasi
+                        </a>
+                    @endif
                 </div>
             </div>
 
@@ -130,15 +132,58 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                 Kembali ke Daftar
             </a>
-            <form method="POST" action="{{ route('surat-keluar.destroy', $surat) }}"
-                  onsubmit="return confirm('Yakin ingin menghapus surat keluar ini? Tindakan ini tidak dapat dibatalkan.')">
-                @csrf
-                @method('DELETE')
-                <button type="submit" style="display:inline-flex; align-items:center; gap:6px; padding:9px 16px; background:#fef2f2; color:#dc2626; border:1px solid #fecaca; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                    Hapus
-                </button>
-            </form>
+            
+            @if($surat->status === 'draft')
+                <form method="POST" action="{{ route('surat-keluar.destroy', $surat) }}"
+                      onsubmit="return confirm('Yakin ingin menghapus surat keluar ini? Tindakan ini tidak dapat dibatalkan.')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" style="display:inline-flex; align-items:center; gap:6px; padding:9px 16px; background:#fef2f2; color:#dc2626; border:1px solid #fecaca; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                        Hapus
+                    </button>
+                </form>
+            @endif
+        </div>
+
+        {{-- Activity Logs --}}
+        <div style="background:white; border-radius:20px; border:1px solid rgba(0,0,0,0.06); overflow:hidden;">
+            <div style="padding:24px; border-bottom:1px solid rgba(0,0,0,0.05);">
+                <h3 style="font-size:16px; font-weight:600; color:#1e293b; margin:0; display:flex; align-items:center; gap:10px;">
+                    <span style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; background:#f3f4f6; color:#4b5563; border-radius:10px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </span>
+                    Riwayat / Log Aktivitas
+                </h3>
+            </div>
+            
+            <table class="data-table" style="width:100%; border-collapse:collapse; text-align:left;">
+                <thead>
+                    <tr style="border-bottom:1px solid rgba(0,0,0,0.05); background:#f8fafc;">
+                        <th style="padding:12px 24px; font-size:12px; font-weight:600; color:#64748b; width:180px;">Waktu</th>
+                        <th style="padding:12px 24px; font-size:12px; font-weight:600; color:#64748b;">User</th>
+                        <th style="padding:12px 24px; font-size:12px; font-weight:600; color:#64748b;">Aktivitas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        $logs = \App\Models\ActivityLog::where('surat_id', $surat->id)->with('user')->latest()->get();
+                    @endphp
+                    @forelse ($logs as $log)
+                        <tr style="border-bottom:1px solid rgba(0,0,0,0.05);">
+                            <td style="padding:16px 24px; color:#64748b; font-size:13px;">{{ $log->created_at->format('d M Y H:i') }}</td>
+                            <td style="padding:16px 24px; font-weight:600; color:#1e293b; font-size:13px;">{{ $log->user->name ?? 'Sistem' }}</td>
+                            <td style="padding:16px 24px; color:#334155; font-size:13px;">{{ $log->aktivitas }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" style="text-align:center; padding:32px; color:#94a3b8;">
+                                <p style="margin:0; font-size:14px; font-weight:500;">Tidak ada log aktivitas tercatat.</p>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 </x-app-layout>

@@ -95,10 +95,14 @@ class SuratKeluarController extends Controller
             'created_by'     => auth()->id(),
         ]);
 
+        $logMessage = $surat->status === 'final' 
+            ? 'Memfinalisasi surat keluar: ' . $surat->nomor_surat 
+            : 'Mencatat draft surat keluar';
+
         ActivityLog::create([
             'user_id'   => auth()->id(),
             'surat_id'  => $surat->id,
-            'aktivitas' => 'mencatat surat keluar: ' . $surat->perihal,
+            'aktivitas' => $logMessage,
         ]);
 
         return redirect()->route('surat-keluar.show', $surat)->with('status', 'Surat keluar berhasil dicatat.');
@@ -115,6 +119,7 @@ class SuratKeluarController extends Controller
     public function edit(Surat $surat)
     {
         abort_if($surat->arah !== 'keluar', 404);
+        abort_if($surat->status === 'final', 403, 'Surat final tidak dapat diedit.');
         $jenisSuratList = JenisSurat::orderBy('nama')->get();
         $klasifikasiList = KlasifikasiSurat::where('status', 'aktif')->orderBy('nama')->get();
 
@@ -124,6 +129,7 @@ class SuratKeluarController extends Controller
     public function update(Request $request, Surat $surat)
     {
         abort_if($surat->arah !== 'keluar', 404);
+        abort_if($surat->status === 'final', 403, 'Surat final tidak dapat diedit.');
 
         $validated = $request->validate([
             'jenis_surat_id' => 'required|exists:jenis_surat,id',
@@ -159,10 +165,14 @@ class SuratKeluarController extends Controller
 
         $surat->update($validated);
 
+        $logMessage = $surat->status === 'final' 
+            ? 'Memfinalisasi surat keluar: ' . $surat->nomor_surat 
+            : 'Mengubah draft surat keluar';
+
         ActivityLog::create([
             'user_id'   => auth()->id(),
             'surat_id'  => $surat->id,
-            'aktivitas' => 'memperbarui surat keluar: ' . $surat->perihal,
+            'aktivitas' => $logMessage,
         ]);
 
         return redirect()->route('surat-keluar.show', $surat)->with('status', 'Surat keluar berhasil diperbarui.');
@@ -171,6 +181,7 @@ class SuratKeluarController extends Controller
     public function destroy(Surat $surat)
     {
         abort_if($surat->arah !== 'keluar', 404);
+        abort_if($surat->status === 'final', 403, 'Surat final tidak dapat dihapus.');
 
         if ($surat->file_dokumen) {
             Storage::disk('public')->delete($surat->file_dokumen);
@@ -185,7 +196,7 @@ class SuratKeluarController extends Controller
         ActivityLog::create([
             'user_id'   => auth()->id(),
             'surat_id'  => $surat->id,
-            'aktivitas' => 'menghapus surat keluar: ' . $surat->perihal,
+            'aktivitas' => 'Menghapus draft surat keluar',
         ]);
 
         $surat->delete();

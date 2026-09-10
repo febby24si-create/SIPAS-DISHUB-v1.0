@@ -141,6 +141,12 @@
         <div style="background:white; border-radius:20px; border:1px solid rgba(0,0,0,0.06); padding:20px 24px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
 
             @if ($surat->status === 'draft')
+                <a href="{{ route('surat-keluar.edit', $surat) }}"
+                   style="display:inline-flex; align-items:center; gap:8px; padding:11px 22px; background:linear-gradient(135deg,#1d4ed8,#3b82f6); color:white; font-size:13px; font-weight:600; border-radius:12px; text-decoration:none; box-shadow:0 2px 8px rgba(29,78,216,0.2);"
+                   onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Edit Draft
+                </a>
                 <form action="{{ route('buat-surat.finalize', $surat) }}" method="POST" style="display:inline;">
                     @csrf @method('PATCH')
                     <button type="submit"

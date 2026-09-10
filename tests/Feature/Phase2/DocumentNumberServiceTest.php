@@ -49,7 +49,8 @@ class DocumentNumberServiceTest extends TestCase
         $user = User::factory()->create();
         $jenisSurat = JenisSurat::create(['kode' => 'UM', 'nama' => 'Umum']);
         
-        $response = $this->actingAs($user)->post(route('surat-keluar.store'), [
+        // 1. Create draft - nomor should NOT be generated
+        $this->actingAs($user)->post(route('surat-keluar.store'), [
             'jenis_surat_id' => $jenisSurat->id,
             'perihal' => 'Draft Surat',
             'tanggal_surat' => '2026-09-01',
@@ -60,11 +61,10 @@ class DocumentNumberServiceTest extends TestCase
         $this->assertEquals('draft', $surat->status);
         $this->assertNull($surat->nomor_surat);
 
-        // Finalize
-        $surat->update(['status' => 'final']);
+        // 2. Finalize via update route (still in draft, so route accepts it)
         $this->actingAs($user)->put(route('surat-keluar.update', $surat), [
             'jenis_surat_id' => $jenisSurat->id,
-            'perihal' => 'Draft Surat Final',
+            'perihal' => 'Surat Final',
             'tanggal_surat' => '2026-09-01',
             'status' => 'final',
         ]);
