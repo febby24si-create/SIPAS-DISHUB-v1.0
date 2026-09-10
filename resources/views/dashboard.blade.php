@@ -127,7 +127,7 @@
         <div style="display:grid;grid-template-columns:1.86fr 1fr;gap:14px;align-items:stretch;">
 
             {{-- Tren Surat – Line Chart --}}
-            <div class="card" style="border-radius:11px;padding:20px 24px;display:flex;flex-direction:column;">
+            <div class="card" style="border-radius:11px;padding:20px 24px;display:flex;flex-direction:column;min-width:0;overflow:hidden;">
                 <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap;">
                     <div>
                         <h4 style="font-size:14px;font-weight:700;color:#111827;margin:0 0 3px 0;">Tren Surat Masuk &amp; Keluar</h4>
@@ -148,7 +148,7 @@
             </div>
 
             {{-- Distribusi Jenis Surat – Donut --}}
-            <div class="card" style="border-radius:11px;padding:20px 22px;display:flex;flex-direction:column;">
+            <div class="card" style="border-radius:11px;padding:20px 22px;display:flex;flex-direction:column;min-width:0;overflow:hidden;">
                 <div style="margin-bottom:14px;">
                     <div style="display:flex;align-items:center;justify-content:space-between;">
                         <h4 style="font-size:14px;font-weight:700;color:#111827;margin:0 0 3px 0;">Distribusi Jenis Surat</h4>
@@ -188,7 +188,7 @@
         <div style="display:grid;grid-template-columns:1.86fr 1fr;gap:14px;align-items:stretch;">
 
             {{-- Klasifikasi – Horizontal Bar --}}
-            <div class="card" style="border-radius:11px;padding:20px 24px;display:flex;flex-direction:column;">
+            <div class="card" style="border-radius:11px;padding:20px 24px;display:flex;flex-direction:column;min-width:0;overflow:hidden;">
                 <div style="margin-bottom:14px;">
                     <h4 style="font-size:14px;font-weight:700;color:#111827;margin:0 0 3px 0;">Surat Berdasarkan Klasifikasi</h4>
                     <p style="font-size:11.5px;color:#9ca3af;margin:0;">Top klasifikasi surat · hanya surat final</p>
@@ -206,7 +206,7 @@
             </div>
 
             {{-- Kalender --}}
-            <div class="card" style="border-radius:11px;padding:20px 22px;display:flex;flex-direction:column;">
+            <div class="card" style="border-radius:11px;padding:20px 22px;display:flex;flex-direction:column;min-width:0;overflow:hidden;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                     <div>
                         <h4 style="font-size:14px;font-weight:700;color:#111827;margin:0 0 2px 0;" id="kal-judul">--</h4>
