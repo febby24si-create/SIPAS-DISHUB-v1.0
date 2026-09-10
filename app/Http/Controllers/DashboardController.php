@@ -28,12 +28,12 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // 4. GRAFIK TREN SURAT – 6 bulan terakhir (aggregate, tidak ambil seluruh record)
+        // 4. GRAFIK TREN SURAT – 6 bulan terakhir
         $bulanList = collect(range(5, 0))->map(fn ($i) => Carbon::now()->startOfMonth()->subMonths($i));
 
-        // Pilih fungsi format tanggal sesuai driver database
-        $driver       = DB::connection()->getDriverName();
-        $formatBulan  = $driver === 'sqlite'
+        // Driver-aware format (MySQL: DATE_FORMAT, SQLite: strftime)
+        $driver      = DB::connection()->getDriverName();
+        $formatBulan = $driver === 'sqlite'
             ? DB::raw("strftime('%Y-%m', tanggal_surat) as bulan")
             : DB::raw("DATE_FORMAT(tanggal_surat, '%Y-%m') as bulan");
 
@@ -48,7 +48,7 @@ class DashboardController extends Controller
         $trendMasuk  = $bulanList->map(fn ($d) => (int) optional($trendRaw->get($d->format('Y-m'))?->firstWhere('arah', 'masuk'))->total)->toArray();
         $trendKeluar = $bulanList->map(fn ($d) => (int) optional($trendRaw->get($d->format('Y-m'))?->firstWhere('arah', 'keluar'))->total)->toArray();
 
-        // 5. GRAFIK DISTRIBUSI JENIS SURAT – dari tabel surat final + relasi jenis_surat
+        // 5. GRAFIK DISTRIBUSI JENIS SURAT
         $distribusiRaw = Surat::where('status', 'final')
             ->whereNotNull('jenis_surat_id')
             ->with('jenisSurat')
@@ -58,6 +58,19 @@ class DashboardController extends Controller
 
         $distribusiLabels = $distribusiRaw->map(fn ($r) => $r->jenisSurat?->kode ?? 'Lainnya')->toArray();
         $distribusiData   = $distribusiRaw->pluck('total')->map(fn ($v) => (int) $v)->toArray();
+
+        // 6. GRAFIK SURAT BERDASARKAN KLASIFIKASI – top 8, hanya surat final
+        $klasifikasiRaw = Surat::where('status', 'final')
+            ->whereNotNull('klasifikasi_id')
+            ->with('klasifikasi')
+            ->select('klasifikasi_id', DB::raw('COUNT(*) as total'))
+            ->groupBy('klasifikasi_id')
+            ->orderByDesc('total')
+            ->take(8)
+            ->get();
+
+        $klasifikasiLabels = $klasifikasiRaw->map(fn ($r) => $r->klasifikasi?->nama ?? 'Lainnya')->toArray();
+        $klasifikasiData   = $klasifikasiRaw->pluck('total')->map(fn ($v) => (int) $v)->toArray();
 
         return view('dashboard', compact(
             'totalSurat',
@@ -72,7 +85,9 @@ class DashboardController extends Controller
             'trendMasuk',
             'trendKeluar',
             'distribusiLabels',
-            'distribusiData'
+            'distribusiData',
+            'klasifikasiLabels',
+            'klasifikasiData'
         ));
     }
 }
