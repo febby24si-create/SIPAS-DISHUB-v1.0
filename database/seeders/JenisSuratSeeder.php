@@ -22,6 +22,7 @@ class JenisSuratSeeder extends Seeder
             ['nama' => 'Surat Pemberitahuan', 'kode' => 'SPB'],
             ['nama' => 'Surat Permohonan', 'kode' => 'SPM'],
             ['nama' => 'Surat Peminjaman Barang', 'kode' => 'SPPB'],
+            ['nama' => 'Berita Acara', 'kode' => 'BA'],
         ];
 
             foreach ($data as $item) {

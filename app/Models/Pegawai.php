@@ -55,4 +55,12 @@ class Pegawai extends Model
     {
         return $this->hasMany(RiwayatJabatanPangkat::class, 'pegawai_id');
     }
+
+    /**
+     * Get the user account associated with this Pegawai.
+     */
+    public function user()
+    {
+        return $this->hasOne(User::class);
+    }
 }

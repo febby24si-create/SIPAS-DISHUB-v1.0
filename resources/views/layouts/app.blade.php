@@ -49,7 +49,7 @@
 
                 <p class="sidebar-section-label">Persuratan</p>
 
-                <a href="{{ route('buat-surat.create') }}"
+                <!-- <a href="{{ route('buat-surat.create') }}"
                    class="sidebar-link {{ request()->routeIs('buat-surat.*') ? 'active' : '' }}">
                     <span class="icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -58,7 +58,7 @@
                         </svg>
                     </span>
                     Buat Surat
-                </a>
+                </a> -->
 
                 {{-- Surat Masuk (dropdown) --}}
                 <div x-data="{ open: {{ request()->routeIs('surat-masuk.*') ? 'true' : 'false' }} }">
@@ -113,7 +113,7 @@
                     </div>
                 </div>
 
-                <a href="{{ route('disposisi.index') }}"
+                <!-- <a href="{{ route('disposisi.index') }}"
                    class="sidebar-link {{ request()->routeIs('disposisi.*') ? 'active' : '' }}">
                     <span class="icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -121,7 +121,7 @@
                         </svg>
                     </span>
                     Disposisi Surat
-                </a>
+                </a> -->
 
                 <p class="sidebar-section-label">Arsip</p>
 

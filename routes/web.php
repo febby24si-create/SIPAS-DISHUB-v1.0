@@ -79,7 +79,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Laporan
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
-    Route::post('/laporan/export', [LaporanController::class, 'export'])->name('laporan.export');
 
     // Kepegawaian & Administrasi
     Route::put('kepegawaian/cuti/{cuti}/status', [CutiController::class, 'updateStatus'])->name('kepegawaian.cuti.status');
@@ -92,9 +91,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('kepegawaian/kgb', GajiBerkalaController::class)->names('kepegawaian.kgb');
 
     // Pengguna
-    Route::get('pengguna', [PenggunaController::class, 'index'])
-        ->middleware('role:admin')
-        ->name('pengguna.index');
+    Route::middleware('role:admin')->group(function () {
+        Route::patch('pengguna/{pengguna}/toggle-status', [PenggunaController::class, 'toggleStatus'])->name('pengguna.toggle-status');
+        Route::patch('pengguna/{pengguna}/reset-password', [PenggunaController::class, 'resetPassword'])->name('pengguna.reset-password');
+        Route::resource('pengguna', PenggunaController::class)->except(['show', 'destroy']);
+    });
 
     // Pengaturan
     Route::get('pengaturan', [PengaturanController::class, 'index'])->name('pengaturan.index');
