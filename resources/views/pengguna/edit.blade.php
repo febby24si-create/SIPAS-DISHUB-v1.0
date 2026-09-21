@@ -38,16 +38,7 @@
                 @error('email') <p style="color:#be123c; font-size:12px; margin:4px 0 0;">{{ $message }}</p> @enderror
             </div>
 
-            <div>
-                <label style="display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:6px;">Role / Hak Akses <span style="color:#dc2626;">*</span></label>
-                <select name="role_id" required style="width:100%; padding:10px 14px; border:1px solid {{ $errors->has('role_id') ? '#fca5a5' : '#e2e8f0' }}; border-radius:10px; font-size:14px; color:#334155;">
-                    <option value="">-- Pilih Role --</option>
-                    @foreach ($roles as $role)
-                        <option value="{{ $role->id }}" @selected(old('role_id', $pengguna->role_id) == $role->id)>{{ ucfirst($role->name) }}</option>
-                    @endforeach
-                </select>
-                @error('role_id') <p style="color:#be123c; font-size:12px; margin:4px 0 0;">{{ $message }}</p> @enderror
-            </div>
+            {{-- Role tidak dapat diubah dari UI --}}
 
             <div>
                 <label style="display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:6px;">Link ke Pegawai (Opsional)</label>

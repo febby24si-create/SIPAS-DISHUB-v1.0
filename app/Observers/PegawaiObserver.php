@@ -29,13 +29,13 @@ class PegawaiObserver
     public function updated(Pegawai $pegawai): void
     {
         // Career History
-        if ($pegawai->wasChanged(['pangkat', 'golongan', 'jabatan'])) {
+        if ($pegawai->wasChanged(['pangkat', 'golongan', 'jabatan', 'tmt_pangkat', 'tmt_jabatan'])) {
             RiwayatJabatanPangkat::create([
                 'pegawai_id' => $pegawai->id,
                 'pangkat' => $pegawai->pangkat,
                 'golongan' => $pegawai->golongan,
                 'jabatan' => $pegawai->jabatan,
-                'tmt' => $pegawai->tmt_input ?? now(),
+                'tmt' => $pegawai->tmt_input ?? $pegawai->tmt_pangkat ?? $pegawai->tmt_jabatan ?? now(),
                 'keterangan' => 'Pembaruan data karier',
             ]);
         }

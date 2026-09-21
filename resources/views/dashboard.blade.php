@@ -296,6 +296,82 @@
             </div>
         </div>
 
+        {{-- 6.5 EARLY WARNING KEPEGAWAIAN ─────────────────────────────────── --}}
+        <div>
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+                <div>
+                    <p style="font-size:11.5px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.8px;margin:0 0 2px 0;">Early Warning Kepegawaian</p>
+                    <p style="font-size:12.5px;color:#9ca3af;margin:0;">Peringatan dini untuk Kenaikan Gaji Berkala (KGB) dan Kenaikan Pangkat (KP)</p>
+                </div>
+            </div>
+            
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">
+                
+                {{-- KGB Warning --}}
+                <div class="card" style="border-radius:11px;overflow:hidden;">
+                    <div style="background:#f8fafc;padding:12px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:10px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                        <h4 style="font-size:14px;font-weight:700;color:#1e293b;margin:0;">Kenaikan Gaji Berkala (KGB)</h4>
+                    </div>
+                    <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
+                        @if($kgbWarningData['tidak_lengkap'] > 0)
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#fef2f2;border-radius:8px;">
+                                <span style="font-size:13px;color:#991b1b;font-weight:500;">Data / Pengaturan Tidak Lengkap</span>
+                                <span style="font-size:14px;font-weight:700;color:#991b1b;">{{ $kgbWarningData['tidak_lengkap'] }}</span>
+                            </div>
+                        @endif
+                        
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#fff1f2;border-radius:8px;">
+                            <span style="font-size:13px;color:#be123c;font-weight:500;">Jatuh Tempo</span>
+                            <span style="font-size:14px;font-weight:700;color:#be123c;">{{ $kgbWarningData['jatuh_tempo'] }}</span>
+                        </div>
+                        
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#fffbeb;border-radius:8px;">
+                            <span style="font-size:13px;color:#b45309;font-weight:500;">Akan Jatuh Tempo</span>
+                            <span style="font-size:14px;font-weight:700;color:#b45309;">{{ $kgbWarningData['akan_jatuh_tempo'] }}</span>
+                        </div>
+
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#f0fdf4;border-radius:8px;">
+                            <span style="font-size:13px;color:#166534;font-weight:500;">Aman</span>
+                            <span style="font-size:14px;font-weight:700;color:#166534;">{{ $kgbWarningData['aman'] }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- KP Warning --}}
+                <div class="card" style="border-radius:11px;overflow:hidden;">
+                    <div style="background:#f8fafc;padding:12px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:10px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                        <h4 style="font-size:14px;font-weight:700;color:#1e293b;margin:0;">Kenaikan Pangkat</h4>
+                    </div>
+                    <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
+                        @if($kpWarningData['tidak_lengkap'] > 0)
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#fef2f2;border-radius:8px;">
+                                <span style="font-size:13px;color:#991b1b;font-weight:500;">Data / Pengaturan Tidak Lengkap</span>
+                                <span style="font-size:14px;font-weight:700;color:#991b1b;">{{ $kpWarningData['tidak_lengkap'] }}</span>
+                            </div>
+                        @endif
+                        
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#fff1f2;border-radius:8px;">
+                            <span style="font-size:13px;color:#be123c;font-weight:500;">Jatuh Tempo</span>
+                            <span style="font-size:14px;font-weight:700;color:#be123c;">{{ $kpWarningData['jatuh_tempo'] }}</span>
+                        </div>
+                        
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#fffbeb;border-radius:8px;">
+                            <span style="font-size:13px;color:#b45309;font-weight:500;">Akan Jatuh Tempo</span>
+                            <span style="font-size:14px;font-weight:700;color:#b45309;">{{ $kpWarningData['akan_jatuh_tempo'] }}</span>
+                        </div>
+
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#f0fdf4;border-radius:8px;">
+                            <span style="font-size:13px;color:#166534;font-weight:500;">Aman</span>
+                            <span style="font-size:14px;font-weight:700;color:#166534;">{{ $kpWarningData['aman'] }}</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
         {{-- ⑦ AKTIVITAS TERBARU ──────────────────────────── --}}
         <div class="card" style="border-radius:11px;overflow:hidden;" x-data="{ tab:'semua' }">
             <div style="padding:16px 24px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">

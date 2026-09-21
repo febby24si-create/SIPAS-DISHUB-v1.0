@@ -19,30 +19,28 @@ class PenggunaController extends Controller
         return view('pengguna.index', compact('pengguna'));
     }
 
-    public function create()
-    {
-        $roles = Role::all();
-        // Hanya ambil pegawai yang belum terhubung dengan user lain
-        $pegawais = Pegawai::whereDoesntHave('user')->where('status_aktif', true)->get();
-        
-        return view('pengguna.create', compact('roles', 'pegawais'));
-    }
+    // public function create()
+    // {
+    //     $roles = Role::all();
+    //     // Hanya ambil pegawai yang belum terhubung dengan user lain
+    //     $pegawais = Pegawai::whereDoesntHave('user')->where('status_aktif', true)->get();
+    //     
+    //     return view('pengguna.create', compact('roles', 'pegawais'));
+    // }
 
-    public function store(StorePenggunaRequest $request)
-    {
-        $validated = $request->validated();
-        $validated['password'] = Hash::make($validated['password']);
-        $validated['is_active'] = true;
-
-        User::create($validated);
-
-        return redirect()->route('pengguna.index')->with('status', 'Pengguna berhasil ditambahkan.');
-    }
+    // public function store(StorePenggunaRequest $request)
+    // {
+    //     $validated = $request->validated();
+    //     $validated['password'] = Hash::make($validated['password']);
+    //     $validated['is_active'] = true;
+    //
+    //     User::create($validated);
+    //
+    //     return redirect()->route('pengguna.index')->with('status', 'Pengguna berhasil ditambahkan.');
+    // }
 
     public function edit(User $pengguna)
     {
-        $roles = Role::all();
-        
         // Ambil pegawai yang belum terhubung ATAU yang saat ini terhubung dengan user ini
         $pegawais = Pegawai::where('status_aktif', true)
             ->where(function ($query) use ($pengguna) {
@@ -50,20 +48,17 @@ class PenggunaController extends Controller
                       ->orWhere('id', $pengguna->pegawai_id);
             })->get();
             
-        return view('pengguna.edit', compact('pengguna', 'roles', 'pegawais'));
+        return view('pengguna.edit', compact('pengguna', 'pegawais'));
     }
 
     public function update(UpdatePenggunaRequest $request, User $pengguna)
     {
-        // Proteksi role admin
-        if ($pengguna->id === auth()->id() && $request->role_id != $pengguna->role_id) {
-            $newRole = Role::find($request->role_id);
-            if ($newRole && $newRole->name !== 'admin') {
-                return back()->with('error', 'Anda tidak dapat mengubah role Anda sendiri menjadi non-admin.');
-            }
-        }
+        $validated = $request->validated();
+        
+        // Filter out role_id from validated data to prevent role changes
+        unset($validated['role_id']);
 
-        $pengguna->update($request->validated());
+        $pengguna->update($validated);
 
         return redirect()->route('pengguna.index')->with('status', 'Data pengguna berhasil diperbarui.');
     }

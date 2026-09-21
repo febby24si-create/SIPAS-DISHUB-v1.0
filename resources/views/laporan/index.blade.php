@@ -10,8 +10,25 @@
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
                 <span style="font-size:13px; font-weight:700; color:#1e293b;">Filter Laporan</span>
             </div>
-            <form method="GET" action="{{ route('laporan.index') }}" id="form-filter">
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:12px; align-items:end;">
+            <form method="GET" action="{{ route('laporan.index') }}" id="form-filter"
+                  x-data="{
+                    bidangId: '{{ $bidangId ?? '' }}',
+                    seksiId: '{{ $seksiId ?? '' }}',
+                    allSeksis: {{ $seksis->groupBy('parent_id')->map(fn($s) => $s->values())->toJson() }},
+                    get seksiList() {
+                        if (!this.bidangId) return [];
+                        return this.allSeksis[this.bidangId] || [];
+                    },
+                    onBidangChange() {
+                        if (!this.allSeksis[this.bidangId]) {
+                            this.seksiId = '';
+                        } else {
+                            const valid = this.seksiList.find(s => String(s.id) === String(this.seksiId));
+                            if (!valid) this.seksiId = '';
+                        }
+                    }
+                  }">
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; align-items:end; margin-bottom:12px;">
 
                     {{-- Tanggal Dari --}}
                     <div>
@@ -72,8 +89,46 @@
                     </div>
                 </div>
 
+                {{-- Baris 2: Bidang & Seksi --}}
+                <div style="display:grid; grid-template-columns:1fr 1fr 2fr; gap:12px; align-items:end; margin-bottom:0;">
+
+                    {{-- Bidang --}}
+                    <div>
+                        <label style="font-size:11.5px; font-weight:600; color:#64748b; display:block; margin-bottom:5px;">Bidang</label>
+                        <select name="bidang_id" id="filter-bidang" x-model="bidangId" @change="onBidangChange()"
+                                style="width:100%; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; font-size:13px; color:#374151; outline:none; background:white; box-sizing:border-box;"
+                                onfocus="this.style.borderColor='#1d4ed8'" onblur="this.style.borderColor='#e2e8f0'">
+                            <option value="">Semua Bidang</option>
+                            @foreach ($bidangs as $b)
+                                <option value="{{ $b->id }}">{{ $b->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Seksi (dependent) --}}
+                    <div>
+                        <label style="font-size:11.5px; font-weight:600; color:#64748b; display:block; margin-bottom:5px;">Seksi / Unit Kerja</label>
+                        <select name="seksi_id" id="filter-seksi" x-model="seksiId"
+                                :disabled="!bidangId"
+                                style="width:100%; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; font-size:13px; color:#374151; outline:none; background:white; box-sizing:border-box;"
+                                :style="!bidangId ? 'background:#f8fafc; color:#9ca3af; cursor:not-allowed;' : ''"
+                                onfocus="this.style.borderColor='#1d4ed8'" onblur="this.style.borderColor='#e2e8f0'">
+                            <option value="">-- Pilih Bidang dahulu --</option>
+                            <template x-if="bidangId">
+                                <template x-for="s in seksiList" :key="s.id">
+                                    <option :value="s.id" :selected="String(s.id) === String(seksiId)" x-text="s.nama"></option>
+                                </template>
+                            </template>
+                        </select>
+                        <input type="hidden" name="seksi_id_dummy" value="" x-show="false">
+                    </div>
+
+                    {{-- Spacer --}}
+                    <div></div>
+                </div>
+
                 {{-- Tombol Aksi --}}
-                <div style="display:flex; align-items:center; gap:10px; margin-top:14px;">
+                <div style="display:flex; align-items:center; gap:10px; margin-top:14px; flex-wrap:wrap;">
                     <button type="submit"
                             style="padding:9px 22px; background:#1d4ed8; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;"
                             onmouseover="this.style.background='#1e40af'" onmouseout="this.style.background='#1d4ed8'">
@@ -88,6 +143,14 @@
                             Reset Filter
                         </a>
                     @endif
+                    {{-- Tombol Print (buka di tab baru dengan filter yang sama) --}}
+                    <a href="{{ route('laporan.print') }}?{{ http_build_query(request()->only(['dari','sampai','arah','jenis_surat_id','klasifikasi_id','bidang_id','seksi_id'])) }}"
+                       target="_blank"
+                       style="padding:9px 18px; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:6px; margin-left:auto;"
+                       onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        Cetak / Print
+                    </a>
                 </div>
             </form>
         </div>
@@ -113,6 +176,12 @@
                 @endif
                 @if($klasifikasiId && ($k = $klasifikasiList->firstWhere('id', $klasifikasiId)))
                     · Klasifikasi: <strong>{{ $k->nama }}</strong>
+                @endif
+                @if($bidangId && ($b = $bidangs->firstWhere('id', $bidangId)))
+                    · Bidang: <strong>{{ $b->nama }}</strong>
+                @endif
+                @if($seksiId && ($s = $seksis->firstWhere('id', $seksiId)))
+                    · Seksi: <strong>{{ $s->nama }}</strong>
                 @endif
                 &nbsp;·&nbsp; Hanya menampilkan surat <strong>final</strong>.
             </p>

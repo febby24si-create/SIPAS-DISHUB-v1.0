@@ -20,6 +20,7 @@ use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\Kepegawaian\CutiController;
 use App\Http\Controllers\Kepegawaian\KenaikanPangkatController;
 use App\Http\Controllers\Kepegawaian\GajiBerkalaController;
+use App\Http\Controllers\Kepegawaian\RiwayatDiklatController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -27,10 +28,10 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth'])
     ->name('dashboard');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     // Master Data
     Route::resource('jenis-surat', JenisSuratController::class);
     Route::resource('klasifikasi-surat', KlasifikasiSuratController::class)->except(['show']);
@@ -77,9 +78,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('arsip/{surat}', [ArsipController::class, 'show'])->name('arsip.show');
     Route::get('pencarian', [PencarianController::class, 'index'])->name('pencarian.index');
 
-    // Laporan
-    Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
-
     // Kepegawaian & Administrasi
     Route::put('kepegawaian/cuti/{cuti}/status', [CutiController::class, 'updateStatus'])->name('kepegawaian.cuti.status');
     Route::resource('kepegawaian/cuti', CutiController::class)->names('kepegawaian.cuti');
@@ -90,15 +88,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('kepegawaian/kgb/{kgb}/status', [GajiBerkalaController::class, 'updateStatus'])->name('kepegawaian.kgb.status');
     Route::resource('kepegawaian/kgb', GajiBerkalaController::class)->names('kepegawaian.kgb');
 
-    // Pengguna
+    // Riwayat Diklat (nested di bawah Pegawai)
+    Route::resource('pegawai.diklat', RiwayatDiklatController::class)
+        ->except(['show'])
+        ->names('pegawai.diklat');
+
+    // Pengguna & Laporan
     Route::middleware('role:admin')->group(function () {
+        // Laporan
+        Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+        Route::get('/laporan/print', [LaporanController::class, 'print'])->name('laporan.print');
+        
         Route::patch('pengguna/{pengguna}/toggle-status', [PenggunaController::class, 'toggleStatus'])->name('pengguna.toggle-status');
         Route::patch('pengguna/{pengguna}/reset-password', [PenggunaController::class, 'resetPassword'])->name('pengguna.reset-password');
-        Route::resource('pengguna', PenggunaController::class)->except(['show', 'destroy']);
+        Route::resource('pengguna', PenggunaController::class)->except(['create', 'store', 'show', 'destroy']);
     });
 
     // Pengaturan
-    Route::get('pengaturan', [PengaturanController::class, 'index'])->name('pengaturan.index');
+    Route::prefix('pengaturan')->name('pengaturan.')->group(function () {
+        Route::get('/', [PengaturanController::class, 'index'])->name('index');
+        
+        // Pengaturan Kepegawaian
+        Route::get('kepegawaian', [\App\Http\Controllers\PengaturanKepegawaianController::class, 'index'])->name('kepegawaian.index');
+        Route::put('kepegawaian', [\App\Http\Controllers\PengaturanKepegawaianController::class, 'update'])->name('kepegawaian.update');
+        
+        // Kategori BUP
+        Route::resource('kategori-bup', \App\Http\Controllers\KategoriBupController::class)->except(['show', 'create']);
+    });
 });
 
 Route::middleware('auth')->group(function () {

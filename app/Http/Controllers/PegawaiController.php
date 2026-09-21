@@ -52,6 +52,12 @@ class PegawaiController extends Controller
             'jabatan' => 'nullable|string|max:255',
             'unit_kerja_id' => 'nullable|exists:unit_kerja,id',
             'status_aktif' => 'boolean',
+            'tempat_lahir' => 'nullable|string|max:255',
+            'tanggal_lahir' => 'nullable|date',
+            'jenis_kelamin' => 'nullable|string|max:255',
+            'pendidikan_terakhir' => 'nullable|string|max:255',
+            'tmt_pangkat' => 'nullable|date',
+            'tmt_jabatan' => 'nullable|date',
             'tmt' => 'required|date',
         ]);
 
@@ -62,6 +68,12 @@ class PegawaiController extends Controller
             $pegawai->pangkat = $validated['pangkat'] ?? null;
             $pegawai->golongan = $validated['golongan'] ?? null;
             $pegawai->jabatan = $validated['jabatan'] ?? null;
+            $pegawai->tempat_lahir = $validated['tempat_lahir'] ?? null;
+            $pegawai->tanggal_lahir = $validated['tanggal_lahir'] ?? null;
+            $pegawai->jenis_kelamin = $validated['jenis_kelamin'] ?? null;
+            $pegawai->pendidikan_terakhir = $validated['pendidikan_terakhir'] ?? null;
+            $pegawai->tmt_pangkat = $validated['tmt_pangkat'] ?? null;
+            $pegawai->tmt_jabatan = $validated['tmt_jabatan'] ?? null;
             $pegawai->unit_kerja_id = $validated['unit_kerja_id'] ?? null;
             $pegawai->status_aktif = $request->has('status_aktif') ? true : false;
             
@@ -105,6 +117,12 @@ class PegawaiController extends Controller
             'jabatan' => 'nullable|string|max:255',
             'unit_kerja_id' => 'nullable|exists:unit_kerja,id',
             'status_aktif' => 'boolean',
+            'tempat_lahir' => 'nullable|string|max:255',
+            'tanggal_lahir' => 'nullable|date',
+            'jenis_kelamin' => 'nullable|string|max:255',
+            'pendidikan_terakhir' => 'nullable|string|max:255',
+            'tmt_pangkat' => 'nullable|date',
+            'tmt_jabatan' => 'nullable|date',
             'tmt' => 'nullable|date', // TMT only needed if career fields changed, but making it nullable is safer. We'll enforce conditionally if needed.
         ]);
 
@@ -119,6 +137,12 @@ class PegawaiController extends Controller
         $pegawai->pangkat = $validated['pangkat'] ?? null;
         $pegawai->golongan = $validated['golongan'] ?? null;
         $pegawai->jabatan = $validated['jabatan'] ?? null;
+        $pegawai->tempat_lahir = $validated['tempat_lahir'] ?? null;
+        $pegawai->tanggal_lahir = $validated['tanggal_lahir'] ?? null;
+        $pegawai->jenis_kelamin = $validated['jenis_kelamin'] ?? null;
+        $pegawai->pendidikan_terakhir = $validated['pendidikan_terakhir'] ?? null;
+        $pegawai->tmt_pangkat = $validated['tmt_pangkat'] ?? null;
+        $pegawai->tmt_jabatan = $validated['tmt_jabatan'] ?? null;
         $pegawai->unit_kerja_id = $validated['unit_kerja_id'] ?? null;
         $pegawai->status_aktif = $request->has('status_aktif') ? true : false;
         

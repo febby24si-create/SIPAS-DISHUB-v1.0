@@ -72,6 +72,25 @@ class DashboardController extends Controller
         $klasifikasiLabels = $klasifikasiRaw->map(fn ($r) => $r->klasifikasi?->nama ?? 'Lainnya')->toArray();
         $klasifikasiData   = $klasifikasiRaw->pluck('total')->map(fn ($v) => (int) $v)->toArray();
 
+        // 7. EARLY WARNING KEPEGAWAIAN
+        $earlyWarningService = new \App\Services\Kepegawaian\EarlyWarningService();
+        $kgbWarnings = collect($earlyWarningService->getKgbWarning());
+        $kpWarnings = collect($earlyWarningService->getKpWarning());
+
+        $kgbWarningData = [
+            'akan_jatuh_tempo' => $kgbWarnings->where('status', 'AKAN JATUH TEMPO')->count(),
+            'jatuh_tempo' => $kgbWarnings->where('status', 'JATUH TEMPO')->count(),
+            'tidak_lengkap' => $kgbWarnings->whereIn('status', ['DATA TIDAK LENGKAP', 'PENGATURAN BELUM LENGKAP'])->count(),
+            'aman' => $kgbWarnings->where('status', 'AMAN')->count(),
+        ];
+
+        $kpWarningData = [
+            'akan_jatuh_tempo' => $kpWarnings->where('status', 'AKAN JATUH TEMPO')->count(),
+            'jatuh_tempo' => $kpWarnings->where('status', 'JATUH TEMPO')->count(),
+            'tidak_lengkap' => $kpWarnings->whereIn('status', ['DATA TIDAK LENGKAP', 'PENGATURAN BELUM LENGKAP'])->count(),
+            'aman' => $kpWarnings->where('status', 'AMAN')->count(),
+        ];
+
         return view('dashboard', compact(
             'totalSurat',
             'totalMasuk',
@@ -87,7 +106,11 @@ class DashboardController extends Controller
             'distribusiLabels',
             'distribusiData',
             'klasifikasiLabels',
-            'klasifikasiData'
+            'klasifikasiData',
+            'kgbWarnings',
+            'kpWarnings',
+            'kgbWarningData',
+            'kpWarningData'
         ));
     }
 }

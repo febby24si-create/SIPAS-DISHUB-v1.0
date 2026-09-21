@@ -46,6 +46,46 @@
                     </div>
                 </div>
 
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                    <div class="form-group">
+                        <label class="form-label" for="tempat_lahir">Tempat Lahir</label>
+                        <input id="tempat_lahir" type="text" name="tempat_lahir"
+                               value="{{ old('tempat_lahir', $pegawai->tempat_lahir) }}"
+                               class="form-control"
+                               placeholder="Contoh: Jakarta">
+                        @error('tempat_lahir') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="tanggal_lahir">Tanggal Lahir</label>
+                        <input id="tanggal_lahir" type="date" name="tanggal_lahir"
+                               value="{{ old('tanggal_lahir', $pegawai->tanggal_lahir?->format('Y-m-d')) }}"
+                               class="form-control">
+                        @error('tanggal_lahir') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                    <div class="form-group">
+                        <label class="form-label" for="jenis_kelamin">Jenis Kelamin</label>
+                        <select id="jenis_kelamin" name="jenis_kelamin" class="form-control">
+                            <option value="">-- Pilih Jenis Kelamin --</option>
+                            <option value="Laki-laki" {{ old('jenis_kelamin', $pegawai->jenis_kelamin) == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
+                            <option value="Perempuan" {{ old('jenis_kelamin', $pegawai->jenis_kelamin) == 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
+                        </select>
+                        @error('jenis_kelamin') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="pendidikan_terakhir">Pendidikan Terakhir</label>
+                        <input id="pendidikan_terakhir" type="text" name="pendidikan_terakhir"
+                               value="{{ old('pendidikan_terakhir', $pegawai->pendidikan_terakhir) }}"
+                               class="form-control"
+                               placeholder="Contoh: S1 Teknik Informatika">
+                        @error('pendidikan_terakhir') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
                 <div style="border-top:1px dashed #e2e8f0; margin:10px 0;"></div>
 
                 <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px;">
@@ -74,6 +114,24 @@
                                class="form-control"
                                placeholder="Contoh: Staf Analis">
                         @error('jabatan') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                    <div class="form-group">
+                        <label class="form-label" for="tmt_pangkat">TMT Pangkat</label>
+                        <input id="tmt_pangkat" type="date" name="tmt_pangkat"
+                               value="{{ old('tmt_pangkat', $pegawai->tmt_pangkat?->format('Y-m-d')) }}"
+                               class="form-control">
+                        @error('tmt_pangkat') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="tmt_jabatan">TMT Jabatan</label>
+                        <input id="tmt_jabatan" type="date" name="tmt_jabatan"
+                               value="{{ old('tmt_jabatan', $pegawai->tmt_jabatan?->format('Y-m-d')) }}"
+                               class="form-control">
+                        @error('tmt_jabatan') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
                 </div>
 

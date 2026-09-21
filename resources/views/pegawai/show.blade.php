@@ -29,10 +29,45 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     Edit Pegawai
                 </a>
+
+                <a href="{{ route('pegawai.diklat.index', $pegawai) }}" style="width:100%; margin-top:8px; text-decoration:none; display:inline-flex; justify-content:center; align-items:center; gap:8px; padding:10px 18px; background:#f0fdf4; color:#15803d; border-radius:12px; font-size:13px; font-weight:600; border:1px solid #bbf7d0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    Riwayat Diklat
+                    @php $diklatCount = $pegawai->riwayatDiklat()->count(); @endphp
+                    @if($diklatCount > 0)
+                        <span style="padding:2px 8px; background:#dcfce7; color:#15803d; font-size:11px; font-weight:700; border-radius:20px;">{{ $diklatCount }}</span>
+                    @endif
+                </a>
             </div>
 
             {{-- Info Card --}}
             <div style="background:white; border-radius:20px; border:1px solid rgba(0,0,0,0.06); padding:24px;">
+                <h4 style="font-size:15px; font-weight:700; color:#1e293b; margin:0 0 20px 0; display:flex; align-items:center; gap:8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    Informasi Dasar
+                </h4>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px;">
+                    <div>
+                        <p style="font-size:12px; color:#94a3b8; margin:0 0 4px 0; font-weight:500; text-transform:uppercase; letter-spacing:0.5px;">Tempat Lahir</p>
+                        <p style="font-size:14px; color:#1e293b; font-weight:600; margin:0;">{{ $pegawai->tempat_lahir ?? '-' }}</p>
+                    </div>
+                    <div>
+                        <p style="font-size:12px; color:#94a3b8; margin:0 0 4px 0; font-weight:500; text-transform:uppercase; letter-spacing:0.5px;">Tanggal Lahir</p>
+                        <p style="font-size:14px; color:#1e293b; font-weight:600; margin:0;">{{ $pegawai->tanggal_lahir ? $pegawai->tanggal_lahir->translatedFormat('d F Y') : '-' }}</p>
+                    </div>
+                    <div>
+                        <p style="font-size:12px; color:#94a3b8; margin:0 0 4px 0; font-weight:500; text-transform:uppercase; letter-spacing:0.5px;">Jenis Kelamin</p>
+                        <p style="font-size:14px; color:#1e293b; font-weight:600; margin:0;">{{ $pegawai->jenis_kelamin ?? '-' }}</p>
+                    </div>
+                    <div>
+                        <p style="font-size:12px; color:#94a3b8; margin:0 0 4px 0; font-weight:500; text-transform:uppercase; letter-spacing:0.5px;">Pendidikan Terakhir</p>
+                        <p style="font-size:14px; color:#1e293b; font-weight:600; margin:0;">{{ $pegawai->pendidikan_terakhir ?? '-' }}</p>
+                    </div>
+                </div>
+
+                <div style="width:100%; height:1px; background:rgba(0,0,0,0.06); margin:0 0 24px 0;"></div>
+
                 <h4 style="font-size:15px; font-weight:700; color:#1e293b; margin:0 0 20px 0; display:flex; align-items:center; gap:8px;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                     Informasi Karier Saat Ini
@@ -48,12 +83,20 @@
                         <p style="font-size:14px; color:#1e293b; font-weight:600; margin:0;">{{ $pegawai->jabatan ?? '-' }}</p>
                     </div>
                     <div>
+                        <p style="font-size:12px; color:#94a3b8; margin:0 0 4px 0; font-weight:500; text-transform:uppercase; letter-spacing:0.5px;">TMT Jabatan</p>
+                        <p style="font-size:14px; color:#1e293b; font-weight:600; margin:0;">{{ $pegawai->tmt_jabatan ? $pegawai->tmt_jabatan->translatedFormat('d F Y') : '-' }}</p>
+                    </div>
+                    <div>
                         <p style="font-size:12px; color:#94a3b8; margin:0 0 4px 0; font-weight:500; text-transform:uppercase; letter-spacing:0.5px;">Pangkat</p>
                         <p style="font-size:14px; color:#1e293b; font-weight:600; margin:0;">{{ $pegawai->pangkat ?? '-' }}</p>
                     </div>
                     <div>
                         <p style="font-size:12px; color:#94a3b8; margin:0 0 4px 0; font-weight:500; text-transform:uppercase; letter-spacing:0.5px;">Golongan</p>
                         <p style="font-size:14px; color:#1e293b; font-weight:600; margin:0;">{{ $pegawai->golongan ?? '-' }}</p>
+                    </div>
+                    <div>
+                        <p style="font-size:12px; color:#94a3b8; margin:0 0 4px 0; font-weight:500; text-transform:uppercase; letter-spacing:0.5px;">TMT Pangkat</p>
+                        <p style="font-size:14px; color:#1e293b; font-weight:600; margin:0;">{{ $pegawai->tmt_pangkat ? $pegawai->tmt_pangkat->translatedFormat('d F Y') : '-' }}</p>
                     </div>
                 </div>
             </div>
