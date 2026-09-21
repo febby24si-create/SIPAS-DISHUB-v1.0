@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ArsipPathHelper;
 use App\Models\ActivityLog;
 use App\Models\JenisSurat;
 use App\Models\KlasifikasiSurat;
@@ -72,7 +73,10 @@ class SuratMasukController extends Controller
 
         $path = null;
         if ($request->hasFile('file_dokumen')) {
-            $path = $request->file('file_dokumen')->store('surat-masuk', 'public');
+            $unitKerjaId = $validated['unit_kerja_id'] ?? null;
+            $tahun = date('Y', strtotime($validated['tanggal_surat']));
+            $folder = ArsipPathHelper::build($unitKerjaId, 'masuk', $tahun) ?? 'surat-masuk';
+            $path = $request->file('file_dokumen')->store($folder, 'public');
         }
 
         $surat = Surat::create([
@@ -152,7 +156,11 @@ class SuratMasukController extends Controller
             if ($surat->file_dokumen) {
                 Storage::disk('public')->delete($surat->file_dokumen);
             }
-            $validated['file_dokumen'] = $request->file('file_dokumen')->store('surat-masuk', 'public');
+            // Tentukan folder: gunakan unit_kerja_id yang sudah ada di surat (jangan override dari request lama)
+            $currentUnitKerjaId = $validated['unit_kerja_id'] ?? $surat->unit_kerja_id ?? null;
+            $tahun = date('Y', strtotime($validated['tanggal_surat'] ?? $surat->tanggal_surat));
+            $folder = ArsipPathHelper::build($currentUnitKerjaId, 'masuk', $tahun) ?? 'surat-masuk';
+            $validated['file_dokumen'] = $request->file('file_dokumen')->store($folder, 'public');
         } else {
             unset($validated['file_dokumen']);
         }

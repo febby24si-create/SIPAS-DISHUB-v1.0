@@ -102,6 +102,40 @@
                     </div>
                 </div>
 
+                {{-- Bidang dan Seksi --}}
+                <div x-data="{
+                        bidang: '{{ old('bidang_id') }}',
+                        seksi:  '{{ old('unit_kerja_id') }}',
+                        bidangs: {{ $bidangs->toJson() }}
+                    }" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+
+                    <div class="form-group">
+                        <label class="form-label">Bidang <span style="color:#ef4444;">*</span></label>
+                        <select name="bidang_id" x-model="bidang" @change="seksi = ''" class="form-control"
+                                style="border-color:{{ $errors->has('bidang_id') ? '#fca5a5' : '' }}">
+                            <option value="">— Pilih Bidang —</option>
+                            <template x-for="b in bidangs" :key="b.id">
+                                <option :value="b.id" x-text="b.nama"></option>
+                            </template>
+                        </select>
+                        @error('bidang_id') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Seksi <span style="color:#ef4444;">*</span></label>
+                        <select name="unit_kerja_id" x-model="seksi" class="form-control"
+                                style="border-color:{{ $errors->has('unit_kerja_id') ? '#fca5a5' : '' }}">
+                            <option value="">— Pilih Seksi —</option>
+                            <template x-if="bidang">
+                                <template x-for="s in bidangs.find(b => b.id == bidang)?.children || []" :key="s.id">
+                                    <option :value="s.id" x-text="s.nama"></option>
+                                </template>
+                            </template>
+                        </select>
+                        @error('unit_kerja_id') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
                 {{-- Field dinamis sesuai placeholder_json milik template ini --}}
                 @php $placeholders = is_array($template->placeholder_json) ? $template->placeholder_json : []; @endphp
                 @if (count($placeholders) > 0)

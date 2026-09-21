@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ArsipPathHelper;
 use App\Models\ActivityLog;
 use App\Models\JenisSurat;
 use App\Models\KlasifikasiSurat;
 use App\Models\Surat;
 use App\Models\TemplateSurat;
+use App\Models\UnitKerja;
 use App\Services\DocumentNumberService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -54,48 +56,61 @@ class SuratController extends Controller
 
         $template->load('jenisSurat');
         $klasifikasiList = KlasifikasiSurat::where('status', 'aktif')->orderBy('nama')->get();
+        $bidangs = UnitKerja::whereNull('parent_id')->with('children')->orderBy('nama')->get();
 
-        return view('buat-surat.form', compact('template', 'klasifikasiList'));
+        return view('buat-surat.form', compact('template', 'klasifikasiList', 'bidangs'));
     }
 
     /**
      * Langkah 4: Proses generate Word/PDF dan simpan ke DB.
      */
-public function store(Request $request)
-{
-    $validated = $request->validate([
-        'template_surat_id' => [
-            'required',
-            'exists:template_surat,id',
-        ],
-
-        'klasifikasi_id' => [
-            'nullable',
-            'exists:klasifikasi_surat,id',
-        ],
-
-        'perihal' => [
-            'required',
-            'string',
-            'max:255',
-        ],
-
-        'tanggal_surat' => [
-            'required',
-            'date',
-        ],
-
-        'tujuan' => [
-            'nullable',
-            'string',
-            'max:255',
-        ],
-
-        'data' => [
-            'nullable',
-            'array',
-        ],
-    ]);
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'template_surat_id' => [
+                'required',
+                'exists:template_surat,id',
+            ],
+            'klasifikasi_id' => [
+                'nullable',
+                'exists:klasifikasi_surat,id',
+            ],
+            'bidang_id' => [
+                'required',
+                'exists:unit_kerja,id',
+            ],
+            'unit_kerja_id' => [
+                'required',
+                'exists:unit_kerja,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    $seksi = UnitKerja::find($value);
+                    if (!$seksi || $seksi->parent_id === null) {
+                        $fail('Unit kerja yang dipilih harus berupa Seksi, bukan Bidang.');
+                    }
+                    if ($seksi && $seksi->parent_id != $request->bidang_id) {
+                        $fail('Seksi yang dipilih tidak sesuai dengan Bidang.');
+                    }
+                }
+            ],
+            'perihal' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'tanggal_surat' => [
+                'required',
+                'date',
+            ],
+            'tujuan' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'data' => [
+                'nullable',
+                'array',
+            ],
+        ]);
 
     /*
     |--------------------------------------------------------------------------
@@ -225,24 +240,24 @@ public function store(Request $request)
 
         /*
         |--------------------------------------------------------------------------
-        | Folder Generated
+        | Folder Generated — arahkan ke struktur arsip jika ada Seksi
         |--------------------------------------------------------------------------
         */
 
-        Storage::disk('public')
-            ->makeDirectory('generated');
+        $tahun = date('Y', strtotime($validated['tanggal_surat']));
+        $unitKerjaId = $validated['unit_kerja_id'] ?? null;
+        $generatedFolder = ArsipPathHelper::build($unitKerjaId, 'keluar', $tahun) ?? 'generated';
+
+        Storage::disk('public')->makeDirectory($generatedFolder);
 
         $fileName = 'surat_' .
             now()->format('Ymd_His') .
             '_' .
             str()->random(6);
 
-        $wordRelativePath =
-            'generated/' . $fileName . '.docx';
+        $wordRelativePath = $generatedFolder . '/' . $fileName . '.docx';
 
-        $wordFullPath =
-            Storage::disk('public')
-                ->path($wordRelativePath);
+        $wordFullPath = Storage::disk('public')->path($wordRelativePath);
 
         /*
         |--------------------------------------------------------------------------
@@ -295,10 +310,7 @@ public function store(Request $request)
         '.pdf';
 
     if (file_exists($pdfFullPath)) {
-        $pdfRelativePath =
-            'generated/' .
-            $fileName .
-            '.pdf';
+        $pdfRelativePath = $generatedFolder . '/' . $fileName . '.pdf';
     }
 
     /*
@@ -308,18 +320,19 @@ public function store(Request $request)
     */
 
     $surat = Surat::create([
-        'jenis_surat_id' => $template->jenis_surat_id,
-        'klasifikasi_id' => $klasifikasiId,
+        'jenis_surat_id'    => $template->jenis_surat_id,
+        'klasifikasi_id'    => $klasifikasiId,
         'template_surat_id' => $template->id,
-        'arah' => 'keluar',
-        'nomor_surat' => null, // Biarkan null saat draft
-        'tanggal_surat' => $validated['tanggal_surat'],
-        'perihal' => $validated['perihal'],
-        'tujuan' => $validated['tujuan'] ?? null,
-        'file_word' => $wordRelativePath,
-        'file_pdf' => $pdfRelativePath,
-        'status' => 'draft',
-        'created_by' => auth()->id(),
+        'unit_kerja_id'     => $validated['unit_kerja_id'] ?? null,
+        'arah'              => 'keluar',
+        'nomor_surat'       => null, // Biarkan null saat draft
+        'tanggal_surat'     => $validated['tanggal_surat'],
+        'perihal'           => $validated['perihal'],
+        'tujuan'            => $validated['tujuan'] ?? null,
+        'file_word'         => $wordRelativePath,
+        'file_pdf'          => $pdfRelativePath,
+        'status'            => 'draft',
+        'created_by'        => auth()->id(),
     ]);
 
     /*
