@@ -29,6 +29,37 @@
                 </select>
             </div>
 
+            <div x-data="{ 
+                    bidang: '{{ old('bidang_id') }}', 
+                    seksi: '{{ old('unit_kerja_id') }}',
+                    bidangs: {{ $bidangs->toJson() }}
+                }" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                
+                <div>
+                    <label style="display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:6px;">Bidang <span style="color:#dc2626;">*</span></label>
+                    <select name="bidang_id" x-model="bidang" @change="seksi = ''" style="width:100%; padding:10px 14px; border:1px solid {{ $errors->has('bidang_id') ? '#fca5a5' : '#e2e8f0' }}; border-radius:10px; font-size:14px; color:#334155;">
+                        <option value="">-- Pilih Bidang --</option>
+                        <template x-for="b in bidangs" :key="b.id">
+                            <option :value="b.id" x-text="b.nama"></option>
+                        </template>
+                    </select>
+                    @error('bidang_id') <p style="color:#be123c; font-size:12px; margin:4px 0 0;">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label style="display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:6px;">Seksi <span style="color:#dc2626;">*</span></label>
+                    <select name="unit_kerja_id" x-model="seksi" style="width:100%; padding:10px 14px; border:1px solid {{ $errors->has('unit_kerja_id') ? '#fca5a5' : '#e2e8f0' }}; border-radius:10px; font-size:14px; color:#334155;">
+                        <option value="">-- Pilih Seksi --</option>
+                        <template x-if="bidang">
+                            <template x-for="s in bidangs.find(b => b.id == bidang)?.children || []" :key="s.id">
+                                <option :value="s.id" x-text="s.nama"></option>
+                            </template>
+                        </template>
+                    </select>
+                    @error('unit_kerja_id') <p style="color:#be123c; font-size:12px; margin:4px 0 0;">{{ $message }}</p> @enderror
+                </div>
+            </div>
+
             <div>
                 <label style="display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:6px;">Nomor Surat (opsional)</label>
                 <input type="text" name="nomor_surat" value="{{ old('nomor_surat') }}"

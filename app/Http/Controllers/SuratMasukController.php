@@ -37,8 +37,9 @@ class SuratMasukController extends Controller
     {
         $jenisSuratList = JenisSurat::orderBy('nama')->get();
         $klasifikasiList = KlasifikasiSurat::where('status', 'aktif')->orderBy('nama')->get();
+        $bidangs = \App\Models\UnitKerja::whereNull('parent_id')->with('children')->orderBy('nama')->get();
 
-        return view('surat-masuk.create', compact('jenisSuratList', 'klasifikasiList'));
+        return view('surat-masuk.create', compact('jenisSuratList', 'klasifikasiList', 'bidangs'));
     }
 
     public function store(Request $request)
@@ -46,6 +47,20 @@ class SuratMasukController extends Controller
         $validated = $request->validate([
             'jenis_surat_id'   => 'required|exists:jenis_surat,id',
             'klasifikasi_id'   => 'nullable|exists:klasifikasi_surat,id',
+            'bidang_id'        => 'required|exists:unit_kerja,id',
+            'unit_kerja_id'    => [
+                'required',
+                'exists:unit_kerja,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    $seksi = \App\Models\UnitKerja::find($value);
+                    if (!$seksi || $seksi->parent_id === null) {
+                        $fail('Unit kerja yang dipilih harus berupa Seksi, bukan Bidang.');
+                    }
+                    if ($seksi && $seksi->parent_id != $request->bidang_id) {
+                        $fail('Seksi yang dipilih tidak sesuai dengan Bidang.');
+                    }
+                }
+            ],
             'nomor_surat'      => 'nullable|string|max:255',
             'perihal'          => 'required|string|max:500',
             'pengirim'         => 'nullable|string|max:255',
@@ -63,6 +78,7 @@ class SuratMasukController extends Controller
         $surat = Surat::create([
             'jenis_surat_id'   => $validated['jenis_surat_id'],
             'klasifikasi_id'   => $validated['klasifikasi_id'] ?? null,
+            'unit_kerja_id'    => $validated['unit_kerja_id'],
             'arah'             => 'masuk',
             'nomor_surat'      => $validated['nomor_surat'] ?? null,
             'perihal'          => $validated['perihal'],
@@ -96,8 +112,9 @@ class SuratMasukController extends Controller
         abort_if($surat->arah !== 'masuk', 404);
         $jenisSuratList = JenisSurat::orderBy('nama')->get();
         $klasifikasiList = KlasifikasiSurat::where('status', 'aktif')->orderBy('nama')->get();
+        $bidangs = \App\Models\UnitKerja::whereNull('parent_id')->with('children')->orderBy('nama')->get();
 
-        return view('surat-masuk.edit', compact('surat', 'jenisSuratList', 'klasifikasiList'));
+        return view('surat-masuk.edit', compact('surat', 'jenisSuratList', 'klasifikasiList', 'bidangs'));
     }
 
     public function update(Request $request, Surat $surat)
@@ -107,6 +124,20 @@ class SuratMasukController extends Controller
         $validated = $request->validate([
             'jenis_surat_id'   => 'required|exists:jenis_surat,id',
             'klasifikasi_id'   => 'nullable|exists:klasifikasi_surat,id',
+            'bidang_id'        => 'nullable|exists:unit_kerja,id',
+            'unit_kerja_id'    => [
+                'nullable',
+                'exists:unit_kerja,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    $seksi = \App\Models\UnitKerja::find($value);
+                    if (!$seksi || $seksi->parent_id === null) {
+                        $fail('Unit kerja yang dipilih harus berupa Seksi, bukan Bidang.');
+                    }
+                    if ($seksi && $request->filled('bidang_id') && $seksi->parent_id != $request->bidang_id) {
+                        $fail('Seksi yang dipilih tidak sesuai dengan Bidang.');
+                    }
+                }
+            ],
             'nomor_surat'      => 'nullable|string|max:255',
             'perihal'          => 'required|string|max:500',
             'pengirim'         => 'nullable|string|max:255',

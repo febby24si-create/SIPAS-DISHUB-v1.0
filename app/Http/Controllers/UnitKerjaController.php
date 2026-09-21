@@ -11,7 +11,10 @@ class UnitKerjaController extends Controller
 {
     public function index()
     {
-        $unitKerja = UnitKerja::with('kepala')->latest()->paginate(10);
+        $unitKerja = UnitKerja::with(['kepala', 'children.kepala'])
+            ->whereNull('parent_id')
+            ->latest()
+            ->paginate(10);
         return view('unit-kerja.index', compact('unitKerja'));
     }
 
@@ -19,9 +22,11 @@ class UnitKerjaController extends Controller
     {
         // Only valid Pegawai can be chosen as kepala
         $pegawais = Pegawai::where('status_aktif', true)->orderBy('nama')->get();
+        $bidangs = UnitKerja::whereNull('parent_id')->orderBy('nama')->get();
         return view('unit-kerja.form', [
             'unitKerja' => new UnitKerja(),
             'pegawais' => $pegawais,
+            'bidangs' => $bidangs,
         ]);
     }
 
@@ -31,6 +36,18 @@ class UnitKerjaController extends Controller
             'kode_unit' => 'required|string|max:255|unique:unit_kerja,kode_unit',
             'nama' => 'required|string|max:255',
             'kepala_id' => 'nullable|exists:pegawai,id',
+            'parent_id' => [
+                'nullable',
+                'exists:unit_kerja,id',
+                function ($attribute, $value, $fail) {
+                    if ($value) {
+                        $parent = UnitKerja::find($value);
+                        if ($parent && $parent->parent_id !== null) {
+                            $fail('Hanya Bidang yang dapat menjadi Induk Unit Kerja (Seksi tidak boleh menjadi induk).');
+                        }
+                    }
+                },
+            ],
         ]);
 
         UnitKerja::create($validated);
@@ -46,7 +63,8 @@ class UnitKerjaController extends Controller
     public function edit(UnitKerja $unitKerja)
     {
         $pegawais = Pegawai::where('status_aktif', true)->orderBy('nama')->get();
-        return view('unit-kerja.form', compact('unitKerja', 'pegawais'));
+        $bidangs = UnitKerja::whereNull('parent_id')->where('id', '!=', $unitKerja->id)->orderBy('nama')->get();
+        return view('unit-kerja.form', compact('unitKerja', 'pegawais', 'bidangs'));
     }
 
     public function update(Request $request, UnitKerja $unitKerja)
@@ -60,6 +78,21 @@ class UnitKerjaController extends Controller
             ],
             'nama' => 'required|string|max:255',
             'kepala_id' => 'nullable|exists:pegawai,id',
+            'parent_id' => [
+                'nullable',
+                'exists:unit_kerja,id',
+                function ($attribute, $value, $fail) use ($unitKerja) {
+                    if ($value == $unitKerja->id) {
+                        $fail('Unit Kerja tidak dapat menjadi induk bagi dirinya sendiri.');
+                    }
+                    if ($value) {
+                        $parent = UnitKerja::find($value);
+                        if ($parent && $parent->parent_id !== null) {
+                            $fail('Hanya Bidang yang dapat menjadi Induk Unit Kerja (Seksi tidak boleh menjadi induk).');
+                        }
+                    }
+                },
+            ],
         ]);
 
         $unitKerja->update($validated);
@@ -69,6 +102,10 @@ class UnitKerjaController extends Controller
 
     public function destroy(UnitKerja $unitKerja)
     {
+        if ($unitKerja->children()->count() > 0) {
+            return redirect()->route('unit-kerja.index')->with('error', 'Unit Kerja tidak dapat dihapus karena masih memiliki Seksi di bawahnya.');
+        }
+
         $unitKerja->delete();
 
         return redirect()->route('unit-kerja.index')->with('status', 'Unit Kerja berhasil dihapus.');

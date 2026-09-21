@@ -18,6 +18,7 @@ class Surat extends Model
         'perihal',
         'pengirim',
         'tujuan',
+        'unit_kerja_id',
         'file_word',
         'file_pdf',
         'file_dokumen',
@@ -40,6 +41,11 @@ class Surat extends Model
     public function klasifikasi()
     {
         return $this->belongsTo(KlasifikasiSurat::class, 'klasifikasi_id');
+    }
+
+    public function unitKerja()
+    {
+        return $this->belongsTo(UnitKerja::class);
     }
 
     public function template()

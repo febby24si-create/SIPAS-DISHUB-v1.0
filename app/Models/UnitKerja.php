@@ -17,6 +17,7 @@ class UnitKerja extends Model
         'kode_unit',
         'nama',
         'kepala_id',
+        'parent_id',
     ];
 
     /**
@@ -33,5 +34,21 @@ class UnitKerja extends Model
     public function pegawais(): HasMany
     {
         return $this->hasMany(Pegawai::class, 'unit_kerja_id');
+    }
+
+    /**
+     * Get the parent UnitKerja (Bidang).
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(UnitKerja::class, 'parent_id');
+    }
+
+    /**
+     * Get the children UnitKerjas (Seksi).
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(UnitKerja::class, 'parent_id');
     }
 }

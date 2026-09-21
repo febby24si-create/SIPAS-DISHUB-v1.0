@@ -49,17 +49,6 @@
 
                 <p class="sidebar-section-label">Persuratan</p>
 
-                <!-- <a href="{{ route('buat-surat.create') }}"
-                   class="sidebar-link {{ request()->routeIs('buat-surat.*') ? 'active' : '' }}">
-                    <span class="icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                    </span>
-                    Buat Surat
-                </a> -->
-
                 {{-- Surat Masuk (dropdown) --}}
                 <div x-data="{ open: {{ request()->routeIs('surat-masuk.*') ? 'true' : 'false' }} }">
                     <a href="#" @click.prevent="open = !open"
@@ -112,16 +101,6 @@
                         </a>
                     </div>
                 </div>
-
-                <!-- <a href="{{ route('disposisi.index') }}"
-                   class="sidebar-link {{ request()->routeIs('disposisi.*') ? 'active' : '' }}">
-                    <span class="icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                        </svg>
-                    </span>
-                    Disposisi Surat
-                </a> -->
 
                 <p class="sidebar-section-label">Arsip</p>
 
@@ -196,55 +175,61 @@
 
                 <p class="sidebar-section-label">Master Data</p>
 
-                <a href="{{ route('jenis-surat.index') }}"
-                   class="sidebar-link {{ request()->routeIs('jenis-surat.*') ? 'active' : '' }}">
-                    <span class="icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                        </svg>
-                    </span>
-                    Jenis Surat
-                </a>
+                {{-- Master Data - Persuratan --}}
+                <div x-data="{ open: {{ request()->routeIs('jenis-surat.*') || request()->routeIs('klasifikasi-surat.*') || request()->routeIs('nomor-surat.*') ? 'true' : 'false' }} }">
+                    <a href="#" @click.prevent="open = !open"
+                       class="sidebar-link {{ request()->routeIs('jenis-surat.*') || request()->routeIs('klasifikasi-surat.*') || request()->routeIs('nomor-surat.*') ? 'active' : '' }}">
+                        <span class="icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                            </svg>
+                        </span>
+                        Persuratan
+                        <span class="arrow" :class="open ? 'rotated' : ''">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </span>
+                    </a>
+                    <div class="sidebar-submenu" x-show="open">
+                        <a href="{{ route('jenis-surat.index') }}"
+                           class="sidebar-submenu-link {{ request()->routeIs('jenis-surat.*') ? 'active' : '' }}">
+                            Jenis Surat
+                        </a>
+                        <a href="{{ route('klasifikasi-surat.index') }}"
+                           class="sidebar-submenu-link {{ request()->routeIs('klasifikasi-surat.*') ? 'active' : '' }}">
+                            Klasifikasi Surat
+                        </a>
+                        <a href="{{ route('nomor-surat.index') }}"
+                           class="sidebar-submenu-link {{ request()->routeIs('nomor-surat.*') ? 'active' : '' }}">
+                            Nomor Surat
+                        </a>
+                    </div>
+                </div>
 
-                <a href="{{ route('klasifikasi-surat.index') }}"
-                   class="sidebar-link {{ request()->routeIs('klasifikasi-surat.*') ? 'active' : '' }}">
-                    <span class="icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 6h16M4 12h10M4 18h6"/>
-                        </svg>
-                    </span>
-                    Klasifikasi Surat
-                </a>
-
-                <a href="{{ route('nomor-surat.index') }}"
-                   class="sidebar-link {{ request()->routeIs('nomor-surat.*') ? 'active' : '' }}">
-                    <span class="icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/>
-                        </svg>
-                    </span>
-                    Nomor Surat
-                </a>
-
-                <a href="{{ route('unit-kerja.index') }}"
-                   class="sidebar-link {{ request()->routeIs('unit-kerja.*') ? 'active' : '' }}">
-                    <span class="icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-                        </svg>
-                    </span>
-                    Unit Kerja
-                </a>
-
-                <a href="{{ route('pegawai.index') }}"
-                   class="sidebar-link {{ request()->routeIs('pegawai.*') ? 'active' : '' }}">
-                    <span class="icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                    </span>
-                    Pegawai
-                </a>
+                {{-- Master Data - Kepegawaian & Organisasi --}}
+                <div x-data="{ open: {{ request()->routeIs('unit-kerja.*') || request()->routeIs('pegawai.*') ? 'true' : 'false' }} }">
+                    <a href="#" @click.prevent="open = !open"
+                       class="sidebar-link {{ request()->routeIs('unit-kerja.*') || request()->routeIs('pegawai.*') ? 'active' : '' }}">
+                        <span class="icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </span>
+                        Kepeg. & Organisasi
+                        <span class="arrow" :class="open ? 'rotated' : ''">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </span>
+                    </a>
+                    <div class="sidebar-submenu" x-show="open">
+                        <a href="{{ route('unit-kerja.index') }}"
+                           class="sidebar-submenu-link {{ request()->routeIs('unit-kerja.*') ? 'active' : '' }}">
+                            Unit Kerja
+                        </a>
+                        <a href="{{ route('pegawai.index') }}"
+                           class="sidebar-submenu-link {{ request()->routeIs('pegawai.*') ? 'active' : '' }}">
+                            Pegawai
+                        </a>
+                    </div>
+                </div>
 
                 <p class="sidebar-section-label">Pengguna</p>
 
