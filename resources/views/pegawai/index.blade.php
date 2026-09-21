@@ -34,8 +34,15 @@
                 <form action="{{ route('pegawai.index') }}" method="GET" style="display:flex; gap:10px;">
                     <select name="unit_kerja_id" class="form-control" style="width:180px; font-size:13px; padding:6px 12px; border-radius:8px;" onchange="this.form.submit()">
                         <option value="">Semua Unit Kerja</option>
-                        @foreach($unitKerjas as $uk)
-                            <option value="{{ $uk->id }}" {{ request('unit_kerja_id') == $uk->id ? 'selected' : '' }}>{{ $uk->nama }}</option>
+                        @foreach($unitKerjas->where('parent_id', null) as $bidang)
+                            <option value="{{ $bidang->id }}" {{ request('unit_kerja_id') == $bidang->id ? 'selected' : '' }}>
+                                {{ $bidang->nama }}
+                            </option>
+                            @foreach($unitKerjas->where('parent_id', $bidang->id) as $seksi)
+                                <option value="{{ $seksi->id }}" {{ request('unit_kerja_id') == $seksi->id ? 'selected' : '' }}>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;↳ {{ $seksi->nama }}
+                                </option>
+                            @endforeach
                         @endforeach
                     </select>
                     <div style="position:relative;">

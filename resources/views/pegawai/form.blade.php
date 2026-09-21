@@ -82,10 +82,15 @@
                         <label class="form-label" for="unit_kerja_id">Unit Kerja</label>
                         <select id="unit_kerja_id" name="unit_kerja_id" class="form-control">
                             <option value="">-- Pilih Unit Kerja --</option>
-                            @foreach($unitKerjas as $uk)
-                                <option value="{{ $uk->id }}" {{ old('unit_kerja_id', $pegawai->unit_kerja_id) == $uk->id ? 'selected' : '' }}>
-                                    {{ $uk->nama }}
+                            @foreach($unitKerjas->where('parent_id', null) as $bidang)
+                                <option value="{{ $bidang->id }}" {{ old('unit_kerja_id', $pegawai->unit_kerja_id) == $bidang->id ? 'selected' : '' }}>
+                                    {{ $bidang->nama }}
                                 </option>
+                                @foreach($unitKerjas->where('parent_id', $bidang->id) as $seksi)
+                                    <option value="{{ $seksi->id }}" {{ old('unit_kerja_id', $pegawai->unit_kerja_id) == $seksi->id ? 'selected' : '' }}>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;↳ {{ $seksi->nama }}
+                                    </option>
+                                @endforeach
                             @endforeach
                         </select>
                         @error('unit_kerja_id') <p class="form-error">{{ $message }}</p> @enderror
