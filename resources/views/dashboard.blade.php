@@ -149,7 +149,7 @@
                         </div>
                         <span style="font-size:16px; font-weight:700; color:{{ $cutiPending > 0 ? '#1d4ed8' : '#94a3b8' }};">{{ $cutiPending }}</span>
                     </div>
-                    
+                    {{-- Kenaikan Pangkat (Dinonaktifkan)
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div style="display:flex; align-items:center; gap:10px;">
                             <div style="width:32px; height:32px; background:#f1f5f9; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#64748b;">
@@ -157,8 +157,9 @@
                             </div>
                             <span style="font-size:13.5px; color:#334155; font-weight:500;">Kenaikan Pangkat</span>
                         </div>
-                        <span style="font-size:16px; font-weight:700; color:{{ $kenaikanPangkatPending > 0 ? '#1d4ed8' : '#94a3b8' }};">{{ $kenaikanPangkatPending }}</span>
+                        <span style="font-size:16px; font-weight:700; color:{{ isset($kenaikanPangkatPending) && $kenaikanPangkatPending > 0 ? '#1d4ed8' : '#94a3b8' }};">{{ $kenaikanPangkatPending ?? 0 }}</span>
                     </div>
+                    --}}
 
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div style="display:flex; align-items:center; gap:10px;">
@@ -190,19 +191,21 @@
                             <span style="color:{{ $kgbColor }}; background:{{ $kgbBg }}; padding:4px 10px; border-radius:6px; font-size:12.5px; font-weight:600;">{{ $kgbStatus }}</span>
                         </td>
                     </tr>
+                    {{-- Kenaikan Pangkat (Dinonaktifkan)
                     <tr>
                         <td style="padding:16px 20px; color:#334155; font-weight:500;">Kenaikan Pangkat</td>
                         <td style="padding:16px 20px; text-align:right;">
                             @php
                                 $kpStatus = 'Aman';
                                 $kpColor = '#16a34a'; $kpBg = '#f0fdf4';
-                                if($kpWarningData['tidak_lengkap'] > 0) { $kpStatus = 'Data Belum Lengkap'; $kpColor = '#dc2626'; $kpBg = '#fef2f2'; }
-                                elseif($kpWarningData['jatuh_tempo'] > 0) { $kpStatus = 'Jatuh Tempo'; $kpColor = '#dc2626'; $kpBg = '#fef2f2'; }
-                                elseif($kpWarningData['akan_jatuh_tempo'] > 0) { $kpStatus = 'Akan Jatuh Tempo'; $kpColor = '#ea580c'; $kpBg = '#fff7ed'; }
+                                if(isset($kpWarningData['tidak_lengkap']) && $kpWarningData['tidak_lengkap'] > 0) { $kpStatus = 'Data Belum Lengkap'; $kpColor = '#dc2626'; $kpBg = '#fef2f2'; }
+                                elseif(isset($kpWarningData['jatuh_tempo']) && $kpWarningData['jatuh_tempo'] > 0) { $kpStatus = 'Jatuh Tempo'; $kpColor = '#dc2626'; $kpBg = '#fef2f2'; }
+                                elseif(isset($kpWarningData['akan_jatuh_tempo']) && $kpWarningData['akan_jatuh_tempo'] > 0) { $kpStatus = 'Akan Jatuh Tempo'; $kpColor = '#ea580c'; $kpBg = '#fff7ed'; }
                             @endphp
                             <span style="color:{{ $kpColor }}; background:{{ $kpBg }}; padding:4px 10px; border-radius:6px; font-size:12.5px; font-weight:600;">{{ $kpStatus }}</span>
                         </td>
                     </tr>
+                    --}}
                 </table>
             </div>
         </div>

@@ -139,7 +139,8 @@
                     Pengajuan Cuti
                 </a>
 
-                {{-- Kenaikan Pangkat --}}
+                {{-- Kenaikan Pangkat (Dinonaktifkan - Pindah ke SRIKANDI) --}}
+                {{--
                 <a href="{{ route('kepegawaian.pangkat.index') }}"
                    class="sidebar-link {{ request()->routeIs('kepegawaian.pangkat.*') ? 'active' : '' }}">
                     <span class="icon">
@@ -149,6 +150,7 @@
                     </span>
                     Kenaikan Pangkat
                 </a>
+                --}}
 
                 {{-- Gaji Berkala --}}
                 <a href="{{ route('kepegawaian.kgb.index') }}"

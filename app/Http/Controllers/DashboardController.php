@@ -19,7 +19,7 @@ class DashboardController extends Controller
 
         // 2. STATISTIK KEPEGAWAIAN
         $cutiPending            = \App\Models\PengajuanCuti::whereIn('status', ['diajukan', 'verifikasi'])->count();
-        $kenaikanPangkatPending = \App\Models\KenaikanPangkat::whereIn('status', ['diajukan', 'verifikasi', 'diproses'])->count();
+        // $kenaikanPangkatPending = \App\Models\KenaikanPangkat::whereIn('status', ['diajukan', 'verifikasi', 'diproses'])->count(); // Dinonaktifkan (Pindah ke SRIKANDI)
         $gajiBerkalaPending     = \App\Models\GajiBerkala::whereIn('status', ['verifikasi', 'disetujui'])->count();
 
         // 3. AKTIVITAS TERBARU
@@ -75,7 +75,7 @@ class DashboardController extends Controller
         // 7. EARLY WARNING KEPEGAWAIAN
         $earlyWarningService = new \App\Services\Kepegawaian\EarlyWarningService();
         $kgbWarnings = collect($earlyWarningService->getKgbWarning());
-        $kpWarnings = collect($earlyWarningService->getKpWarning());
+        // $kpWarnings = collect($earlyWarningService->getKpWarning()); // Dinonaktifkan (Pindah ke SRIKANDI)
 
         $kgbWarningData = [
             'akan_jatuh_tempo' => $kgbWarnings->where('status', 'AKAN JATUH TEMPO')->count(),
@@ -84,12 +84,14 @@ class DashboardController extends Controller
             'aman' => $kgbWarnings->where('status', 'AMAN')->count(),
         ];
 
+        /* Dinonaktifkan (Pindah ke SRIKANDI)
         $kpWarningData = [
             'akan_jatuh_tempo' => $kpWarnings->where('status', 'AKAN JATUH TEMPO')->count(),
             'jatuh_tempo' => $kpWarnings->where('status', 'JATUH TEMPO')->count(),
             'tidak_lengkap' => $kpWarnings->whereIn('status', ['DATA TIDAK LENGKAP', 'PENGATURAN BELUM LENGKAP'])->count(),
             'aman' => $kpWarnings->where('status', 'AMAN')->count(),
         ];
+        */
 
         return view('dashboard', compact(
             'totalSurat',
@@ -97,7 +99,6 @@ class DashboardController extends Controller
             'totalKeluar',
             'totalDraft',
             'cutiPending',
-            'kenaikanPangkatPending',
             'gajiBerkalaPending',
             'aktivitasTerbaru',
             'trendLabels',
@@ -108,9 +109,8 @@ class DashboardController extends Controller
             'klasifikasiLabels',
             'klasifikasiData',
             'kgbWarnings',
-            'kpWarnings',
-            'kgbWarningData',
-            'kpWarningData'
+            'kgbWarningData'
+            // 'kenaikanPangkatPending', 'kpWarnings', 'kpWarningData' -> Dinonaktifkan
         ));
     }
 }
