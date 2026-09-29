@@ -27,6 +27,13 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Buku Tamu (Public)
+Route::middleware('throttle:5,1')->group(function () {
+    Route::get('/buku-tamu', [\App\Http\Controllers\BukuTamuController::class, 'create'])->name('buku-tamu.create');
+    Route::post('/buku-tamu', [\App\Http\Controllers\BukuTamuController::class, 'store'])->name('buku-tamu.store');
+});
+Route::get('/buku-tamu/sukses', [\App\Http\Controllers\BukuTamuController::class, 'sukses'])->name('buku-tamu.sukses');
+
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth'])
     ->name('dashboard');
@@ -93,8 +100,13 @@ Route::middleware(['auth'])->group(function () {
         ->except(['show'])
         ->names('pegawai.diklat');
 
-    // Pengguna & Laporan
+    // Pengguna & Laporan & Buku Tamu
     Route::middleware('role:admin')->group(function () {
+        // Buku Tamu (Admin)
+        Route::get('/buku-tamu/admin', [\App\Http\Controllers\BukuTamuController::class, 'index'])->name('buku-tamu.index');
+        Route::get('/buku-tamu/qr', [\App\Http\Controllers\BukuTamuController::class, 'qr'])->name('buku-tamu.qr');
+        Route::get('/buku-tamu/admin/{bukuTamu}', [\App\Http\Controllers\BukuTamuController::class, 'show'])->name('buku-tamu.show');
+
         // Laporan
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
         Route::get('/laporan/print', [LaporanController::class, 'print'])->name('laporan.print');

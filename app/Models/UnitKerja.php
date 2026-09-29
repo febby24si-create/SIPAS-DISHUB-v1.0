@@ -51,4 +51,12 @@ class UnitKerja extends Model
     {
         return $this->hasMany(UnitKerja::class, 'parent_id');
     }
+
+    /**
+     * Get the visitor logs (Buku Tamu) associated with this UnitKerja.
+     */
+    public function bukuTamu(): HasMany
+    {
+        return $this->hasMany(BukuTamu::class, 'unit_kerja_id');
+    }
 }

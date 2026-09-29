@@ -105,4 +105,12 @@ class Pegawai extends Model
     {
         return $this->belongsTo(KategoriBup::class, 'kategori_bup_id');
     }
+
+    /**
+     * Get the visitor logs (Buku Tamu) associated with this Pegawai.
+     */
+    public function bukuTamu(): HasMany
+    {
+        return $this->hasMany(BukuTamu::class, 'pegawai_id');
+    }
 }
