@@ -42,32 +42,60 @@ class GajiBerkalaController extends Controller
             'catatan' => 'nullable|string',
         ]);
 
-        $validated['status'] = 'draft';
+        $validated['status'] = 'selesai'; // Langsung selesai
         $validated['nomor_usulan'] = 'KGB-' . time();
         
-        // Cek jika tmt_sebelumnya melebihi tanggal wajar
         $tmtSebelumnya = Carbon::parse($validated['tmt_sebelumnya']);
         $validated['tmt_berikutnya'] = $tmtSebelumnya->copy()->addMonths(24);
 
-        $kgb = GajiBerkala::create($validated);
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $request, &$kgb) {
+                $kgb = GajiBerkala::create($validated);
 
-        if ($request->hasFile('file_pendukung')) {
-            $path = $request->file('file_pendukung')->store('kgb', 'public');
-            $kgb->attachments()->create([
-                'original_name' => $request->file('file_pendukung')->getClientOriginalName(),
-                'file_path' => $path,
-                'mime_type' => $request->file('file_pendukung')->getClientMimeType(),
-                'size' => $request->file('file_pendukung')->getSize(),
-                'uploaded_by' => auth()->id(),
-            ]);
+                if ($request->hasFile('file_pendukung')) {
+                    $path = $request->file('file_pendukung')->store('kgb', 'public');
+                    $kgb->attachments()->create([
+                        'original_name' => $request->file('file_pendukung')->getClientOriginalName(),
+                        'file_path' => $path,
+                        'mime_type' => $request->file('file_pendukung')->getClientMimeType(),
+                        'size' => $request->file('file_pendukung')->getSize(),
+                        'uploaded_by' => auth()->id(),
+                    ]);
+                }
+
+                $kgb->activityLogs()->create([
+                    'user_id' => auth()->id() ?? 1,
+                    'aktivitas' => 'Membuat dokumen gaji berkala: ' . $kgb->nomor_usulan,
+                ]);
+
+                // Create Surat for Arsip Digital
+                $jenisSurat = \App\Models\JenisSurat::firstOrCreate(['kode' => 'KGB'], ['nama' => 'Surat Kenaikan Gaji Berkala']);
+                $klasifikasi = \App\Models\KlasifikasiSurat::firstOrCreate(['kode' => '822'], ['nama' => 'Gaji', 'status' => 'aktif']);
+                $nomorSurat = \App\Services\DocumentNumberService::generate($klasifikasi->id, Carbon::now());
+
+                \App\Models\Surat::firstOrCreate(
+                    [
+                        'source_type' => GajiBerkala::class,
+                        'source_id' => $kgb->id
+                    ],
+                    [
+                        'jenis_surat_id' => $jenisSurat->id,
+                        'klasifikasi_id' => $klasifikasi->id,
+                        'arah' => 'keluar',
+                        'nomor_surat' => $nomorSurat,
+                        'perihal' => 'Kenaikan Gaji Berkala ' . Pegawai::find($kgb->pegawai_id)->nama,
+                        'tanggal_surat' => Carbon::now(),
+                        'tujuan' => Pegawai::find($kgb->pegawai_id)->nama,
+                        'status' => 'final',
+                        'created_by' => auth()->id() ?? 1,
+                    ]
+                );
+            });
+
+            return redirect()->route('kepegawaian.kgb.show', $kgb)->with('status', 'Dokumen KGB berhasil disimpan dan masuk ke Arsip Digital.');
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', 'Gagal menyimpan KGB: ' . $e->getMessage());
         }
-
-        $kgb->activityLogs()->create([
-            'user_id' => auth()->id() ?? 1,
-            'aktivitas' => 'Membuat pengajuan gaji berkala: ' . $kgb->nomor_usulan,
-        ]);
-
-        return redirect()->route('kepegawaian.kgb.show', $kgb)->with('status', 'Usulan Gaji Berkala (Draft) berhasil dibuat.');
     }
 
     public function show(GajiBerkala $kgb)

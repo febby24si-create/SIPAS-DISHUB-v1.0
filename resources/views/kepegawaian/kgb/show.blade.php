@@ -152,19 +152,25 @@
                 @endif
             </div>
 
-            {{-- Panel Workflow / Aksi --}}
+            {{-- Status Dokumen --}}
             <div style="background:white; border-radius:20px; border:1px solid rgba(0,0,0,0.06); padding:24px;">
                 <h3 style="font-size:16px; font-weight:600; color:#1e293b; margin:0 0 20px 0; display:flex; align-items:center; gap:10px;">
                     <span style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; background:#ecfdf5; color:#10b981; border-radius:10px;">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     </span>
-                    Tindakan & Workflow
+                    Status Dokumen
                 </h3>
 
                 @if($kgb->status === 'selesai')
-                    <div style="display:flex; align-items:center; justify-content:center; gap:10px; padding:20px; background:#f0fdf4; border:1px dashed #86efac; border-radius:12px; color:#166534; font-size:14px; font-weight:600;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                        Proses Gaji Berkala Telah Selesai
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <div style="display:flex; align-items:center; justify-content:center; gap:10px; padding:20px; background:#f0fdf4; border:1px dashed #86efac; border-radius:12px; color:#166534; font-size:14px; font-weight:600;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            Proses Gaji Berkala Telah Selesai
+                        </div>
+                        <div style="display:flex; align-items:center; justify-content:center; gap:10px; padding:12px; background:#eff6ff; border-radius:12px; color:#1d4ed8; font-size:13px; font-weight:500;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            Dokumen KGB ini telah otomatis terintegrasi dengan Arsip Digital.
+                        </div>
                     </div>
                 @elseif($kgb->status === 'ditolak')
                     <div style="display:flex; align-items:center; justify-content:center; gap:10px; padding:20px; background:#fef2f2; border:1px dashed #fecaca; border-radius:12px; color:#991b1b; font-size:14px; font-weight:600;">
@@ -172,27 +178,9 @@
                         Usulan Telah Ditolak
                     </div>
                 @else
-                    <form action="{{ route('kepegawaian.kgb.status', $kgb) }}" method="POST">
-                        @csrf
-                        @method('PUT')
-                        <div style="display:flex; flex-direction:column; gap:16px;">
-                            <div>
-                                <label style="display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:8px;">Catatan (Opsional)</label>
-                                <textarea name="catatan" rows="2" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:10px; font-size:14px; color:#1e293b;"></textarea>
-                            </div>
-                            
-                            <div style="display:flex; gap:12px; flex-wrap:wrap;">
-                                @if($kgb->status === 'draft')
-                                    <button type="submit" name="status" value="verifikasi" style="flex:1; padding:12px; background:#eab308; color:white; border:none; border-radius:12px; font-weight:600; cursor:pointer;">Verifikasi</button>
-                                @elseif($kgb->status === 'verifikasi')
-                                    <button type="submit" name="status" value="disetujui" style="flex:1; padding:12px; background:#3b82f6; color:white; border:none; border-radius:12px; font-weight:600; cursor:pointer;">Setujui</button>
-                                    <button type="submit" name="status" value="ditolak" style="flex:1; padding:12px; background:#ef4444; color:white; border:none; border-radius:12px; font-weight:600; cursor:pointer;">Tolak</button>
-                                @elseif($kgb->status === 'disetujui')
-                                    <button type="submit" name="status" value="selesai" style="flex:1; padding:12px; background:#10b981; color:white; border:none; border-radius:12px; font-weight:600; cursor:pointer;">Selesaikan</button>
-                                @endif
-                            </div>
-                        </div>
-                    </form>
+                    <div style="display:flex; align-items:center; justify-content:center; gap:10px; padding:20px; background:#f1f5f9; border:1px dashed #cbd5e1; border-radius:12px; color:#475569; font-size:14px; font-weight:600; text-transform:capitalize;">
+                        Status: {{ $kgb->status }}
+                    </div>
                 @endif
             </div>
         </div>
