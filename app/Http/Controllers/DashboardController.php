@@ -22,9 +22,7 @@ class DashboardController extends Controller
         $totalKeluar = (clone $suratFinal)->where('arah', 'keluar')->count();
         $totalDraft  = Surat::where('status', 'draft')->count();
 
-        // 2. STATISTIK KEPEGAWAIAN
-        $cutiPending        = PengajuanCuti::whereIn('status', ['diajukan', 'verifikasi'])->count();
-        $gajiBerkalaPending = GajiBerkala::whereIn('status', ['verifikasi', 'disetujui'])->count();
+        // (Kepegawaian metrics dihapus dari card atas, diganti grafik rekap di bawah)
 
         // 3. AKTIVITAS TERBARU
         $aktivitasTerbaru = \App\Models\ActivityLog::with(['user', 'subject'])
@@ -137,7 +135,7 @@ class DashboardController extends Controller
             ->groupBy('jenis_surat_id')
             ->get();
 
-        $distribusiLabels = $distribusiRaw->map(fn ($r) => $r->jenisSurat?->kode ?? 'Lainnya')->toArray();
+        $distribusiLabels = $distribusiRaw->map(fn ($r) => $r->jenisSurat?->nama ?? 'Lainnya')->toArray();
         $distribusiData   = $distribusiRaw->pluck('total')->map(fn ($v) => (int) $v)->toArray();
 
         // 6. GRAFIK SURAT BERDASARKAN KLASIFIKASI – top 8, hanya surat final
@@ -153,24 +151,29 @@ class DashboardController extends Controller
         $klasifikasiLabels = $klasifikasiRaw->map(fn ($r) => $r->klasifikasi?->nama ?? 'Lainnya')->toArray();
         $klasifikasiData   = $klasifikasiRaw->pluck('total')->map(fn ($v) => (int) $v)->toArray();
 
-        // 7. EARLY WARNING KEPEGAWAIAN
-        $earlyWarningService = new \App\Services\Kepegawaian\EarlyWarningService();
-        $kgbWarnings = collect($earlyWarningService->getKgbWarning());
+        // 7. GRAFIK SURAT BERDASARKAN UNIT KERJA
+        $unitKerjaRaw = Surat::where('status', 'final')
+            ->whereNull('source_type')
+            ->with('unitKerja')
+            ->select('unit_kerja_id', DB::raw('COUNT(*) as total'))
+            ->groupBy('unit_kerja_id')
+            ->orderByDesc('total')
+            ->get();
 
-        $kgbWarningData = [
-            'akan_jatuh_tempo' => $kgbWarnings->where('status', 'AKAN JATUH TEMPO')->count(),
-            'jatuh_tempo'      => $kgbWarnings->where('status', 'JATUH TEMPO')->count(),
-            'tidak_lengkap'    => $kgbWarnings->whereIn('status', ['DATA TIDAK LENGKAP', 'PENGATURAN BELUM LENGKAP'])->count(),
-            'aman'             => $kgbWarnings->where('status', 'AMAN')->count(),
-        ];
+        $unitKerjaLabels = $unitKerjaRaw->map(fn ($r) => $r->unitKerja?->nama ?? 'Tanpa Unit Kerja')->toArray();
+        $unitKerjaData   = $unitKerjaRaw->pluck('total')->map(fn ($v) => (int) $v)->toArray();
+
+        // 8. GRAFIK REKAP KEPEGAWAIAN
+        $rekapCuti = PengajuanCuti::where('status', 'diterbitkan')->count();
+        $rekapKgb  = GajiBerkala::where('status', 'selesai')->count();
+        $rekapKepegawaianLabels = ['Cuti', 'KGB'];
+        $rekapKepegawaianData   = [$rekapCuti, $rekapKgb];
 
         return view('dashboard', compact(
             'totalSurat',
             'totalMasuk',
             'totalKeluar',
             'totalDraft',
-            'cutiPending',
-            'gajiBerkalaPending',
             'aktivitasTerbaru',
             'trendLabels',
             'trendMasuk',
@@ -182,8 +185,10 @@ class DashboardController extends Controller
             'distribusiData',
             'klasifikasiLabels',
             'klasifikasiData',
-            'kgbWarnings',
-            'kgbWarningData'
+            'unitKerjaLabels',
+            'unitKerjaData',
+            'rekapKepegawaianLabels',
+            'rekapKepegawaianData'
         ));
     }
 

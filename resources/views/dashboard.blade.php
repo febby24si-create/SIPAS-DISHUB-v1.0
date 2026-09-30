@@ -99,7 +99,7 @@
             </div>
             
             <div style="background:white; border-radius:10px; border:1px solid #e2e8f0; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
-                <h3 style="margin:0 0 16px; font-size:14.5px; font-weight:700; color:#1e293b;">Distribusi Jenis Surat</h3>
+                <h3 style="margin:0 0 16px; font-size:14.5px; font-weight:700; color:#1e293b;">Distribusi Jenis Dokumen</h3>
                 @if(count($distribusiData) > 0)
                     <div style="position:relative; width:100%; max-width:200px; height:200px; margin:0 auto 20px;">
                         <canvas id="chartDistribusi"></canvas>
@@ -107,12 +107,12 @@
                     @php $palDist = ['#1d4ed8','#22c55e','#ea580c','#7c3aed','#0ea5e9','#e11d48','#0d9488']; @endphp
                     <div style="display:flex; flex-direction:column; gap:8px;">
                         @foreach($distribusiLabels as $idx => $label)
-                            <div style="display:flex; align-items:center; justify-content:space-between; font-size:12.5px; color:#475569;">
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <span style="width:8px; height:8px; border-radius:2px; background:{{ $palDist[$idx % count($palDist)] }};"></span>
-                                    <span>{{ $label }}</span>
+                            <div style="display:flex; align-items:center; justify-content:space-between; font-size:12.5px; color:#475569;" title="{{ $label }}">
+                                <div style="display:flex; align-items:center; gap:8px; flex:1; overflow:hidden;">
+                                    <span style="min-width:8px; width:8px; height:8px; border-radius:2px; background:{{ $palDist[$idx % count($palDist)] }};"></span>
+                                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $label }}</span>
                                 </div>
-                                <span style="font-weight:600;">{{ $distribusiData[$idx] }}</span>
+                                <span style="font-weight:600; margin-left:8px;">{{ $distribusiData[$idx] }}</span>
                             </div>
                         @endforeach
                     </div>
@@ -145,80 +145,24 @@
             </div>
         </div>
 
-        {{-- 6 & 7. KEPEGAWAIAN & EARLY WARNING --}}
-        <div style="display:grid; grid-template-columns:1fr 1.5fr; gap:16px;">
-            <div style="background:white; border-radius:10px; border:1px solid #e2e8f0; padding:0; box-shadow:0 1px 3px rgba(0,0,0,0.02); overflow:hidden;">
-                <div style="padding:16px 20px; border-bottom:1px solid #e2e8f0; background:#f8fafc;">
-                    <h3 style="margin:0; font-size:14.5px; font-weight:700; color:#1e293b;">Kepegawaian (Perlu Diproses)</h3>
-                </div>
-                <div style="padding:16px 20px; display:flex; flex-direction:column; gap:16px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <div style="width:32px; height:32px; background:#f1f5f9; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#64748b;">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                            </div>
-                            <span style="font-size:13.5px; color:#334155; font-weight:500;">Cuti</span>
-                        </div>
-                        <span style="font-size:16px; font-weight:700; color:{{ $cutiPending > 0 ? '#1d4ed8' : '#94a3b8' }};">{{ $cutiPending }}</span>
+        {{-- 6 & 7. UNIT KERJA & REKAP KEPEGAWAIAN --}}
+        <div style="display:grid; grid-template-columns:1.8fr 1fr; gap:16px;">
+            <div style="background:white; border-radius:10px; border:1px solid #e2e8f0; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
+                <h3 style="margin:0 0 16px; font-size:14.5px; font-weight:700; color:#1e293b;">Surat Berdasarkan Unit Kerja</h3>
+                @if(count($unitKerjaData) > 0)
+                    <div style="flex:1; position:relative; min-height:180px;">
+                        <canvas id="chartUnitKerja"></canvas>
                     </div>
-                    {{-- Kenaikan Pangkat (Dinonaktifkan)
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <div style="width:32px; height:32px; background:#f1f5f9; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#64748b;">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                            </div>
-                            <span style="font-size:13.5px; color:#334155; font-weight:500;">Kenaikan Pangkat</span>
-                        </div>
-                        <span style="font-size:16px; font-weight:700; color:{{ isset($kenaikanPangkatPending) && $kenaikanPangkatPending > 0 ? '#1d4ed8' : '#94a3b8' }};">{{ $kenaikanPangkatPending ?? 0 }}</span>
-                    </div>
-                    --}}
-
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <div style="width:32px; height:32px; background:#f1f5f9; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#64748b;">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                            </div>
-                            <span style="font-size:13.5px; color:#334155; font-weight:500;">Kenaikan Gaji Berkala</span>
-                        </div>
-                        <span style="font-size:16px; font-weight:700; color:{{ $gajiBerkalaPending > 0 ? '#1d4ed8' : '#94a3b8' }};">{{ $gajiBerkalaPending }}</span>
-                    </div>
-                </div>
+                @else
+                    <div style="flex:1; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:13px;">Belum ada data unit kerja.</div>
+                @endif
             </div>
 
-            <div style="background:white; border-radius:10px; border:1px solid #e2e8f0; padding:0; box-shadow:0 1px 3px rgba(0,0,0,0.02); overflow:hidden;">
-                <div style="padding:16px 20px; border-bottom:1px solid #e2e8f0; background:#f8fafc;">
-                    <h3 style="margin:0; font-size:14.5px; font-weight:700; color:#1e293b;">Early Warning Kepegawaian</h3>
+            <div style="background:white; border-radius:10px; border:1px solid #e2e8f0; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
+                <h3 style="margin:0 0 16px; font-size:14.5px; font-weight:700; color:#1e293b;">Rekap Kepegawaian</h3>
+                <div style="flex:1; position:relative; min-height:180px;">
+                    <canvas id="chartRekapKepegawaian"></canvas>
                 </div>
-                <table style="width:100%; border-collapse:collapse; font-size:13.5px;">
-                    <tr style="border-bottom:1px solid #f1f5f9;">
-                        <td style="padding:16px 20px; color:#334155; font-weight:500;">Kenaikan Gaji Berkala</td>
-                        <td style="padding:16px 20px; text-align:right;">
-                            @php
-                                $kgbStatus = 'Aman';
-                                $kgbColor = '#16a34a'; $kgbBg = '#f0fdf4';
-                                if($kgbWarningData['tidak_lengkap'] > 0) { $kgbStatus = 'Data Belum Lengkap'; $kgbColor = '#dc2626'; $kgbBg = '#fef2f2'; }
-                                elseif($kgbWarningData['jatuh_tempo'] > 0) { $kgbStatus = 'Jatuh Tempo'; $kgbColor = '#dc2626'; $kgbBg = '#fef2f2'; }
-                                elseif($kgbWarningData['akan_jatuh_tempo'] > 0) { $kgbStatus = 'Akan Jatuh Tempo'; $kgbColor = '#ea580c'; $kgbBg = '#fff7ed'; }
-                            @endphp
-                            <span style="color:{{ $kgbColor }}; background:{{ $kgbBg }}; padding:4px 10px; border-radius:6px; font-size:12.5px; font-weight:600;">{{ $kgbStatus }}</span>
-                        </td>
-                    </tr>
-                    {{-- Kenaikan Pangkat (Dinonaktifkan)
-                    <tr>
-                        <td style="padding:16px 20px; color:#334155; font-weight:500;">Kenaikan Pangkat</td>
-                        <td style="padding:16px 20px; text-align:right;">
-                            @php
-                                $kpStatus = 'Aman';
-                                $kpColor = '#16a34a'; $kpBg = '#f0fdf4';
-                                if(isset($kpWarningData['tidak_lengkap']) && $kpWarningData['tidak_lengkap'] > 0) { $kpStatus = 'Data Belum Lengkap'; $kpColor = '#dc2626'; $kpBg = '#fef2f2'; }
-                                elseif(isset($kpWarningData['jatuh_tempo']) && $kpWarningData['jatuh_tempo'] > 0) { $kpStatus = 'Jatuh Tempo'; $kpColor = '#dc2626'; $kpBg = '#fef2f2'; }
-                                elseif(isset($kpWarningData['akan_jatuh_tempo']) && $kpWarningData['akan_jatuh_tempo'] > 0) { $kpStatus = 'Akan Jatuh Tempo'; $kpColor = '#ea580c'; $kpBg = '#fff7ed'; }
-                            @endphp
-                            <span style="color:{{ $kpColor }}; background:{{ $kpBg }}; padding:4px 10px; border-radius:6px; font-size:12.5px; font-weight:600;">{{ $kpStatus }}</span>
-                        </td>
-                    </tr>
-                    --}}
-                </table>
             </div>
         </div>
 
@@ -402,6 +346,54 @@
                     scales: {
                         x: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 12 }, color: '#64748b', precision: 0, stepSize: 1 }, border: { display: false }, beginAtZero: true },
                         y: { grid: { display: false }, ticks: { font: { size: 12 }, color: '#334155' }, border: { display: false } }
+                    }
+                }
+            });
+        }
+
+        /* 4. Unit Kerja (Bar Horizontal) */
+        const unitLabels = @json($unitKerjaLabels);
+        const unitData = @json($unitKerjaData);
+        const ctxUnit = document.getElementById('chartUnitKerja');
+        if (ctxUnit && unitData.length > 0) {
+            new Chart(ctxUnit, {
+                type: 'bar',
+                data: {
+                    labels: unitLabels,
+                    datasets: [{ data: unitData, backgroundColor: '#6366f1', borderRadius: 4 }]
+                },
+                options: {
+                    indexAxis: 'y', responsive:true, maintainAspectRatio:false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 12 }, color: '#64748b', precision: 0, stepSize: 1 }, border: { display: false }, beginAtZero: true },
+                        y: { grid: { display: false }, ticks: { font: { size: 12 }, color: '#334155' }, border: { display: false } }
+                    }
+                }
+            });
+        }
+
+        /* 5. Rekap Kepegawaian (Bar Vertikal) */
+        const rekapLabels = @json($rekapKepegawaianLabels);
+        const rekapData = @json($rekapKepegawaianData);
+        const ctxRekap = document.getElementById('chartRekapKepegawaian');
+        if (ctxRekap) {
+            new Chart(ctxRekap, {
+                type: 'bar',
+                data: {
+                    labels: rekapLabels,
+                    datasets: [{
+                        data: rekapData,
+                        backgroundColor: ['#ea580c', '#7c3aed'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive:true, maintainAspectRatio:false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 12 }, color: '#334155' }, border: { display: false } },
+                        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 12 }, color: '#64748b', precision: 0, stepSize: 1 }, border: { display: false }, beginAtZero: true }
                     }
                 }
             });
