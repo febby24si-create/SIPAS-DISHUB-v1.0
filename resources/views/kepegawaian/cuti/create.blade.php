@@ -54,6 +54,13 @@
                     Detail Cuti
                 </h3>
 
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+                    <div>
+                        <label style="display:block; font-size:13px; font-weight:600; color:#475569; margin-bottom:6px;">Nomor Surat Cuti *</label>
+                        <input type="text" name="nomor_surat_cuti" value="{{ old('nomor_surat_cuti') }}" required placeholder="Contoh: B/123/800.1.11.1/DISHUB/2026" style="width:100%; padding:10px 14px; border:1px solid #e2e8f0; border-radius:12px; font-size:14px; color:#1e293b;">
+                    </div>
+                </div>
+
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
                     <div>
                         <label style="display:block; font-size:13px; font-weight:600; color:#475569; margin-bottom:6px;">Jenis Cuti *</label>

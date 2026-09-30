@@ -36,6 +36,7 @@ class GajiBerkalaController extends Controller
     {
         $validated = $request->validate([
             'pegawai_id' => 'required|exists:pegawai,id',
+            'nomor_dokumen' => 'required|string',
             'gaji_pokok_lama' => 'required|numeric|min:0',
             'gaji_pokok_baru' => 'required|numeric|min:0',
             'tmt_sebelumnya' => 'required|date',
@@ -43,7 +44,7 @@ class GajiBerkalaController extends Controller
         ]);
 
         $validated['status'] = 'selesai'; // Langsung selesai
-        $validated['nomor_usulan'] = 'KGB-' . time();
+        $validated['nomor_usulan'] = $validated['nomor_dokumen']; // Nomor manual dari Admin
         
         $tmtSebelumnya = Carbon::parse($validated['tmt_sebelumnya']);
         $validated['tmt_berikutnya'] = $tmtSebelumnya->copy()->addMonths(24);
@@ -68,26 +69,29 @@ class GajiBerkalaController extends Controller
                     'aktivitas' => 'Membuat dokumen gaji berkala: ' . $kgb->nomor_usulan,
                 ]);
 
-                // Create Surat for Arsip Digital
-                $jenisSurat = \App\Models\JenisSurat::firstOrCreate(['kode' => 'KGB'], ['nama' => 'Surat Kenaikan Gaji Berkala']);
-                $klasifikasi = \App\Models\KlasifikasiSurat::firstOrCreate(['kode' => '822'], ['nama' => 'Gaji', 'status' => 'aktif']);
-                $nomorSurat = \App\Services\DocumentNumberService::generate($klasifikasi->id, Carbon::now());
+                // Buat entri Arsip Digital - KGB adalah dokumen kepegawaian internal, bukan surat keluar
+                $pegawai = Pegawai::find($kgb->pegawai_id);
+                $jenisDokumen = \App\Models\JenisSurat::firstOrCreate(
+                    ['kode' => 'DK'],
+                    ['nama' => 'Dokumen Kepegawaian']
+                );
 
                 \App\Models\Surat::firstOrCreate(
                     [
                         'source_type' => GajiBerkala::class,
-                        'source_id' => $kgb->id
+                        'source_id'   => $kgb->id,
                     ],
                     [
-                        'jenis_surat_id' => $jenisSurat->id,
-                        'klasifikasi_id' => $klasifikasi->id,
-                        'arah' => 'keluar',
-                        'nomor_surat' => $nomorSurat,
-                        'perihal' => 'Kenaikan Gaji Berkala ' . Pegawai::find($kgb->pegawai_id)->nama,
-                        'tanggal_surat' => Carbon::now(),
-                        'tujuan' => Pegawai::find($kgb->pegawai_id)->nama,
-                        'status' => 'final',
-                        'created_by' => auth()->id() ?? 1,
+                        'jenis_surat_id' => $jenisDokumen->id,
+                        'klasifikasi_id' => null,
+                        'arah'           => 'masuk',
+                        'nomor_surat'    => $validated['nomor_dokumen'],
+                        'perihal'        => 'Kenaikan Gaji Berkala – ' . $pegawai->nama,
+                        'tanggal_surat'  => Carbon::now(),
+                        'pengirim'       => $pegawai->nama,
+                        'tujuan'         => null,
+                        'status'         => 'final',
+                        'created_by'     => auth()->id() ?? 1,
                     ]
                 );
             });

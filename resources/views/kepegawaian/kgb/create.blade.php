@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>Buat Usulan Gaji Berkala</div>
+            <div>Tambah Dokumen Kenaikan Gaji Berkala</div>
             <a href="{{ route('kepegawaian.kgb.index') }}" style="display:inline-flex; align-items:center; gap:8px; padding:10px 18px; background:white; border:1px solid #cbd5e1; color:#334155; border-radius:12px; font-size:13px; font-weight:600; text-decoration:none;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                 Kembali
@@ -42,6 +42,14 @@
                 <div x-show="hasRiwayat" style="display:none; margin-top:8px; font-size:12px; color:#059669; font-weight:500;">
                     ✓ Ditemukan riwayat KGB terakhir. Data gaji lama otomatis terisi.
                 </div>
+            </div>
+
+            <div style="margin-bottom:24px;">
+                <label style="display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:8px;">Nomor Dokumen KGB <span style="color:#ef4444;">*</span></label>
+                <input type="text" name="nomor_dokumen" value="{{ old('nomor_dokumen') }}" required
+                       placeholder="Contoh: 800.1.11.1/DISHUB/KGB/2026/001"
+                       style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:14px; color:#1e293b;">
+                <small style="color:#94a3b8; font-size:11px; margin-top:4px; display:block;">Isi sesuai nomor dokumen dari administrasi Dishub.</small>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:32px;">

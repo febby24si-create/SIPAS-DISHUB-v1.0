@@ -31,6 +31,7 @@ class CutiController extends Controller
     {
         $validated = $request->validate([
             'pegawai_id' => 'required|exists:pegawai,id',
+            'nomor_surat_cuti' => 'required|string',
             'jenis_cuti' => 'required|string',
             'alasan' => 'required|string',
             'tanggal_mulai' => 'required|date',
@@ -65,13 +66,11 @@ class CutiController extends Controller
                 $jenisSurat = JenisSurat::firstOrCreate(['kode' => 'CUTI'], ['nama' => 'Surat Cuti']);
                 $klasifikasi = KlasifikasiSurat::firstOrCreate(['kode' => '850'], ['nama' => 'Kepegawaian', 'status' => 'aktif']);
 
-                $nomorSurat = DocumentNumberService::generate($klasifikasi->id, Carbon::now());
-
                 $surat = Surat::create([
                     'jenis_surat_id' => $jenisSurat->id,
                     'klasifikasi_id' => $klasifikasi->id,
                     'arah' => 'keluar',
-                    'nomor_surat' => $nomorSurat,
+                    'nomor_surat' => $validated['nomor_surat_cuti'],
                     'perihal' => 'Persetujuan Cuti ' . \App\Models\Pegawai::find($cuti->pegawai_id)->nama,
                     'tanggal_surat' => Carbon::now(),
                     'tujuan' => \App\Models\Pegawai::find($cuti->pegawai_id)->nama,
@@ -105,6 +104,7 @@ class CutiController extends Controller
 
         $validated = $request->validate([
             'pegawai_id' => 'required|exists:pegawai,id',
+            'nomor_surat_cuti' => 'nullable|string',
             'jenis_cuti' => 'required|string',
             'alasan' => 'required|string',
             'tanggal_mulai' => 'required|date',
@@ -204,13 +204,12 @@ class CutiController extends Controller
                 $jenisSurat = JenisSurat::firstOrCreate(['kode' => 'CUTI'], ['nama' => 'Surat Cuti']);
                 $klasifikasi = KlasifikasiSurat::firstOrCreate(['kode' => '850'], ['nama' => 'Kepegawaian', 'status' => 'aktif']);
 
-                $nomorSurat = DocumentNumberService::generate($klasifikasi->id, Carbon::now());
-
                 $surat = Surat::create([
                     'jenis_surat_id' => $jenisSurat->id,
                     'klasifikasi_id' => $klasifikasi->id,
                     'arah' => 'keluar',
-                    'nomor_surat' => $nomorSurat,
+                    'nomor_surat' => $cuti->nomor_pengajuan, // Fallback for legacy
+
                     'perihal' => 'Persetujuan Cuti ' . $cuti->pegawai->nama,
                     'tanggal_surat' => Carbon::now(),
                     'tujuan' => $cuti->pegawai->nama,

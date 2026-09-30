@@ -37,7 +37,7 @@
                     {{ $kgb->nomor_usulan }}
                 </h2>
                 <p style="margin:0; color:#94a3b8; font-size:15px;">
-                    Usulan Kenaikan Gaji Berkala (KGB)
+                    Dokumen Kenaikan Gaji Berkala (KGB)
                 </p>
             </div>
             <div style="position:absolute; top:-50%; right:-10%; width:300px; height:300px; background:radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(0,0,0,0) 70%); border-radius:50%; z-index:1;"></div>
