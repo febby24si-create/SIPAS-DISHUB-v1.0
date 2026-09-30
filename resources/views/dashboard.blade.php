@@ -80,9 +80,21 @@
         {{-- 4. GRAFIK UTAMA & DISTRIBUSI --}}
         <div style="display:grid; grid-template-columns:1.8fr 1fr; gap:16px;">
             <div style="background:white; border-radius:10px; border:1px solid #e2e8f0; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
-                <h3 style="margin:0 0 16px; font-size:14.5px; font-weight:700; color:#1e293b;">Tren Surat Masuk &amp; Keluar</h3>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+                    <h3 style="margin:0; font-size:14.5px; font-weight:700; color:#1e293b;">
+                        Tren Dokumen &amp; Surat
+                        <span id="periodeTrendLabel" style="font-size:12px; font-weight:400; color:#94a3b8; margin-left:6px;">6 Bulan Terakhir</span>
+                    </h3>
+                    <select id="periodeTrend"
+                            style="border:1px solid #e2e8f0; border-radius:6px; padding:5px 10px; font-size:12.5px; color:#334155; cursor:pointer; background:#f8fafc;">
+                        <option value="7_hari">7 Hari</option>
+                        <option value="30_hari">30 Hari</option>
+                        <option value="bulan" selected>Per Bulan</option>
+                    </select>
+                </div>
                 <div style="flex:1; position:relative; min-height:280px;">
                     <canvas id="chartTren"></canvas>
+                    <div id="trendLoading" style="display:none; position:absolute; inset:0; background:rgba(255,255,255,0.75); align-items:center; justify-content:center; font-size:13px; color:#64748b; border-radius:8px;">Memuat data...</div>
                 </div>
             </div>
             
@@ -275,19 +287,26 @@
 
         const PALETTE = ['#1d4ed8','#22c55e','#ea580c','#7c3aed','#0ea5e9','#e11d48','#0d9488'];
 
-        /* 1. Tren Surat */
+        /* 1. Tren Surat + Cuti + KGB */
         const trendLabels = @json($trendLabels);
-        const trendMasuk = @json($trendMasuk);
+        const trendMasuk  = @json($trendMasuk);
         const trendKeluar = @json($trendKeluar);
+        const trendCuti   = @json($trendCuti);
+        const trendKgb    = @json($trendKgb);
+        const TREND_URL   = '{{ route('dashboard.trend') }}';
+
         const ctxTren = document.getElementById('chartTren');
+        let chartTren = null;
         if (ctxTren) {
-            new Chart(ctxTren, {
+            chartTren = new Chart(ctxTren, {
                 type: 'line',
                 data: {
                     labels: trendLabels,
                     datasets: [
-                        { label:'Surat Masuk', data:trendMasuk, borderColor:'#16a34a', backgroundColor:'rgba(22, 163, 74, 0.05)', borderWidth:2.5, pointBackgroundColor:'#16a34a', pointRadius:4, tension:0.3, fill:true },
-                        { label:'Surat Keluar', data:trendKeluar, borderColor:'#1d4ed8', backgroundColor:'rgba(29, 78, 216, 0.05)', borderWidth:2.5, pointBackgroundColor:'#1d4ed8', pointRadius:4, tension:0.3, fill:true }
+                        { label:'Surat Masuk',  data:trendMasuk,  borderColor:'#16a34a', backgroundColor:'rgba(22,163,74,0.05)',   borderWidth:2.5, pointBackgroundColor:'#16a34a', pointRadius:4, tension:0.3, fill:true },
+                        { label:'Surat Keluar', data:trendKeluar, borderColor:'#1d4ed8', backgroundColor:'rgba(29,78,216,0.05)',   borderWidth:2.5, pointBackgroundColor:'#1d4ed8', pointRadius:4, tension:0.3, fill:true },
+                        { label:'Cuti',         data:trendCuti,   borderColor:'#ea580c', backgroundColor:'rgba(234,88,12,0.05)',   borderWidth:2,   pointBackgroundColor:'#ea580c', pointRadius:4, tension:0.3, fill:false, borderDash:[4,3] },
+                        { label:'KGB',          data:trendKgb,    borderColor:'#7c3aed', backgroundColor:'rgba(124,58,237,0.05)', borderWidth:2,   pointBackgroundColor:'#7c3aed', pointRadius:4, tension:0.3, fill:false, borderDash:[4,3] }
                     ]
                 },
                 options: {
@@ -297,10 +316,57 @@
                         legend:{ display:true, position:'top', labels:{ font:{size:12}, boxWidth:12, usePointStyle:true } }
                     },
                     scales:{
-                        x:{ grid:{display:false}, ticks:{font:{size:12},color:'#64748b'}, border:{display:false} },
+                        x:{ grid:{display:false}, ticks:{font:{size:12},color:'#64748b',maxTicksLimit:10}, border:{display:false} },
                         y:{ grid:{color:'#f1f5f9'}, ticks:{font:{size:12},color:'#64748b',precision:0,stepSize:1}, border:{display:false}, beginAtZero:true }
                     }
                 }
+            });
+        }
+
+        /* Dropdown periode — fetch tanpa reload */
+        const periodeSelect = document.getElementById('periodeTrend');
+        const periodeLabel  = document.getElementById('periodeTrendLabel');
+        const loadingEl     = document.getElementById('trendLoading');
+        const labelMap = {
+            '7_hari':  '7 Hari Terakhir',
+            '30_hari': '30 Hari Terakhir',
+            'bulan':   '6 Bulan Terakhir',
+        };
+
+        function fetchTrend(periode) {
+            if (!chartTren) return;
+
+            // Tampilkan loading overlay
+            if (loadingEl) { loadingEl.style.display = 'flex'; }
+
+            fetch(TREND_URL + '?periode=' + encodeURIComponent(periode), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+            })
+            .then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function(data) {
+                chartTren.data.labels          = data.labels;
+                chartTren.data.datasets[0].data = data.masuk;
+                chartTren.data.datasets[1].data = data.keluar;
+                chartTren.data.datasets[2].data = data.cuti;
+                chartTren.data.datasets[3].data = data.kgb;
+                chartTren.update();
+                if (periodeLabel) periodeLabel.textContent = labelMap[periode] || '';
+            })
+            .catch(function(err) {
+                console.error('Trend fetch error:', err);
+                if (periodeLabel) periodeLabel.textContent = 'Gagal memuat data';
+            })
+            .finally(function() {
+                if (loadingEl) { loadingEl.style.display = 'none'; }
+            });
+        }
+
+        if (periodeSelect) {
+            periodeSelect.addEventListener('change', function() {
+                fetchTrend(this.value);
             });
         }
 

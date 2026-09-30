@@ -3,24 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Models\Surat;
+use App\Models\PengajuanCuti;
+use App\Models\GajiBerkala;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
 
-    public function index()
+    public function index(Request $request)
     {
         // 1. STATISTIK PERSURATAN
-        $totalSurat  = Surat::where('status', 'final')->count();
-        $totalMasuk  = Surat::where('status', 'final')->where('arah', 'masuk')->count();
-        $totalKeluar = Surat::where('status', 'final')->where('arah', 'keluar')->count();
+        // Surat Masuk/Keluar = hanya surat "murni" (bukan arsip KGB/Cuti dari source)
+        $suratFinal  = Surat::where('status', 'final')->whereNull('source_type');
+        $totalSurat  = (clone $suratFinal)->count();
+        $totalMasuk  = (clone $suratFinal)->where('arah', 'masuk')->count();
+        $totalKeluar = (clone $suratFinal)->where('arah', 'keluar')->count();
         $totalDraft  = Surat::where('status', 'draft')->count();
 
         // 2. STATISTIK KEPEGAWAIAN
-        $cutiPending            = \App\Models\PengajuanCuti::whereIn('status', ['diajukan', 'verifikasi'])->count();
-        // $kenaikanPangkatPending = \App\Models\KenaikanPangkat::whereIn('status', ['diajukan', 'verifikasi', 'diproses'])->count(); // Dinonaktifkan (Pindah ke SRIKANDI)
-        $gajiBerkalaPending     = \App\Models\GajiBerkala::whereIn('status', ['verifikasi', 'disetujui'])->count();
+        $cutiPending        = PengajuanCuti::whereIn('status', ['diajukan', 'verifikasi'])->count();
+        $gajiBerkalaPending = GajiBerkala::whereIn('status', ['verifikasi', 'disetujui'])->count();
 
         // 3. AKTIVITAS TERBARU
         $aktivitasTerbaru = \App\Models\ActivityLog::with(['user', 'subject'])
@@ -28,25 +32,102 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // 4. GRAFIK TREN SURAT – 6 bulan terakhir
-        $bulanList = collect(range(5, 0))->map(fn ($i) => Carbon::now()->startOfMonth()->subMonths($i));
+        // 4. GRAFIK TREN – multi periode
+        $periode = in_array($request->get('periode'), ['7_hari', '30_hari', 'bulan'])
+            ? $request->get('periode')
+            : 'bulan';
 
-        // Driver-aware format (MySQL: DATE_FORMAT, SQLite: strftime)
-        $driver      = DB::connection()->getDriverName();
-        $formatBulan = $driver === 'sqlite'
-            ? DB::raw("strftime('%Y-%m', tanggal_surat) as bulan")
-            : DB::raw("DATE_FORMAT(tanggal_surat, '%Y-%m') as bulan");
+        $driver = DB::connection()->getDriverName();
 
-        $trendRaw = Surat::where('status', 'final')
-            ->where('tanggal_surat', '>=', $bulanList->first())
-            ->select($formatBulan, 'arah', DB::raw('COUNT(*) as total'))
-            ->groupBy('bulan', 'arah')
+        if ($periode === '7_hari') {
+            // 7 titik per hari
+            $days     = collect(range(6, 0))->map(fn ($i) => Carbon::today()->subDays($i));
+            $dateFrom = $days->first()->startOfDay();
+
+            $fmtSurat = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m-%d', tanggal_surat) as periode")
+                : DB::raw("DATE_FORMAT(tanggal_surat, '%Y-%m-%d') as periode");
+            $fmtCuti = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m-%d', tanggal_mulai) as periode")
+                : DB::raw("DATE_FORMAT(tanggal_mulai, '%Y-%m-%d') as periode");
+            $fmtKgb = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m-%d', created_at) as periode")
+                : DB::raw("DATE_FORMAT(created_at, '%Y-%m-%d') as periode");
+
+            $trendLabels = $days->map(fn ($d) => $d->translatedFormat('d M'))->toArray();
+            $keyFn       = fn ($d) => $d->format('Y-m-d');
+            $keyField    = 'Y-m-d';
+
+        } elseif ($periode === '30_hari') {
+            // 30 titik per hari
+            $days     = collect(range(29, 0))->map(fn ($i) => Carbon::today()->subDays($i));
+            $dateFrom = $days->first()->startOfDay();
+
+            $fmtSurat = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m-%d', tanggal_surat) as periode")
+                : DB::raw("DATE_FORMAT(tanggal_surat, '%Y-%m-%d') as periode");
+            $fmtCuti = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m-%d', tanggal_mulai) as periode")
+                : DB::raw("DATE_FORMAT(tanggal_mulai, '%Y-%m-%d') as periode");
+            $fmtKgb = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m-%d', created_at) as periode")
+                : DB::raw("DATE_FORMAT(created_at, '%Y-%m-%d') as periode");
+
+            $trendLabels = $days->map(fn ($d) => $d->translatedFormat('d M'))->toArray();
+            $keyFn       = fn ($d) => $d->format('Y-m-d');
+            $keyField    = 'Y-m-d';
+
+        } else {
+            // Default: 6 bulan per bulan
+            $days     = collect(range(5, 0))->map(fn ($i) => Carbon::now()->startOfMonth()->subMonths($i));
+            $dateFrom = $days->first();
+
+            $fmtSurat = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m', tanggal_surat) as periode")
+                : DB::raw("DATE_FORMAT(tanggal_surat, '%Y-%m') as periode");
+            $fmtCuti = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m', tanggal_mulai) as periode")
+                : DB::raw("DATE_FORMAT(tanggal_mulai, '%Y-%m') as periode");
+            $fmtKgb = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m', created_at) as periode")
+                : DB::raw("DATE_FORMAT(created_at, '%Y-%m') as periode");
+
+            $trendLabels = $days->map(fn ($d) => $d->translatedFormat('M Y'))->toArray();
+            $keyFn       = fn ($d) => $d->format('Y-m');
+            $keyField    = 'Y-m';
+        }
+
+        // --- Surat Masuk/Keluar: sumber tabel surat, hanya surat "murni" ---
+        $suratRaw = Surat::where('status', 'final')
+            ->whereNull('source_type')
+            ->where('tanggal_surat', '>=', $dateFrom)
+            ->select($fmtSurat, 'arah', DB::raw('COUNT(*) as total'))
+            ->groupBy('periode', 'arah')
             ->get()
-            ->groupBy('bulan');
+            ->groupBy('periode');
 
-        $trendLabels = $bulanList->map(fn ($d) => $d->translatedFormat('M Y'))->toArray();
-        $trendMasuk  = $bulanList->map(fn ($d) => (int) optional($trendRaw->get($d->format('Y-m'))?->firstWhere('arah', 'masuk'))->total)->toArray();
-        $trendKeluar = $bulanList->map(fn ($d) => (int) optional($trendRaw->get($d->format('Y-m'))?->firstWhere('arah', 'keluar'))->total)->toArray();
+        $trendMasuk  = $days->map(fn ($d) => (int) optional($suratRaw->get($keyFn($d))?->firstWhere('arah', 'masuk'))->total)->toArray();
+        $trendKeluar = $days->map(fn ($d) => (int) optional($suratRaw->get($keyFn($d))?->firstWhere('arah', 'keluar'))->total)->toArray();
+
+        // --- Cuti: sumber tabel pengajuan_cuti, field: tanggal_mulai, status: diterbitkan ---
+        $cutiRaw = PengajuanCuti::where('status', 'diterbitkan')
+            ->where('tanggal_mulai', '>=', $dateFrom)
+            ->select($fmtCuti, DB::raw('COUNT(*) as total'))
+            ->groupBy('periode')
+            ->get()
+            ->keyBy('periode');
+
+        $trendCuti = $days->map(fn ($d) => (int) optional($cutiRaw->get($keyFn($d)))->total)->toArray();
+
+        // --- KGB: sumber tabel gaji_berkala, field: created_at, status: selesai ---
+        $kgbRaw = GajiBerkala::where('status', 'selesai')
+            ->where('created_at', '>=', $dateFrom)
+            ->select($fmtKgb, DB::raw('COUNT(*) as total'))
+            ->groupBy('periode')
+            ->get()
+            ->keyBy('periode');
+
+        $trendKgb = $days->map(fn ($d) => (int) optional($kgbRaw->get($keyFn($d)))->total)->toArray();
 
         // 5. GRAFIK DISTRIBUSI JENIS SURAT
         $distribusiRaw = Surat::where('status', 'final')
@@ -75,23 +156,13 @@ class DashboardController extends Controller
         // 7. EARLY WARNING KEPEGAWAIAN
         $earlyWarningService = new \App\Services\Kepegawaian\EarlyWarningService();
         $kgbWarnings = collect($earlyWarningService->getKgbWarning());
-        // $kpWarnings = collect($earlyWarningService->getKpWarning()); // Dinonaktifkan (Pindah ke SRIKANDI)
 
         $kgbWarningData = [
             'akan_jatuh_tempo' => $kgbWarnings->where('status', 'AKAN JATUH TEMPO')->count(),
-            'jatuh_tempo' => $kgbWarnings->where('status', 'JATUH TEMPO')->count(),
-            'tidak_lengkap' => $kgbWarnings->whereIn('status', ['DATA TIDAK LENGKAP', 'PENGATURAN BELUM LENGKAP'])->count(),
-            'aman' => $kgbWarnings->where('status', 'AMAN')->count(),
+            'jatuh_tempo'      => $kgbWarnings->where('status', 'JATUH TEMPO')->count(),
+            'tidak_lengkap'    => $kgbWarnings->whereIn('status', ['DATA TIDAK LENGKAP', 'PENGATURAN BELUM LENGKAP'])->count(),
+            'aman'             => $kgbWarnings->where('status', 'AMAN')->count(),
         ];
-
-        /* Dinonaktifkan (Pindah ke SRIKANDI)
-        $kpWarningData = [
-            'akan_jatuh_tempo' => $kpWarnings->where('status', 'AKAN JATUH TEMPO')->count(),
-            'jatuh_tempo' => $kpWarnings->where('status', 'JATUH TEMPO')->count(),
-            'tidak_lengkap' => $kpWarnings->whereIn('status', ['DATA TIDAK LENGKAP', 'PENGATURAN BELUM LENGKAP'])->count(),
-            'aman' => $kpWarnings->where('status', 'AMAN')->count(),
-        ];
-        */
 
         return view('dashboard', compact(
             'totalSurat',
@@ -104,13 +175,116 @@ class DashboardController extends Controller
             'trendLabels',
             'trendMasuk',
             'trendKeluar',
+            'trendCuti',
+            'trendKgb',
+            'periode',
             'distribusiLabels',
             'distribusiData',
             'klasifikasiLabels',
             'klasifikasiData',
             'kgbWarnings',
             'kgbWarningData'
-            // 'kenaikanPangkatPending', 'kpWarnings', 'kpWarningData' -> Dinonaktifkan
         ));
     }
+
+    // -------------------------------------------------------
+    // Endpoint JSON untuk AJAX periode chart (tanpa reload)
+    // GET /dashboard/trend?periode=7_hari|30_hari|bulan
+    // -------------------------------------------------------
+    public function trend(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $periode = in_array($request->get('periode'), ['7_hari', '30_hari', 'bulan'])
+            ? $request->get('periode')
+            : 'bulan';
+
+        $driver = DB::connection()->getDriverName();
+
+        if ($periode === '7_hari') {
+            $days     = collect(range(6, 0))->map(fn ($i) => Carbon::today()->subDays($i));
+            $dateFrom = $days->first()->copy()->startOfDay();
+            $fmtSurat = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m-%d', tanggal_surat) as periode")
+                : DB::raw("DATE_FORMAT(tanggal_surat, '%Y-%m-%d') as periode");
+            $fmtCuti  = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m-%d', tanggal_mulai) as periode")
+                : DB::raw("DATE_FORMAT(tanggal_mulai, '%Y-%m-%d') as periode");
+            $fmtKgb   = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m-%d', created_at) as periode")
+                : DB::raw("DATE_FORMAT(created_at, '%Y-%m-%d') as periode");
+            $keyFn    = fn ($d) => $d->format('Y-m-d');
+            $labelFn  = fn ($d) => $d->translatedFormat('d M');
+
+        } elseif ($periode === '30_hari') {
+            $days     = collect(range(29, 0))->map(fn ($i) => Carbon::today()->subDays($i));
+            $dateFrom = $days->first()->copy()->startOfDay();
+            $fmtSurat = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m-%d', tanggal_surat) as periode")
+                : DB::raw("DATE_FORMAT(tanggal_surat, '%Y-%m-%d') as periode");
+            $fmtCuti  = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m-%d', tanggal_mulai) as periode")
+                : DB::raw("DATE_FORMAT(tanggal_mulai, '%Y-%m-%d') as periode");
+            $fmtKgb   = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m-%d', created_at) as periode")
+                : DB::raw("DATE_FORMAT(created_at, '%Y-%m-%d') as periode");
+            $keyFn    = fn ($d) => $d->format('Y-m-d');
+            $labelFn  = fn ($d) => $d->translatedFormat('d M');
+
+        } else {
+            $days     = collect(range(5, 0))->map(fn ($i) => Carbon::now()->startOfMonth()->subMonths($i));
+            $dateFrom = $days->first();
+            $fmtSurat = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m', tanggal_surat) as periode")
+                : DB::raw("DATE_FORMAT(tanggal_surat, '%Y-%m') as periode");
+            $fmtCuti  = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m', tanggal_mulai) as periode")
+                : DB::raw("DATE_FORMAT(tanggal_mulai, '%Y-%m') as periode");
+            $fmtKgb   = $driver === 'sqlite'
+                ? DB::raw("strftime('%Y-%m', created_at) as periode")
+                : DB::raw("DATE_FORMAT(created_at, '%Y-%m') as periode");
+            $keyFn    = fn ($d) => $d->format('Y-m');
+            $labelFn  = fn ($d) => $d->translatedFormat('M Y');
+        }
+
+        // Surat masuk/keluar — surat "murni" saja
+        $suratRaw = Surat::where('status', 'final')
+            ->whereNull('source_type')
+            ->where('tanggal_surat', '>=', $dateFrom)
+            ->select($fmtSurat, 'arah', DB::raw('COUNT(*) as total'))
+            ->groupBy('periode', 'arah')
+            ->get()
+            ->groupBy('periode');
+
+        $masuk  = $days->map(fn ($d) => (int) optional($suratRaw->get($keyFn($d))?->firstWhere('arah', 'masuk'))->total)->values()->toArray();
+        $keluar = $days->map(fn ($d) => (int) optional($suratRaw->get($keyFn($d))?->firstWhere('arah', 'keluar'))->total)->values()->toArray();
+
+        // Cuti — tanggal_mulai, status diterbitkan
+        $cutiRaw = \App\Models\PengajuanCuti::where('status', 'diterbitkan')
+            ->where('tanggal_mulai', '>=', $dateFrom)
+            ->select($fmtCuti, DB::raw('COUNT(*) as total'))
+            ->groupBy('periode')
+            ->get()
+            ->keyBy('periode');
+
+        $cuti = $days->map(fn ($d) => (int) optional($cutiRaw->get($keyFn($d)))->total)->values()->toArray();
+
+        // KGB — created_at, status selesai
+        $kgbRaw = \App\Models\GajiBerkala::where('status', 'selesai')
+            ->where('created_at', '>=', $dateFrom)
+            ->select($fmtKgb, DB::raw('COUNT(*) as total'))
+            ->groupBy('periode')
+            ->get()
+            ->keyBy('periode');
+
+        $kgb    = $days->map(fn ($d) => (int) optional($kgbRaw->get($keyFn($d)))->total)->values()->toArray();
+        $labels = $days->map(fn ($d) => $labelFn($d))->values()->toArray();
+
+        return response()->json([
+            'labels' => $labels,
+            'masuk'  => $masuk,
+            'keluar' => $keluar,
+            'cuti'   => $cuti,
+            'kgb'    => $kgb,
+        ]);
+    }
 }
+

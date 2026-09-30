@@ -38,6 +38,10 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth'])
     ->name('dashboard');
 
+Route::get('/dashboard/trend', [DashboardController::class, 'trend'])
+    ->middleware(['auth'])
+    ->name('dashboard.trend');
+
 Route::middleware(['auth'])->group(function () {
     // Master Data
     Route::resource('jenis-surat', JenisSuratController::class);
