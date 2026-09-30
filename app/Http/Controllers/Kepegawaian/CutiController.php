@@ -43,23 +43,49 @@ class CutiController extends Controller
         $tanggalMulai = Carbon::parse($validated['tanggal_mulai']);
         $tanggalSelesai = Carbon::parse($validated['tanggal_selesai']);
         $validated['lama_cuti'] = $tanggalMulai->diffInDays($tanggalSelesai) + 1;
-        $validated['status'] = 'draft'; // default
+        $validated['status'] = 'diterbitkan'; // langsung diterbitkan
         $validated['nomor_pengajuan'] = 'CUTI-' . time();
+        $validated['approved_by'] = auth()->id();
 
-        $cuti = PengajuanCuti::create($validated);
+        try {
+            DB::transaction(function () use ($validated, $request, &$cuti) {
+                $cuti = PengajuanCuti::create($validated);
 
-        if ($request->hasFile('file_pendukung')) {
-            $path = $request->file('file_pendukung')->store('cuti', 'public');
-            $cuti->attachments()->create([
-                'original_name' => $request->file('file_pendukung')->getClientOriginalName(),
-                'file_path' => $path,
-                'mime_type' => $request->file('file_pendukung')->getClientMimeType(),
-                'size' => $request->file('file_pendukung')->getSize(),
-                'uploaded_by' => auth()->id(),
-            ]);
+                if ($request->hasFile('file_pendukung')) {
+                    $path = $request->file('file_pendukung')->store('cuti', 'public');
+                    $cuti->attachments()->create([
+                        'original_name' => $request->file('file_pendukung')->getClientOriginalName(),
+                        'file_path' => $path,
+                        'mime_type' => $request->file('file_pendukung')->getClientMimeType(),
+                        'size' => $request->file('file_pendukung')->getSize(),
+                        'uploaded_by' => auth()->id(),
+                    ]);
+                }
+
+                $jenisSurat = JenisSurat::firstOrCreate(['kode' => 'CUTI'], ['nama' => 'Surat Cuti']);
+                $klasifikasi = KlasifikasiSurat::firstOrCreate(['kode' => '850'], ['nama' => 'Kepegawaian', 'status' => 'aktif']);
+
+                $nomorSurat = DocumentNumberService::generate($klasifikasi->id, Carbon::now());
+
+                $surat = Surat::create([
+                    'jenis_surat_id' => $jenisSurat->id,
+                    'klasifikasi_id' => $klasifikasi->id,
+                    'arah' => 'keluar',
+                    'nomor_surat' => $nomorSurat,
+                    'perihal' => 'Persetujuan Cuti ' . \App\Models\Pegawai::find($cuti->pegawai_id)->nama,
+                    'tanggal_surat' => Carbon::now(),
+                    'tujuan' => \App\Models\Pegawai::find($cuti->pegawai_id)->nama,
+                    'status' => 'final',
+                    'created_by' => auth()->id() ?? 1,
+                    'source_type' => PengajuanCuti::class,
+                    'source_id' => $cuti->id,
+                ]);
+            });
+
+            return redirect()->route('kepegawaian.cuti.show', $cuti)->with('status', 'Data cuti berhasil disimpan dan masuk ke Arsip Digital.');
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', 'Gagal menyimpan cuti: ' . $e->getMessage());
         }
-
-        return redirect()->route('kepegawaian.cuti.show', $cuti)->with('status', 'Pengajuan cuti draft berhasil dibuat.');
     }
 
     public function edit(PengajuanCuti $cuti)

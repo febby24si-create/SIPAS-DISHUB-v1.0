@@ -84,10 +84,7 @@
                     </div>
                 </div>
 
-                <div>
-                    <label style="display:block; font-size:13px; font-weight:600; color:#475569; margin-bottom:6px;">Alamat Selama Cuti</label>
-                    <textarea name="alamat_cuti" rows="2" style="width:100%; padding:10px 14px; border:1px solid #e2e8f0; border-radius:12px; font-size:14px; color:#1e293b; resize:vertical;">{{ old('alamat_cuti') }}</textarea>
-                </div>
+
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
                     <div>
@@ -117,7 +114,7 @@
                     Batal
                 </a>
                 <button type="submit" style="cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:12px 20px; background:linear-gradient(135deg,#1d4ed8,#3b82f6); color:white; border:none; border-radius:12px; font-size:14px; font-weight:600; box-shadow:0 4px 12px rgba(59,130,246,0.3);">
-                    Simpan Draft
+                    Simpan
                 </button>
             </div>
         </form>

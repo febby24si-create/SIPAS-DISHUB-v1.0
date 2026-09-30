@@ -15,66 +15,6 @@
                         Edit Draft
                     </a>
                 @endif
-                
-                @if($cuti->status === 'draft' && in_array(auth()->user()->role?->name, ['admin', 'staff']))
-                    <form action="{{ route('kepegawaian.cuti.status', $cuti) }}" method="POST">
-                        @csrf @method('PUT')
-                        <input type="hidden" name="status" value="diajukan">
-                        <button type="submit" style="cursor:pointer; display:inline-flex; align-items:center; padding:10px 18px; background:linear-gradient(135deg,#1d4ed8,#3b82f6); color:white; border:none; border-radius:12px; font-size:13px; font-weight:600;">
-                            Ajukan
-                        </button>
-                    </form>
-                @endif
-
-                @if($cuti->status === 'diajukan' && in_array(auth()->user()->role?->name, ['admin', 'verifikator']))
-                    <form action="{{ route('kepegawaian.cuti.status', $cuti) }}" method="POST">
-                        @csrf @method('PUT')
-                        <input type="hidden" name="status" value="verifikasi">
-                        <button type="submit" style="cursor:pointer; display:inline-flex; align-items:center; padding:10px 18px; background:linear-gradient(135deg,#b45309,#d97706); color:white; border:none; border-radius:12px; font-size:13px; font-weight:600;">
-                            Verifikasi
-                        </button>
-                    </form>
-                @endif
-
-                @if($cuti->status === 'verifikasi' && in_array(auth()->user()->role?->name, ['admin', 'pimpinan']))
-                    <form action="{{ route('kepegawaian.cuti.status', $cuti) }}" method="POST">
-                        @csrf @method('PUT')
-                        <input type="hidden" name="status" value="disetujui">
-                        <button type="submit" style="cursor:pointer; display:inline-flex; align-items:center; padding:10px 18px; background:linear-gradient(135deg,#059669,#10b981); color:white; border:none; border-radius:12px; font-size:13px; font-weight:600;">
-                            Setujui
-                        </button>
-                    </form>
-                @endif
-
-                @if($cuti->status === 'disetujui' && in_array(auth()->user()->role?->name, ['admin', 'staff', 'verifikator', 'pimpinan']))
-                    <form action="{{ route('kepegawaian.cuti.status', $cuti) }}" method="POST">
-                        @csrf @method('PUT')
-                        <input type="hidden" name="status" value="diterbitkan">
-                        <button type="submit" style="cursor:pointer; display:inline-flex; align-items:center; padding:10px 18px; background:linear-gradient(135deg,#a21caf,#c026d3); color:white; border:none; border-radius:12px; font-size:13px; font-weight:600;">
-                            Terbitkan Surat
-                        </button>
-                    </form>
-                @endif
-                
-                @if($cuti->status === 'diterbitkan' && in_array(auth()->user()->role?->name, ['admin', 'staff']))
-                    <form action="{{ route('kepegawaian.cuti.status', $cuti) }}" method="POST">
-                        @csrf @method('PUT')
-                        <input type="hidden" name="status" value="selesai">
-                        <button type="submit" style="cursor:pointer; display:inline-flex; align-items:center; padding:10px 18px; background:linear-gradient(135deg,#166534,#22c55e); color:white; border:none; border-radius:12px; font-size:13px; font-weight:600;">
-                            Selesaikan
-                        </button>
-                    </form>
-                @endif
-                
-                @if(in_array($cuti->status, ['diajukan', 'verifikasi']) && in_array(auth()->user()->role?->name, ['admin', 'verifikator', 'pimpinan']))
-                    <form action="{{ route('kepegawaian.cuti.status', $cuti) }}" method="POST">
-                        @csrf @method('PUT')
-                        <input type="hidden" name="status" value="ditolak">
-                        <button type="submit" style="cursor:pointer; display:inline-flex; align-items:center; padding:10px 18px; background:white; border:1px solid #ef4444; color:#ef4444; border-radius:12px; font-size:13px; font-weight:600;">
-                            Tolak
-                        </button>
-                    </form>
-                @endif
             </div>
         </div>
 
@@ -166,10 +106,6 @@
                         <div style="font-size:14px; color:#334155; line-height:1.5;">{{ $cuti->alasan }}</div>
                     </div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-                        <div>
-                            <div style="font-size:11px; font-weight:600; color:#64748b; margin-bottom:2px;">Alamat Selama Cuti</div>
-                            <div style="font-size:14px; color:#334155;">{{ $cuti->alamat_cuti ?: '-' }}</div>
-                        </div>
                         <div>
                             <div style="font-size:11px; font-weight:600; color:#64748b; margin-bottom:2px;">No. Telepon</div>
                             <div style="font-size:14px; color:#334155;">{{ $cuti->no_telp ?: '-' }}</div>
