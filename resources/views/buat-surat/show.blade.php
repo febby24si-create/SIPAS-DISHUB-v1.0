@@ -115,7 +115,7 @@
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
                     </div>
                     <p style="font-size:15px; font-weight:700; color:#1e293b; margin:0 0 6px;">Dokumen Word Siap</p>
-                    <p style="font-size:13px; color:#64748b; margin:0 0 20px;">Preview PDF tidak tersedia (LibreOffice belum terpasang). Klik tombol di bawah untuk membuka atau mengunduh file Word.</p>
+                    <p style="font-size:13px; color:#64748b; margin:0 0 20px;">Preview PDF tidak tersedia. Klik tombol di bawah untuk membuka atau mengunduh file Word.</p>
                     <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
                         <a href="{{ Storage::url($surat->file_word) }}" target="_blank"
                            style="display:inline-flex; align-items:center; gap:8px; padding:11px 22px; background:linear-gradient(135deg,#1d4ed8,#3b82f6); color:white; border-radius:12px; font-size:13px; font-weight:600; text-decoration:none;">
@@ -141,21 +141,10 @@
         <div style="background:white; border-radius:20px; border:1px solid rgba(0,0,0,0.06); padding:20px 24px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
 
             @if ($surat->status === 'draft')
-                <a href="{{ route('surat-keluar.edit', $surat) }}"
-                   style="display:inline-flex; align-items:center; gap:8px; padding:11px 22px; background:linear-gradient(135deg,#1d4ed8,#3b82f6); color:white; font-size:13px; font-weight:600; border-radius:12px; text-decoration:none; box-shadow:0 2px 8px rgba(29,78,216,0.2);"
-                   onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    Edit Draft
-                </a>
-                <form action="{{ route('buat-surat.finalize', $surat) }}" method="POST" style="display:inline;">
-                    @csrf @method('PATCH')
-                    <button type="submit"
-                            style="display:inline-flex; align-items:center; gap:8px; padding:11px 22px; background:linear-gradient(135deg,#059669,#10b981); color:white; font-size:13px; font-weight:600; border-radius:12px; border:none; cursor:pointer; box-shadow:0 2px 8px rgba(5,150,105,0.25);"
-                            onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                        Finalisasi & Simpan ke Arsip
-                    </button>
-                </form>
+                <div style="display:inline-flex; align-items:center; gap:8px; padding:11px 20px; background:#fef3c7; color:#92400e; font-size:13px; font-weight:600; border-radius:12px; border:1px solid #fde68a;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    Draft legacy (Tidak bisa difinalisasi)
+                </div>
             @else
                 <div style="display:inline-flex; align-items:center; gap:8px; padding:11px 20px; background:#ecfdf5; color:#065f46; font-size:13px; font-weight:600; border-radius:12px; border:1px solid #a7f3d0;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -169,12 +158,7 @@
                 Ke Surat Keluar
             </a>
 
-            <a href="{{ route('buat-surat.create') }}"
-               style="display:inline-flex; align-items:center; gap:6px; padding:11px 18px; background:white; color:#64748b; border:1px solid #e2e8f0; border-radius:12px; font-size:13px; font-weight:600; text-decoration:none;"
-               onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Buat Surat Baru
-            </a>
+
         </div>
 
     </div>

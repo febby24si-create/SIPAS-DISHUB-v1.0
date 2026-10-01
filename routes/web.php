@@ -46,19 +46,21 @@ Route::middleware(['auth'])->group(function () {
     // Master Data
     Route::resource('jenis-surat', JenisSuratController::class);
     Route::resource('klasifikasi-surat', KlasifikasiSuratController::class)->except(['show']);
-    Route::resource('template-surat', TemplateSuratController::class);
+    // Route::resource('template-surat', TemplateSuratController::class); // DINONAKTIFKAN
     Route::get('nomor-surat', [NomorSuratController::class, 'index'])->name('nomor-surat.index');
     Route::resource('unit-kerja', UnitKerjaController::class)->except(['show']);
     Route::resource('pegawai', PegawaiController::class);
 
-    // Persuratan - Buat Surat
-    // Alur: Pilih Jenis Surat -> Pilih Template -> Isi Form Dinamis -> Preview -> Generate -> Finalisasi -> Arsip
-    Route::get('buat-surat', [SuratController::class, 'create'])->name('buat-surat.create');
-    Route::get('buat-surat/template/{jenisSurat}', [SuratController::class, 'pilihTemplate'])->name('buat-surat.pilih-template');
-    Route::get('buat-surat/form/{template}', [SuratController::class, 'form'])->name('buat-surat.form');
-    Route::post('buat-surat', [SuratController::class, 'store'])->name('buat-surat.store');
+    // Persuratan - Buat Surat (LEGACY DINONAKTIFKAN)
+    // Route::get('buat-surat', [SuratController::class, 'create'])->name('buat-surat.create');
+    // Route::get('buat-surat/template/{jenisSurat}', [SuratController::class, 'pilihTemplate'])->name('buat-surat.pilih-template');
+    // Route::get('buat-surat/form/{template}', [SuratController::class, 'form'])->name('buat-surat.form');
+    // Route::post('buat-surat', [SuratController::class, 'store'])->name('buat-surat.store');
+
+    // Viewer legacy dipertahankan
     Route::get('buat-surat/{surat}', [SuratController::class, 'show'])->name('buat-surat.show');
-    Route::patch('buat-surat/{surat}/finalize', [SuratController::class, 'finalize'])->name('buat-surat.finalize');
+
+    // Route::patch('buat-surat/{surat}/finalize', [SuratController::class, 'finalize'])->name('buat-surat.finalize');
 
     // Persuratan - Surat Masuk
     Route::get('surat-masuk', [SuratMasukController::class, 'index'])->name('surat-masuk.index');

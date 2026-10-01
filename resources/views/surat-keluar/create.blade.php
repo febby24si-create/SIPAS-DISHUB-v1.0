@@ -105,7 +105,7 @@
             <div style="padding:12px 16px; background:#fffbeb; border:1px solid #fde68a; border-radius:10px;">
                 <p style="margin:0; font-size:12px; color:#92400e;">
                     <strong>Tip:</strong> Untuk membuat surat dengan template Word/PDF otomatis, gunakan menu
-                    <a href="{{ route('buat-surat.create') }}" style="color:#1d4ed8; font-weight:600;">Buat Surat</a>.
+                    <a href="{{ route('surat-keluar.create') }}" style="color:#1d4ed8; font-weight:600;">Buat Surat</a>.
                 </p>
             </div>
 
