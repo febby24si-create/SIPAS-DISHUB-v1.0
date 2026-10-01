@@ -31,20 +31,145 @@
                 </div>
                 
                 {{-- Filter & Search --}}
-                <form action="{{ route('pegawai.index') }}" method="GET" style="display:flex; gap:10px;">
-                    <select name="unit_kerja_id" class="form-control" style="width:180px; font-size:13px; padding:6px 12px; border-radius:8px;" onchange="this.form.submit()">
-                        <option value="">Semua Unit Kerja</option>
-                        @foreach($unitKerjas->where('parent_id', null) as $bidang)
-                            <option value="{{ $bidang->id }}" {{ request('unit_kerja_id') == $bidang->id ? 'selected' : '' }}>
-                                {{ $bidang->nama }}
-                            </option>
-                            @foreach($unitKerjas->where('parent_id', $bidang->id) as $seksi)
-                                <option value="{{ $seksi->id }}" {{ request('unit_kerja_id') == $seksi->id ? 'selected' : '' }}>
-                                    &nbsp;&nbsp;&nbsp;&nbsp;↳ {{ $seksi->nama }}
-                                </option>
-                            @endforeach
-                        @endforeach
-                    </select>
+                @php
+                    $filterStructuredUnits = [];
+                    foreach($unitKerjas->where('parent_id', null) as $bidang) {
+                        $filterSeksis = [];
+                        foreach($unitKerjas->where('parent_id', $bidang->id) as $seksi) {
+                            $filterSeksis[] = ['id' => $seksi->id, 'nama' => $seksi->nama];
+                        }
+                        $filterStructuredUnits[] = [
+                            'id' => $bidang->id,
+                            'nama' => $bidang->nama,
+                            'seksis' => $filterSeksis
+                        ];
+                    }
+                    $filterInitialId = request('unit_kerja_id');
+                    $filterInitialName = '';
+                    if ($filterInitialId) {
+                        $found = $unitKerjas->where('id', $filterInitialId)->first();
+                        if ($found) $filterInitialName = $found->nama;
+                    }
+                @endphp
+
+                <form action="{{ route('pegawai.index') }}" method="GET" id="filter-pegawai-form" style="display:flex; gap:10px;">
+                    {{-- Custom Searchable Dropdown Unit Kerja --}}
+                    <div x-data="{
+                        open: false,
+                        search: '',
+                        value: '{{ $filterInitialId }}',
+                        label: '{{ addslashes($filterInitialName) }}',
+                        data: {{ json_encode($filterStructuredUnits) }},
+                        direction: 'down',
+                        maxListHeight: 240,
+
+                        get filteredData() {
+                            if (this.search === '') return this.data;
+                            const q = this.search.toLowerCase();
+                            return this.data.map(b => ({
+                                ...b,
+                                seksis: b.seksis.filter(s => s.nama.toLowerCase().includes(q))
+                            })).filter(b => b.seksis.length > 0);
+                        },
+
+                        toggleOpen(el) {
+                            if (this.open) { this.open = false; return; }
+                            const rect = el.getBoundingClientRect();
+                            const chrome = 110;
+                            const below = window.innerHeight - rect.bottom;
+                            const above = rect.top;
+                            if (below >= 200 && below >= above) {
+                                this.direction = 'down';
+                                this.maxListHeight = Math.max(80, Math.min(240, below - chrome));
+                            } else {
+                                this.direction = 'up';
+                                this.maxListHeight = Math.max(80, Math.min(240, above - chrome));
+                            }
+                            this.open = true;
+                        },
+
+                        selectSeksi(id, nama) {
+                            this.value = id;
+                            this.label = nama;
+                            this.open = false;
+                            this.search = '';
+                            this.$nextTick(() => document.getElementById('filter-pegawai-form').submit());
+                        },
+
+                        clearFilter() {
+                            this.value = '';
+                            this.label = '';
+                            this.search = '';
+                            this.open = false;
+                            this.$nextTick(() => document.getElementById('filter-pegawai-form').submit());
+                        }
+                    }" style="position:relative; width:200px;">
+
+                        <input type="hidden" name="unit_kerja_id" :value="value">
+
+                        <button type="button"
+                                @click="toggleOpen($el)"
+                                @click.outside="open = false"
+                                style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; background:#fff; cursor:pointer; height:34px; padding:0 10px; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; gap:6px;">
+                            <span x-text="label || 'Semua Unit Kerja'"
+                                  :style="!label ? 'color:#94a3b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px;' : 'color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px;'"></span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+
+                        <div x-show="open"
+                             x-transition.opacity
+                             :style="direction === 'up'
+                                 ? 'display:flex; flex-direction:column-reverse; position:absolute; z-index:50; width:280px; bottom:calc(100% + 4px); left:0; background:white; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05); overflow:hidden;'
+                                 : 'display:flex; flex-direction:column; position:absolute; z-index:50; width:280px; top:calc(100% + 4px); left:0; background:white; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05); overflow:hidden;'"
+                             style="display:none;">
+
+                            <div style="padding:10px; border-bottom:1px solid #e2e8f0; background:#f8fafc; flex-shrink:0;">
+                                <div style="position:relative;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:10px; top:9px; color:#94a3b8;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                    <input type="text"
+                                           x-model="search"
+                                           placeholder="Cari unit kerja..."
+                                           style="width:100%; padding:7px 10px 7px 32px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; outline:none; box-sizing:border-box;"
+                                           @click.stop>
+                                </div>
+                            </div>
+
+                            <div :style="'overflow-y:auto; max-height:' + maxListHeight + 'px; padding:6px 0 10px 0;'">
+                                <template x-if="filteredData.length === 0">
+                                    <div style="padding:14px; font-size:13px; color:#64748b; text-align:center;">
+                                        Unit kerja tidak ditemukan.
+                                    </div>
+                                </template>
+                                <template x-for="bidang in filteredData" :key="bidang.id">
+                                    <div>
+                                        <div style="padding:7px 14px; font-size:11px; font-weight:700; color:#64748b; background:#f8fafc; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid #f1f5f9;" x-text="bidang.nama"></div>
+                                        <template x-for="seksi in bidang.seksis" :key="seksi.id">
+                                            <div @click="selectSeksi(seksi.id, seksi.nama)"
+                                                 style="padding:9px 14px 9px 22px; font-size:13px; color:#334155; cursor:pointer; display:flex; align-items:center; gap:7px;"
+                                                 onmouseover="this.style.backgroundColor='#eff6ff'"
+                                                 onmouseout="this.style.backgroundColor='transparent'">
+                                                <span style="color:#cbd5e1; font-weight:bold;">↳</span>
+                                                <span x-text="seksi.nama" style="flex:1;"></span>
+                                                <svg x-show="value == seksi.id" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <div style="padding:7px 14px; border-top:1px solid #e2e8f0; background:#f8fafc; flex-shrink:0;">
+                                <button type="button"
+                                        @click.stop="clearFilter()"
+                                        :disabled="!value"
+                                        :style="!value ? 'opacity:0.4; cursor:not-allowed;' : 'cursor:pointer;'"
+                                        style="display:flex; align-items:center; gap:5px; color:#ef4444; font-size:12px; font-weight:600; background:none; border:none; padding:3px 0; outline:none; width:100%;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    Hapus Pilihan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div style="position:relative;">
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari NIP/Nama..." class="form-control" style="width:180px; font-size:13px; padding:6px 12px; padding-left:32px; border-radius:8px;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; left:10px; top:50%; transform:translateY(-50%);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>

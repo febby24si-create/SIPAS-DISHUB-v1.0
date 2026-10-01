@@ -106,7 +106,7 @@
                                placeholder="Contoh: III/a">
                         @error('golongan') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
-                    
+
                     <div class="form-group">
                         <label class="form-label" for="jabatan">Jabatan</label>
                         <input id="jabatan" type="text" name="jabatan"
@@ -138,22 +138,146 @@
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
                     <div class="form-group">
                         <label class="form-label" for="unit_kerja_id">Unit Kerja</label>
-                        <select id="unit_kerja_id" name="unit_kerja_id" class="form-control">
-                            <option value="">-- Pilih Unit Kerja --</option>
-                            @foreach($unitKerjas->where('parent_id', null) as $bidang)
-                                <option value="{{ $bidang->id }}" {{ old('unit_kerja_id', $pegawai->unit_kerja_id) == $bidang->id ? 'selected' : '' }}>
-                                    {{ $bidang->nama }}
-                                </option>
-                                @foreach($unitKerjas->where('parent_id', $bidang->id) as $seksi)
-                                    <option value="{{ $seksi->id }}" {{ old('unit_kerja_id', $pegawai->unit_kerja_id) == $seksi->id ? 'selected' : '' }}>
-                                        &nbsp;&nbsp;&nbsp;&nbsp;↳ {{ $seksi->nama }}
-                                    </option>
-                                @endforeach
-                            @endforeach
-                        </select>
+                        @php
+                            $structuredUnits = [];
+                            foreach($unitKerjas->where('parent_id', null) as $bidang) {
+                                $seksis = [];
+                                foreach($unitKerjas->where('parent_id', $bidang->id) as $seksi) {
+                                    $seksis[] = [
+                                        'id' => $seksi->id,
+                                        'nama' => $seksi->nama
+                                    ];
+                                }
+                                $structuredUnits[] = [
+                                    'id' => $bidang->id,
+                                    'nama' => $bidang->nama,
+                                    'seksis' => $seksis
+                                ];
+                            }
+                            $initialSeksiId = old('unit_kerja_id', $pegawai->unit_kerja_id);
+                            $initialSeksiName = '';
+                            if($initialSeksiId) {
+                                $found = $unitKerjas->where('id', $initialSeksiId)->first();
+                                if($found) {
+                                    $initialSeksiName = $found->nama;
+                                }
+                            }
+                        @endphp
+
+                        <div x-data="{
+                            open: false,
+                            search: '',
+                            value: '{{ $initialSeksiId }}',
+                            label: '{{ addslashes($initialSeksiName) }}',
+                            data: {{ json_encode($structuredUnits) }},
+                            direction: 'down',
+                            maxListHeight: 240,
+
+                            get filteredData() {
+                                if (this.search === '') {
+                                    return this.data;
+                                }
+                                const lowerSearch = this.search.toLowerCase();
+                                return this.data.map(bidang => {
+                                    const filteredSeksis = bidang.seksis.filter(seksi =>
+                                        seksi.nama.toLowerCase().includes(lowerSearch)
+                                    );
+                                    return { ...bidang, seksis: filteredSeksis };
+                                }).filter(bidang => bidang.seksis.length > 0);
+                            },
+
+                            toggleOpen(triggerEl) {
+                                if (this.open) { this.open = false; return; }
+                                const rect = triggerEl.getBoundingClientRect();
+                                const chrome = 110;
+                                const spaceBelow = window.innerHeight - rect.bottom;
+                                const spaceAbove = rect.top;
+                                if (spaceBelow >= 200 && spaceBelow >= spaceAbove) {
+                                    this.direction = 'down';
+                                    this.maxListHeight = Math.max(80, Math.min(240, spaceBelow - chrome));
+                                } else {
+                                    this.direction = 'up';
+                                    this.maxListHeight = Math.max(80, Math.min(240, spaceAbove - chrome));
+                                }
+                                this.open = true;
+                            },
+
+                            selectSeksi(id, nama) {
+                                this.value = id;
+                                this.label = nama;
+                                this.open = false;
+                                this.search = '';
+                            }
+                        }" style="position:relative;">
+
+                            <input type="hidden" name="unit_kerja_id" :value="value">
+
+                            <button type="button"
+                                    @click="toggleOpen($el)"
+                                    @click.outside="open = false"
+                                    class="form-control"
+                                    style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; background:#fff; cursor:pointer; min-height:42px; border: 1px solid {{ $errors->has('unit_kerja_id') ? '#fca5a5' : '#cbd5e1' }}; border-radius: 8px;">
+                                <span x-text="label || '-- Pilih Unit Kerja --'" :style="!label ? 'color:#94a3b8;' : 'color:#0f172a;'"></span>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+
+                            <div x-show="open"
+                                 x-transition.opacity
+                                 :style="direction === 'up'
+                                     ? 'display:flex; flex-direction:column-reverse; position:absolute; z-index:50; width:100%; bottom:calc(100% + 4px); background:white; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05); overflow:hidden;'
+                                     : 'display:flex; flex-direction:column; position:absolute; z-index:50; width:100%; top:calc(100% + 4px); background:white; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05); overflow:hidden;'"
+                                 style="display:none;">
+
+                                <div style="padding:10px; border-bottom:1px solid #e2e8f0; background:#f8fafc; border-top-left-radius:8px; border-top-right-radius:8px;">
+                                    <div style="position:relative;">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:12px; top:10px; color:#94a3b8;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                        <input type="text"
+                                               x-model="search"
+                                               placeholder="Cari unit kerja..."
+                                               style="width:100%; padding:8px 12px 8px 36px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; outline:none; box-sizing:border-box;"
+                                               @click.stop>
+                                    </div>
+                                </div>
+
+                                <div :style="'overflow-y:auto; max-height:' + maxListHeight + 'px; padding:6px 0 10px 0;'">
+                                    <template x-if="filteredData.length === 0">
+                                        <div style="padding:16px; font-size:13px; color:#64748b; text-align:center;">
+                                            Unit kerja tidak ditemukan.
+                                        </div>
+                                    </template>
+
+                                    <template x-for="bidang in filteredData" :key="bidang.id">
+                                        <div>
+                                            <div style="padding:8px 16px; font-size:11px; font-weight:700; color:#64748b; background:#f8fafc; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid #f1f5f9;" x-text="bidang.nama"></div>
+                                            <template x-for="seksi in bidang.seksis" :key="seksi.id">
+                                                <div @click="selectSeksi(seksi.id, seksi.nama)"
+                                                     style="padding:10px 16px 10px 24px; font-size:13px; color:#334155; cursor:pointer; display:flex; align-items:center; gap:8px;"
+                                                     onmouseover="this.style.backgroundColor='#eff6ff'"
+                                                     onmouseout="this.style.backgroundColor='transparent'">
+                                                    <span style="color:#cbd5e1; font-weight:bold;">↳</span>
+                                                    <span x-text="seksi.nama"></span>
+                                                    <svg x-show="value == seksi.id" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;"><polyline points="20 6 9 17 4 12"/></svg>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <div style="padding:8px 16px; border-top:1px solid #e2e8f0; background:#f8fafc; flex-shrink:0;">
+                                    <button type="button"
+                                            @click.stop="value = ''; label = ''; search = '';"
+                                            :disabled="!value"
+                                            :style="!value ? 'opacity:0.4; cursor:not-allowed;' : 'cursor:pointer;'"
+                                            style="display:flex; align-items:center; gap:5px; color:#ef4444; font-size:12px; font-weight:600; background:none; border:none; padding:4px 0; outline:none; width:100%;">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                        Hapus Pilihan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         @error('unit_kerja_id') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
-                    
+
                     <div class="form-group">
                         <label class="form-label" for="tmt">
                             TMT (Terhitung Mulai Tanggal)
