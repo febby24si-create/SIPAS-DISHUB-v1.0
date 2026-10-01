@@ -36,14 +36,118 @@
 
                 <div>
                     <label style="display:block; font-size:13px; font-weight:600; color:#475569; margin-bottom:6px;">Pilih Pegawai *</label>
-                    <select name="pegawai_id" required style="width:100%; padding:10px 14px; border:1px solid #e2e8f0; border-radius:12px; font-size:14px; color:#1e293b;">
-                        <option value="">-- Pilih Pegawai --</option>
-                        @foreach($pegawais as $pegawai)
-                            <option value="{{ $pegawai->id }}" @selected(old('pegawai_id', $cuti->pegawai_id) == $pegawai->id)>
-                                {{ $pegawai->nama }} (NIP. {{ $pegawai->nip }}) - {{ $pegawai->jabatan }}
-                            </option>
-                        @endforeach
-                    </select>
+                    @php
+                        $editCutiPegawaiList = $pegawais->map(fn($p) => [
+                            'id'  => $p->id,
+                            'nama'=> $p->nama,
+                            'nip' => $p->nip ?? '',
+                        ])->values()->toArray();
+                        $editCutiInitId   = old('pegawai_id', $cuti->pegawai_id);
+                        $editCutiInitName = '';
+                        if ($editCutiInitId) {
+                            $fp = $pegawais->firstWhere('id', $editCutiInitId);
+                            if ($fp) $editCutiInitName = $fp->nama;
+                        }
+                    @endphp
+                    <div x-data="{
+                        open: false,
+                        search: '',
+                        value: '{{ $editCutiInitId }}',
+                        label: '{{ addslashes($editCutiInitName) }}',
+                        data: {{ json_encode($editCutiPegawaiList) }},
+                        direction: 'down',
+                        maxListHeight: 260,
+
+                        get filtered() {
+                            if (!this.search) return this.data;
+                            const q = this.search.toLowerCase();
+                            return this.data.filter(p =>
+                                p.nama.toLowerCase().includes(q) || p.nip.toLowerCase().includes(q)
+                            );
+                        },
+
+                        toggleOpen(el) {
+                            if (this.open) { this.open = false; return; }
+                            const rect = el.getBoundingClientRect();
+                            const chrome = 90;
+                            const below = window.innerHeight - rect.bottom;
+                            const above = rect.top;
+                            if (below >= 200 && below >= above) {
+                                this.direction = 'down';
+                                this.maxListHeight = Math.max(80, Math.min(260, below - chrome));
+                            } else {
+                                this.direction = 'up';
+                                this.maxListHeight = Math.max(80, Math.min(260, above - chrome));
+                            }
+                            this.open = true;
+                        },
+
+                        select(id, nama) {
+                            this.value = id; this.label = nama;
+                            this.open = false; this.search = '';
+                        },
+
+                        clear() {
+                            this.value = ''; this.label = ''; this.search = ''; this.open = false;
+                        }
+                    }" style="position:relative;">
+                        <input type="hidden" name="pegawai_id" :value="value" required>
+                        <button type="button"
+                                @click="toggleOpen($el)"
+                                @click.outside="open = false"
+                                style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; background:#fff; cursor:pointer; padding:10px 14px; border:1px solid {{ $errors->has('pegawai_id') ? '#fca5a5' : '#e2e8f0' }}; border-radius:12px; font-size:14px; gap:8px;">
+                            <span x-text="label || '-- Pilih Pegawai --'"
+                                  :style="!label ? 'color:#94a3b8;' : 'color:#1e293b;'"></span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+
+                        <div x-show="open"
+                             x-transition.opacity
+                             :style="direction === 'up'
+                                 ? 'display:flex; flex-direction:column-reverse; position:absolute; z-index:50; width:100%; bottom:calc(100% + 4px); background:white; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.12); overflow:hidden;'
+                                 : 'display:flex; flex-direction:column; position:absolute; z-index:50; width:100%; top:calc(100% + 4px); background:white; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.12); overflow:hidden;'"
+                             style="display:none;">
+
+                            <div style="padding:10px 12px; border-bottom:1px solid #e2e8f0; background:#f8fafc; flex-shrink:0;">
+                                <div style="position:relative;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:10px; top:9px; color:#94a3b8;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                    <input type="text" x-model="search" placeholder="Cari nama atau NIP..."
+                                           style="width:100%; padding:7px 10px 7px 32px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                                           @click.stop>
+                                </div>
+                            </div>
+
+                            <div :style="'overflow-y:auto; max-height:' + maxListHeight + 'px;'">
+                                <template x-if="filtered.length === 0">
+                                    <div style="padding:16px; font-size:13px; color:#64748b; text-align:center;">Pegawai tidak ditemukan.</div>
+                                </template>
+                                <template x-for="p in filtered" :key="p.id">
+                                    <div @click="select(p.id, p.nama)"
+                                         style="padding:10px 16px; cursor:pointer; border-bottom:1px solid #f1f5f9;"
+                                         onmouseover="this.style.backgroundColor='#eff6ff'"
+                                         onmouseout="this.style.backgroundColor='transparent'">
+                                        <div style="display:flex; align-items:center; justify-content:space-between;">
+                                            <div>
+                                                <div x-text="p.nama" style="font-size:13px; font-weight:600; color:#1e293b;"></div>
+                                                <div x-show="p.nip" x-text="'NIP: ' + p.nip" style="font-size:11px; color:#64748b; margin-top:2px;"></div>
+                                            </div>
+                                            <svg x-show="value == p.id" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <div style="padding:8px 14px; border-top:1px solid #e2e8f0; background:#f8fafc; flex-shrink:0;">
+                                <button type="button" @click.stop="clear()"
+                                        :disabled="!value"
+                                        :style="!value ? 'opacity:0.4; cursor:not-allowed;' : 'cursor:pointer;'"
+                                        style="display:flex; align-items:center; gap:5px; color:#ef4444; font-size:12px; font-weight:600; background:none; border:none; padding:3px 0; outline:none; width:100%;">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    Hapus Pilihan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -54,6 +158,13 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                     Detail Cuti
                 </h3>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+                    <div>
+                        <label style="display:block; font-size:13px; font-weight:600; color:#475569; margin-bottom:6px;">Nomor Surat Cuti *</label>
+                        <input type="text" name="nomor_surat_cuti" value="{{ old('nomor_surat_cuti', $cuti->surat->nomor_surat ?? $cuti->nomor_pengajuan) }}" required placeholder="Contoh: B/123/800.1.11.1/DISHUB/2026" style="width:100%; padding:10px 14px; border:1px solid #e2e8f0; border-radius:12px; font-size:14px; color:#1e293b;">
+                    </div>
+                </div>
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
                     <div>

@@ -89,22 +89,15 @@ class CutiController extends Controller
 
     public function edit(PengajuanCuti $cuti)
     {
-        if ($cuti->status !== 'draft') {
-            return redirect()->route('kepegawaian.cuti.index')->with('error', 'Hanya pengajuan berstatus draft yang dapat diedit.');
-        }
         $pegawais = \App\Models\Pegawai::where('status_aktif', true)->get();
         return view('kepegawaian.cuti.edit', compact('cuti', 'pegawais'));
     }
 
     public function update(Request $request, PengajuanCuti $cuti)
     {
-        if ($cuti->status !== 'draft') {
-            return redirect()->route('kepegawaian.cuti.index')->with('error', 'Hanya pengajuan berstatus draft yang dapat diedit.');
-        }
-
         $validated = $request->validate([
             'pegawai_id' => 'required|exists:pegawai,id',
-            'nomor_surat_cuti' => 'nullable|string',
+            'nomor_surat_cuti' => 'required|string',
             'jenis_cuti' => 'required|string',
             'alasan' => 'required|string',
             'tanggal_mulai' => 'required|date',
@@ -131,7 +124,17 @@ class CutiController extends Controller
             ]);
         }
 
-        return redirect()->route('kepegawaian.cuti.show', $cuti)->with('status', 'Pengajuan cuti berhasil diperbarui.');
+        $surat = Surat::where('source_type', PengajuanCuti::class)->where('source_id', $cuti->id)->first();
+        if ($surat) {
+            $pegawai = \App\Models\Pegawai::find($cuti->pegawai_id);
+            $surat->update([
+                'nomor_surat' => $validated['nomor_surat_cuti'],
+                'perihal' => 'Persetujuan Cuti ' . $pegawai->nama,
+                'tujuan' => $pegawai->nama,
+            ]);
+        }
+
+        return redirect()->route('kepegawaian.cuti.index')->with('status', 'Data cuti berhasil diperbarui.');
     }
 
     public function destroy(PengajuanCuti $cuti)
