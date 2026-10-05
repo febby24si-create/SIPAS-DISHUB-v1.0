@@ -97,7 +97,7 @@
                     <div id="trendLoading" style="display:none; position:absolute; inset:0; background:rgba(255,255,255,0.75); align-items:center; justify-content:center; font-size:13px; color:#64748b; border-radius:8px;">Memuat data...</div>
                 </div>
             </div>
-            
+
             <div style="background:white; border-radius:10px; border:1px solid #e2e8f0; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
                 <h3 style="margin:0 0 16px; font-size:14.5px; font-weight:700; color:#1e293b;">Distribusi Jenis Dokumen</h3>
                 @if(count($distribusiData) > 0)
@@ -184,7 +184,7 @@
                     </thead>
                     <tbody>
                         @forelse($aktivitasTerbaru as $log)
-                        <tr style="border-bottom:1px solid #f1f5f9; transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                        <tr class="aktivitas-row" style="border-bottom:1px solid #f1f5f9; transition:background 0.15s;">
                             <td style="padding:12px 20px; color:#64748b; white-space:nowrap;">{{ $log->created_at?->translatedFormat('d M Y, H:i') }}</td>
                             <td style="padding:12px 20px; color:#1e293b; font-weight:600; white-space:nowrap;">{{ $log->user->name ?? 'Sistem' }}</td>
                             <td style="padding:12px 20px; color:#334155;">{{ $log->aktivitas ?? $log->description ?? 'Melakukan aksi sistem' }}</td>
@@ -213,23 +213,120 @@
     @push('scripts')
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        /* Jam Realtime */
+        /* ── Jam Realtime ── */
         const HARI_ID  = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
         const BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
         const elTgl = document.getElementById('jam-tanggal');
         const elJam = document.getElementById('jam-waktu');
         function updateJam() {
             const n = new Date();
-            if(elJam) elJam.textContent = `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;
-            if(elTgl) elTgl.textContent = `${HARI_ID[n.getDay()]}, ${n.getDate()} ${BULAN_ID[n.getMonth()]} ${n.getFullYear()}`;
+            if (elJam) elJam.textContent = `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;
+            if (elTgl) elTgl.textContent = `${HARI_ID[n.getDay()]}, ${n.getDate()} ${BULAN_ID[n.getMonth()]} ${n.getFullYear()}`;
         }
         updateJam(); setInterval(updateJam, 1000);
 
-        /* Chart.js */
+        /* ── Aktivitas table hover: theme-aware ── */
+        document.querySelectorAll('.aktivitas-row').forEach(function(tr) {
+            tr.addEventListener('mouseover', function() {
+                this.style.background = document.documentElement.getAttribute('data-theme') === 'dark'
+                    ? '#162032' : '#f8fafc';
+            });
+            tr.addEventListener('mouseout', function() {
+                this.style.background = 'transparent';
+            });
+        });
+
+        /* ── Chart.js ── */
         const Chart = window.Chart;
         if (!Chart) return;
 
         const PALETTE = ['#1d4ed8','#22c55e','#ea580c','#7c3aed','#0ea5e9','#e11d48','#0d9488'];
+
+        /* Deteksi dark mode */
+        function isDark() {
+            return document.documentElement.getAttribute('data-theme') === 'dark';
+        }
+
+        /* Palette warna chart berdasarkan tema */
+        function chartColors() {
+            if (isDark()) {
+                return {
+                    tickColor:     '#94a3b8',
+                    gridColor:     '#293548',
+                    labelColor:    '#94a3b8',
+                    tooltipBg:     '#1e293b',
+                    tooltipTitle:  '#e2e8f0',
+                    tooltipBody:   '#cbd5e1',
+                    tooltipBorder: '#334155',
+                    doughnutBorder:'#1e293b',
+                };
+            }
+            return {
+                tickColor:     '#64748b',
+                gridColor:     '#f1f5f9',
+                labelColor:    '#64748b',
+                tooltipBg:     '#ffffff',
+                tooltipTitle:  '#1e293b',
+                tooltipBody:   '#475569',
+                tooltipBorder: '#e2e8f0',
+                doughnutBorder:'#ffffff',
+            };
+        }
+
+        /* Terapkan warna ke semua chart yang sudah dibuat */
+        function applyThemeToAllCharts() {
+            const c = chartColors();
+            if (!Chart.instances) return;
+            Object.values(Chart.instances).forEach(function(chart) {
+                if (!chart || !chart.config) return;
+                const opts = chart.config.options || {};
+
+                // Scales (x, y, r)
+                if (opts.scales) {
+                    Object.keys(opts.scales).forEach(function(axis) {
+                        const sc = opts.scales[axis];
+                        if (!sc) return;
+                        if (sc.ticks) sc.ticks.color = c.tickColor;
+                        if (sc.grid && sc.grid.display !== false) sc.grid.color = c.gridColor;
+                    });
+                }
+
+                // Legend labels color
+                if (opts.plugins && opts.plugins.legend && opts.plugins.legend.labels) {
+                    opts.plugins.legend.labels.color = c.labelColor;
+                }
+
+                // Tooltip
+                if (opts.plugins) {
+                    if (!opts.plugins.tooltip) opts.plugins.tooltip = {};
+                    const tt = opts.plugins.tooltip;
+                    tt.backgroundColor = c.tooltipBg;
+                    tt.titleColor      = c.tooltipTitle;
+                    tt.bodyColor       = c.tooltipBody;
+                    tt.borderColor     = c.tooltipBorder;
+                    tt.borderWidth     = 1;
+                }
+
+                // Doughnut border
+                if (chart.config.type === 'doughnut' && chart.data && chart.data.datasets) {
+                    chart.data.datasets.forEach(function(ds) { ds.borderColor = c.doughnutBorder; });
+                }
+
+                chart.update('none');
+            });
+        }
+
+        /* MutationObserver: update chart saat tema berubah */
+        new MutationObserver(function(mutations) {
+            mutations.forEach(function(m) {
+                if (m.type === 'attributes' && m.attributeName === 'data-theme') {
+                    setTimeout(applyThemeToAllCharts, 80);
+                }
+            });
+        }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+        /* Warna saat init */
+        const c = chartColors();
 
         /* 1. Tren Surat + Cuti + KGB */
         const trendLabels = @json($trendLabels);
@@ -257,11 +354,12 @@
                     responsive:true, maintainAspectRatio:false,
                     interaction:{ mode:'index', intersect:false },
                     plugins:{
-                        legend:{ display:true, position:'top', labels:{ font:{size:12}, boxWidth:12, usePointStyle:true } }
+                        legend:{ display:true, position:'top', labels:{ font:{size:12}, boxWidth:12, usePointStyle:true, color:c.labelColor } },
+                        tooltip:{ backgroundColor:c.tooltipBg, titleColor:c.tooltipTitle, bodyColor:c.tooltipBody, borderColor:c.tooltipBorder, borderWidth:1 }
                     },
                     scales:{
-                        x:{ grid:{display:false}, ticks:{font:{size:12},color:'#64748b',maxTicksLimit:10}, border:{display:false} },
-                        y:{ grid:{color:'#f1f5f9'}, ticks:{font:{size:12},color:'#64748b',precision:0,stepSize:1}, border:{display:false}, beginAtZero:true }
+                        x:{ grid:{display:false}, ticks:{font:{size:12},color:c.tickColor,maxTicksLimit:10}, border:{display:false} },
+                        y:{ grid:{color:c.gridColor}, ticks:{font:{size:12},color:c.tickColor,precision:0,stepSize:1}, border:{display:false}, beginAtZero:true }
                     }
                 }
             });
@@ -271,27 +369,17 @@
         const periodeSelect = document.getElementById('periodeTrend');
         const periodeLabel  = document.getElementById('periodeTrendLabel');
         const loadingEl     = document.getElementById('trendLoading');
-        const labelMap = {
-            '7_hari':  '7 Hari Terakhir',
-            '30_hari': '30 Hari Terakhir',
-            'bulan':   '6 Bulan Terakhir',
-        };
+        const labelMap = { '7_hari':'7 Hari Terakhir', '30_hari':'30 Hari Terakhir', 'bulan':'6 Bulan Terakhir' };
 
         function fetchTrend(periode) {
             if (!chartTren) return;
-
-            // Tampilkan loading overlay
             if (loadingEl) { loadingEl.style.display = 'flex'; }
-
             fetch(TREND_URL + '?periode=' + encodeURIComponent(periode), {
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
             })
-            .then(function(res) {
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                return res.json();
-            })
+            .then(function(res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
             .then(function(data) {
-                chartTren.data.labels          = data.labels;
+                chartTren.data.labels           = data.labels;
                 chartTren.data.datasets[0].data = data.masuk;
                 chartTren.data.datasets[1].data = data.keluar;
                 chartTren.data.datasets[2].data = data.cuti;
@@ -303,49 +391,45 @@
                 console.error('Trend fetch error:', err);
                 if (periodeLabel) periodeLabel.textContent = 'Gagal memuat data';
             })
-            .finally(function() {
-                if (loadingEl) { loadingEl.style.display = 'none'; }
-            });
+            .finally(function() { if (loadingEl) { loadingEl.style.display = 'none'; } });
         }
-
-        if (periodeSelect) {
-            periodeSelect.addEventListener('change', function() {
-                fetchTrend(this.value);
-            });
-        }
+        if (periodeSelect) periodeSelect.addEventListener('change', function() { fetchTrend(this.value); });
 
         /* 2. Distribusi (Donut) */
         const distLabels = @json($distribusiLabels);
-        const distData = @json($distribusiData);
-        const ctxDist = document.getElementById('chartDistribusi');
+        const distData   = @json($distribusiData);
+        const ctxDist    = document.getElementById('chartDistribusi');
         if (ctxDist && distData.length > 0) {
             new Chart(ctxDist, {
                 type: 'doughnut',
-                data: { labels: distLabels, datasets: [{ data: distData, backgroundColor: PALETTE.slice(0, distData.length), borderWidth:2, borderColor:'#fff' }] },
+                data: { labels: distLabels, datasets: [{ data: distData, backgroundColor: PALETTE.slice(0, distData.length), borderWidth:2, borderColor: c.doughnutBorder }] },
                 options: {
                     responsive:true, maintainAspectRatio:false, cutout:'65%',
-                    plugins: { legend: { display: false } }
+                    plugins: {
+                        legend: { display: false },
+                        tooltip:{ backgroundColor:c.tooltipBg, titleColor:c.tooltipTitle, bodyColor:c.tooltipBody, borderColor:c.tooltipBorder, borderWidth:1 }
+                    }
                 }
             });
         }
 
         /* 3. Klasifikasi (Bar Horizontal) */
         const klasifLabels = @json($klasifikasiLabels);
-        const klasifData = @json($klasifikasiData);
-        const ctxKlasif = document.getElementById('chartKlasifikasi');
+        const klasifData   = @json($klasifikasiData);
+        const ctxKlasif    = document.getElementById('chartKlasifikasi');
         if (ctxKlasif && klasifData.length > 0) {
             new Chart(ctxKlasif, {
                 type: 'bar',
-                data: {
-                    labels: klasifLabels,
-                    datasets: [{ data: klasifData, backgroundColor: '#3b82f6', borderRadius: 4 }]
-                },
+                data: { labels: klasifLabels, datasets: [{ data: klasifData, backgroundColor: '#3b82f6', borderRadius: 4 }] },
                 options: {
                     indexAxis: 'y', responsive:true, maintainAspectRatio:false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip:{ backgroundColor:c.tooltipBg, titleColor:c.tooltipTitle, bodyColor:c.tooltipBody, borderColor:c.tooltipBorder, borderWidth:1 }
+                    },
                     scales: {
-                        x: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 12 }, color: '#64748b', precision: 0, stepSize: 1 }, border: { display: false }, beginAtZero: true },
-                        y: { grid: { display: false }, ticks: { font: { size: 12 }, color: '#334155' }, border: { display: false } }
+                        x: { grid:{ color:c.gridColor }, ticks:{ font:{size:12}, color:c.tickColor, precision:0, stepSize:1 }, border:{display:false}, beginAtZero:true },
+                        y: { grid:{ display:false }, ticks:{ font:{size:12}, color:c.tickColor }, border:{display:false} }
                     }
                 }
             });
@@ -353,21 +437,21 @@
 
         /* 4. Unit Kerja (Bar Horizontal) */
         const unitLabels = @json($unitKerjaLabels);
-        const unitData = @json($unitKerjaData);
-        const ctxUnit = document.getElementById('chartUnitKerja');
+        const unitData   = @json($unitKerjaData);
+        const ctxUnit    = document.getElementById('chartUnitKerja');
         if (ctxUnit && unitData.length > 0) {
             new Chart(ctxUnit, {
                 type: 'bar',
-                data: {
-                    labels: unitLabels,
-                    datasets: [{ data: unitData, backgroundColor: '#6366f1', borderRadius: 4 }]
-                },
+                data: { labels: unitLabels, datasets: [{ data: unitData, backgroundColor: '#6366f1', borderRadius: 4 }] },
                 options: {
                     indexAxis: 'y', responsive:true, maintainAspectRatio:false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip:{ backgroundColor:c.tooltipBg, titleColor:c.tooltipTitle, bodyColor:c.tooltipBody, borderColor:c.tooltipBorder, borderWidth:1 }
+                    },
                     scales: {
-                        x: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 12 }, color: '#64748b', precision: 0, stepSize: 1 }, border: { display: false }, beginAtZero: true },
-                        y: { grid: { display: false }, ticks: { font: { size: 12 }, color: '#334155' }, border: { display: false } }
+                        x: { grid:{ color:c.gridColor }, ticks:{ font:{size:12}, color:c.tickColor, precision:0, stepSize:1 }, border:{display:false}, beginAtZero:true },
+                        y: { grid:{ display:false }, ticks:{ font:{size:12}, color:c.tickColor }, border:{display:false} }
                     }
                 }
             });
@@ -375,25 +459,21 @@
 
         /* 5. Rekap Kepegawaian (Bar Vertikal) */
         const rekapLabels = @json($rekapKepegawaianLabels);
-        const rekapData = @json($rekapKepegawaianData);
-        const ctxRekap = document.getElementById('chartRekapKepegawaian');
+        const rekapData   = @json($rekapKepegawaianData);
+        const ctxRekap    = document.getElementById('chartRekapKepegawaian');
         if (ctxRekap) {
             new Chart(ctxRekap, {
                 type: 'bar',
-                data: {
-                    labels: rekapLabels,
-                    datasets: [{
-                        data: rekapData,
-                        backgroundColor: ['#ea580c', '#7c3aed'],
-                        borderRadius: 4
-                    }]
-                },
+                data: { labels: rekapLabels, datasets: [{ data: rekapData, backgroundColor: ['#ea580c', '#7c3aed'], borderRadius: 4 }] },
                 options: {
                     responsive:true, maintainAspectRatio:false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip:{ backgroundColor:c.tooltipBg, titleColor:c.tooltipTitle, bodyColor:c.tooltipBody, borderColor:c.tooltipBorder, borderWidth:1 }
+                    },
                     scales: {
-                        x: { grid: { display: false }, ticks: { font: { size: 12 }, color: '#334155' }, border: { display: false } },
-                        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 12 }, color: '#64748b', precision: 0, stepSize: 1 }, border: { display: false }, beginAtZero: true }
+                        x: { grid:{ display:false }, ticks:{ font:{size:12}, color:c.tickColor }, border:{display:false} },
+                        y: { grid:{ color:c.gridColor }, ticks:{ font:{size:12}, color:c.tickColor, precision:0, stepSize:1 }, border:{display:false}, beginAtZero:true }
                     }
                 }
             });

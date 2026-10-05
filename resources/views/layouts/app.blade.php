@@ -14,6 +14,56 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        {{-- Anti-flash: terapkan theme/sidebar dari localStorage sebelum render --}}
+        <script>
+            (function() {
+                try {
+                    var s = JSON.parse(localStorage.getItem('sipas-theme-settings') || '{}');
+                    var theme = s.theme || 'light';
+                    var sidebar = s.sidebar || 'full';
+                    var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+                    document.documentElement.setAttribute('data-sidebar', sidebar);
+                    // Accent variables
+                    var accentMap = {
+                        blue:   { main:'#2563eb', dark:'#1d4ed8', soft:'#eff6ff', sb:'#1e40af' },
+                        indigo: { main:'#4f46e5', dark:'#4338ca', soft:'#eef2ff', sb:'#3730a3' },
+                        purple: { main:'#7c3aed', dark:'#6d28d9', soft:'#f5f3ff', sb:'#5b21b6' },
+                        red:    { main:'#dc2626', dark:'#b91c1c', soft:'#fef2f2', sb:'#991b1b' },
+                        orange: { main:'#ea580c', dark:'#c2410c', soft:'#fff7ed', sb:'#9a3412' },
+                        green:  { main:'#16a34a', dark:'#15803d', soft:'#f0fdf4', sb:'#166534' },
+                        teal:   { main:'#0d9488', dark:'#0f766e', soft:'#f0fdfa', sb:'#115e59' },
+                        cyan:   { main:'#0891b2', dark:'#0e7490', soft:'#ecfeff', sb:'#155e75' },
+                    };
+                    var accent = s.accent || 'blue';
+                    var c = accentMap[accent] || accentMap.blue;
+                    var root = document.documentElement;
+                    root.style.setProperty('--tc-accent', c.main);
+                    root.style.setProperty('--tc-accent-dark', c.dark);
+                    root.style.setProperty('--tc-accent-soft', c.soft);
+                    root.style.setProperty('--tc-accent-sidebar', c.sb);
+                    // Radius variables + data-radius attribute
+                    var radiusMap = {
+                        sharp:  { sm:'0px',  md:'0px',  lg:'0px'  },
+                        small:  { sm:'4px',  md:'6px',  lg:'8px'  },
+                        medium: { sm:'6px',  md:'10px', lg:'14px' },
+                        large:  { sm:'10px', md:'16px', lg:'24px' },
+                    };
+                    var radius = s.radius || 'small';
+                    var r = radiusMap[radius] || radiusMap.small;
+                    root.style.setProperty('--tc-radius-sm', r.sm);
+                    root.style.setProperty('--tc-radius-md', r.md);
+                    root.style.setProperty('--tc-radius-lg', r.lg);
+                    root.setAttribute('data-radius', radius);
+                } catch(e) {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    document.documentElement.setAttribute('data-sidebar', 'full');
+                    document.documentElement.setAttribute('data-radius', 'small');
+                }
+            })();
+        </script>
+
     </head>
     <body class="font-sans antialiased" style="background:#f0f4f8;">
 
@@ -37,6 +87,7 @@
                 <p class="sidebar-section-label">Dashboard</p>
 
                 <a href="{{ route('dashboard') }}"
+                   data-tooltip="Dashboard"
                    class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <span class="icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -52,6 +103,7 @@
                 {{-- Surat Masuk (dropdown) --}}
                 <div x-data="{ open: {{ request()->routeIs('surat-masuk.*') ? 'true' : 'false' }} }">
                     <a href="#" @click.prevent="open = !open"
+                       data-tooltip="Surat Masuk"
                        class="sidebar-link {{ request()->routeIs('surat-masuk.*') ? 'active' : '' }}">
                         <span class="icon">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -79,6 +131,7 @@
                 {{-- Surat Keluar (dropdown) --}}
                 <div x-data="{ open: {{ request()->routeIs('surat-keluar.*') ? 'true' : 'false' }} }">
                     <a href="#" @click.prevent="open = !open"
+                       data-tooltip="Surat Keluar"
                        class="sidebar-link {{ request()->routeIs('surat-keluar.*') ? 'active' : '' }}">
                         <span class="icon">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -105,6 +158,7 @@
                 <p class="sidebar-section-label">Arsip</p>
 
                 <a href="{{ route('arsip.index') }}"
+                   data-tooltip="Arsip Digital"
                    class="sidebar-link {{ request()->routeIs('arsip.*') ? 'active' : '' }}">
                     <span class="icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -115,6 +169,7 @@
                 </a>
 
                 <a href="{{ route('pencarian.index') }}"
+                   data-tooltip="Pencarian Surat"
                    class="sidebar-link {{ request()->routeIs('pencarian.*') ? 'active' : '' }}">
                     <span class="icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -128,6 +183,7 @@
 
                 {{-- Pengajuan Cuti --}}
                 <a href="{{ route('kepegawaian.cuti.index') }}"
+                   data-tooltip="Pengajuan Cuti"
                    class="sidebar-link {{ request()->routeIs('kepegawaian.cuti.*') ? 'active' : '' }}">
                     <span class="icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -154,6 +210,7 @@
 
                 {{-- Gaji Berkala --}}
                 <a href="{{ route('kepegawaian.kgb.index') }}"
+                   data-tooltip="Gaji Berkala"
                    class="sidebar-link {{ request()->routeIs('kepegawaian.kgb.*') ? 'active' : '' }}">
                     <span class="icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -166,6 +223,7 @@
                 <p class="sidebar-section-label">Laporan</p>
 
                 <a href="{{ route('laporan.index') }}"
+                   data-tooltip="Laporan Persuratan"
                    class="sidebar-link {{ request()->routeIs('laporan.*') ? 'active' : '' }}">
                     <span class="icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -177,6 +235,7 @@
 
                 {{-- Buku Tamu (Admin) --}}
                 <a href="{{ route('buku-tamu.index') }}"
+                   data-tooltip="Buku Tamu"
                    class="sidebar-link {{ request()->routeIs('buku-tamu.index') || request()->routeIs('buku-tamu.show') ? 'active' : '' }}">
                     <span class="icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -190,6 +249,7 @@
                 <p class="sidebar-section-label">Master Data</p>
                 <div x-data="{ open: {{ request()->routeIs('jenis-surat.*') || request()->routeIs('klasifikasi-surat.*') || request()->routeIs('nomor-surat.*') ? 'true' : 'false' }} }">
                     <a href="#" @click.prevent="open = !open"
+                       data-tooltip="Persuratan"
                        class="sidebar-link {{ request()->routeIs('jenis-surat.*') || request()->routeIs('klasifikasi-surat.*') || request()->routeIs('nomor-surat.*') ? 'active' : '' }}">
                         <span class="icon">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -220,6 +280,7 @@
                 {{-- Master Data - Kepegawaian & Organisasi --}}
                 <div x-data="{ open: {{ request()->routeIs('unit-kerja.*') || request()->routeIs('pegawai.*') ? 'true' : 'false' }} }">
                     <a href="#" @click.prevent="open = !open"
+                       data-tooltip="Kepeg. & Organisasi"
                        class="sidebar-link {{ request()->routeIs('unit-kerja.*') || request()->routeIs('pegawai.*') ? 'active' : '' }}">
                         <span class="icon">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -246,6 +307,7 @@
                 <p class="sidebar-section-label">Pengguna</p>
 
                 <a href="{{ route('pengguna.index') }}"
+                   data-tooltip="Daftar Pengguna"
                    class="sidebar-link {{ request()->routeIs('pengguna.*') ? 'active' : '' }}">
                     <span class="icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -259,6 +321,7 @@
 
                 <div x-data="{ open: {{ request()->routeIs('pengaturan.*') ? 'true' : 'false' }} }">
                     <a href="#" @click.prevent="open = !open"
+                       data-tooltip="Pengaturan"
                        class="sidebar-link {{ request()->routeIs('pengaturan.*') ? 'active' : '' }}">
                         <span class="icon">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -360,6 +423,8 @@
                     <button style="width:36px; height:36px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                     </button>
+                    {{-- Theme Customizer Trigger --}}
+                    <x-theme-customizer />
                 </div>
             </header>
             @endisset
@@ -370,6 +435,92 @@
             </main>
         </div>
 
+        {{-- ════════ DARK MODE: Dropdown & DOM Patches ════════ --}}
+        {{-- Patch onmouseover/onmouseout dan Alpine :style yang inject warna hardcoded --}}
+        <script>
+        (function() {
+            function isDark() {
+                return document.documentElement.getAttribute('data-theme') === 'dark';
+            }
+
+            /* ── Patch onmouseover pada dropdown item ── */
+            function patchDropdownItems(root) {
+                root = root || document;
+                // Semua div yang punya onmouseover berisi backgroundColor
+                root.querySelectorAll('div[onmouseover*="backgroundColor"]').forEach(function(el) {
+                    if (el._dmPatched) return;
+                    el._dmPatched = true;
+
+                    const origOver = el.getAttribute('onmouseover') || '';
+                    const origOut  = el.getAttribute('onmouseout')  || '';
+
+                    el.addEventListener('mouseover', function(e) {
+                        if (isDark()) {
+                            this.style.backgroundColor = '#1e3a5c'; // dark hover: biru navy subtle
+                        }
+                        // light mode: biarkan inline onmouseover berjalan normal
+                    }, true);
+
+                    el.addEventListener('mouseout', function(e) {
+                        if (isDark()) {
+                            this.style.backgroundColor = 'transparent';
+                        }
+                    }, true);
+                });
+
+                // Patch tr.aktivitas-row jika ada
+                root.querySelectorAll('.aktivitas-row').forEach(function(tr) {
+                    if (tr._dmPatched) return;
+                    tr._dmPatched = true;
+                    tr.addEventListener('mouseover', function() {
+                        this.style.background = isDark() ? '#162032' : '#f8fafc';
+                    });
+                    tr.addEventListener('mouseout', function() {
+                        this.style.background = 'transparent';
+                    });
+                });
+            }
+
+            /* ── Patch Alpine :style span yang inject color:#1e293b ── */
+            function patchAlpineSpans(root) {
+                root = root || document;
+                // Span dalam dropdown trigger yang punya inline color:#1e293b saat dipilih
+                root.querySelectorAll('button[style*="background:#fff"] span[style*="color:#1e293b"], button[style*="background: #fff"] span[style*="color:#1e293b"]').forEach(function(el) {
+                    if (isDark() && el.style.color === '#1e293b' || el.style.color === 'rgb(30, 41, 59)') {
+                        el.style.color = '#e2e8f0';
+                    }
+                });
+            }
+
+            /* ── Jalankan patch saat DOM ready ── */
+            function runAllPatches() {
+                patchDropdownItems();
+                patchAlpineSpans();
+            }
+
+            document.addEventListener('DOMContentLoaded', runAllPatches);
+
+            /* ── MutationObserver: patch item baru yang dirender Alpine x-for ── */
+            var observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(m) {
+                    if (m.type === 'childList' && m.addedNodes.length) {
+                        m.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1) {
+                                patchDropdownItems(node.parentElement || document);
+                                patchAlpineSpans(node.parentElement || document);
+                            }
+                        });
+                    }
+                });
+            });
+            document.addEventListener('DOMContentLoaded', function() {
+                observer.observe(document.body, { childList: true, subtree: true });
+            });
+
+        })();
+        </script>
+
         @stack('scripts')
+
     </body>
 </html>

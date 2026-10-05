@@ -148,7 +148,6 @@
                                                  style="padding:9px 14px 9px 22px; font-size:13px; color:#334155; cursor:pointer; display:flex; align-items:center; gap:7px;"
                                                  onmouseover="this.style.backgroundColor='#eff6ff'"
                                                  onmouseout="this.style.backgroundColor='transparent'">
-                                                <span style="color:#cbd5e1; font-weight:bold;">↳</span>
                                                 <span x-text="seksi.nama" style="flex:1;"></span>
                                                 <svg x-show="value == seksi.id" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                                             </div>
