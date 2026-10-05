@@ -67,6 +67,9 @@
     </head>
     <body class="font-sans antialiased" style="background:#f0f4f8;">
 
+        {{-- ════════ MOBILE OVERLAY ════════ --}}
+        <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+
         {{-- ════════ SIDEBAR ════════ --}}
         <aside class="sidebar" id="sidebar">
             {{-- Logo / Brand --}}
@@ -80,6 +83,12 @@
                     <span class="title">SIPAS</span>
                     <span class="subtitle">Dinas Perhubungan</span>
                 </div>
+                {{-- Mobile close button --}}
+                <button class="sidebar-mobile-close" id="btn-sidebar-close" onclick="closeMobileSidebar()" title="Tutup menu" aria-label="Tutup sidebar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
             </div>
 
             {{-- Navigation --}}
@@ -95,63 +104,77 @@
                             <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
                         </svg>
                     </span>
-                    Dashboard
+                    <span class="nav-label">Dashboard</span>
                 </a>
 
                 <p class="sidebar-section-label">Persuratan</p>
 
-                {{-- Surat Masuk (dropdown) --}}
-                <div x-data="{ open: {{ request()->routeIs('surat-masuk.*') ? 'true' : 'false' }} }">
-                    <a href="#" @click.prevent="open = !open"
-                       data-tooltip="Surat Masuk"
-                       class="sidebar-link {{ request()->routeIs('surat-masuk.*') ? 'active' : '' }}">
-                        <span class="icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
-                                <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+                {{-- ── Surat Masuk (submenu) ── --}}
+                <div x-data="{ expanded: {{ request()->routeIs('surat-masuk.*') ? 'true' : 'false' }} }">
+                    <div class="sidebar-link-row {{ request()->routeIs('surat-masuk.*') ? 'active' : '' }}">
+                        {{-- Tombol utama: toggle submenu --}}
+                        <button type="button"
+                                class="sidebar-link-main"
+                                data-tooltip="Surat Masuk"
+                                @click="expanded = !expanded">
+                            <span class="icon">
+                                <svg style="pointer-events: none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
+                                    <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+                                </svg>
+                            </span>
+                            <span class="nav-label">Surat Masuk</span>
+                        </button>
+                        {{-- Tombol panah: HANYA toggle, terpisah --}}
+                        <button type="button" class="sidebar-arrow-btn" @click="expanded = !expanded"
+                                :aria-expanded="expanded" aria-label="Toggle Surat Masuk">
+                            <svg class="arrow-icon" :class="expanded ? 'rotated' : ''"
+                                 style="pointer-events: none;"
+                                 width="11" height="11" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2.5"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"/>
                             </svg>
-                        </span>
-                        Surat Masuk
-                        <span class="arrow" :class="open ? 'rotated' : ''">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                        </span>
-                    </a>
-                    <div class="sidebar-submenu" x-show="open">
+                        </button>
+                    </div>
+                    <div class="sidebar-submenu" x-show="expanded">
                         <a href="{{ route('surat-masuk.index') }}"
-                           class="sidebar-submenu-link {{ request()->routeIs('surat-masuk.index') ? 'active' : '' }}">
-                            Daftar Surat
-                        </a>
+                           class="sidebar-submenu-link {{ request()->routeIs('surat-masuk.index') ? 'active' : '' }}">Daftar Surat</a>
                         <a href="{{ route('surat-masuk.create') }}"
-                           class="sidebar-submenu-link {{ request()->routeIs('surat-masuk.create') ? 'active' : '' }}">
-                            Input Surat
-                        </a>
+                           class="sidebar-submenu-link {{ request()->routeIs('surat-masuk.create') ? 'active' : '' }}">Input Surat</a>
                     </div>
                 </div>
 
-                {{-- Surat Keluar (dropdown) --}}
-                <div x-data="{ open: {{ request()->routeIs('surat-keluar.*') ? 'true' : 'false' }} }">
-                    <a href="#" @click.prevent="open = !open"
-                       data-tooltip="Surat Keluar"
-                       class="sidebar-link {{ request()->routeIs('surat-keluar.*') ? 'active' : '' }}">
-                        <span class="icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                {{-- ── Surat Keluar (submenu) ── --}}
+                <div x-data="{ expanded: {{ request()->routeIs('surat-keluar.*') ? 'true' : 'false' }} }">
+                    <div class="sidebar-link-row {{ request()->routeIs('surat-keluar.*') ? 'active' : '' }}">
+                        <button type="button"
+                                class="sidebar-link-main"
+                                data-tooltip="Surat Keluar"
+                                @click="expanded = !expanded">
+                            <span class="icon">
+                                <svg style="pointer-events: none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                </svg>
+                            </span>
+                            <span class="nav-label">Surat Keluar</span>
+                        </button>
+                        <button type="button" class="sidebar-arrow-btn" @click="expanded = !expanded"
+                                :aria-expanded="expanded" aria-label="Toggle Surat Keluar">
+                            <svg class="arrow-icon" :class="expanded ? 'rotated' : ''"
+                                 style="pointer-events: none;"
+                                 width="11" height="11" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2.5"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"/>
                             </svg>
-                        </span>
-                        Surat Keluar
-                        <span class="arrow" :class="open ? 'rotated' : ''">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                        </span>
-                    </a>
-                    <div class="sidebar-submenu" x-show="open">
+                        </button>
+                    </div>
+                    <div class="sidebar-submenu" x-show="expanded">
                         <a href="{{ route('surat-keluar.index') }}"
-                           class="sidebar-submenu-link {{ request()->routeIs('surat-keluar.index') ? 'active' : '' }}">
-                            Daftar Surat
-                        </a>
+                           class="sidebar-submenu-link {{ request()->routeIs('surat-keluar.index') ? 'active' : '' }}">Daftar Surat</a>
                         <a href="{{ route('surat-keluar.draft') }}"
-                           class="sidebar-submenu-link {{ request()->routeIs('surat-keluar.draft') ? 'active' : '' }}">
-                            Draft Surat
-                        </a>
+                           class="sidebar-submenu-link {{ request()->routeIs('surat-keluar.draft') ? 'active' : '' }}">Draft Surat</a>
                     </div>
                 </div>
 
@@ -165,7 +188,7 @@
                             <path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/>
                         </svg>
                     </span>
-                    Arsip Digital
+                    <span class="nav-label">Arsip Digital</span>
                 </a>
 
                 <a href="{{ route('pencarian.index') }}"
@@ -176,7 +199,7 @@
                             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                         </svg>
                     </span>
-                    Pencarian Surat
+                    <span class="nav-label">Pencarian Surat</span>
                 </a>
 
                 <p class="sidebar-section-label">Kepegawaian</p>
@@ -192,21 +215,8 @@
                             <polyline points="7 3 7 8 15 8"></polyline>
                         </svg>
                     </span>
-                    Pengajuan Cuti
+                    <span class="nav-label">Pengajuan Cuti</span>
                 </a>
-
-                {{-- Kenaikan Pangkat (Dinonaktifkan - Pindah ke SRIKANDI) --}}
-                {{--
-                <a href="{{ route('kepegawaian.pangkat.index') }}"
-                   class="sidebar-link {{ request()->routeIs('kepegawaian.pangkat.*') ? 'active' : '' }}">
-                    <span class="icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
-                        </svg>
-                    </span>
-                    Kenaikan Pangkat
-                </a>
-                --}}
 
                 {{-- Gaji Berkala --}}
                 <a href="{{ route('kepegawaian.kgb.index') }}"
@@ -217,7 +227,7 @@
                             <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
                         </svg>
                     </span>
-                    Gaji Berkala
+                    <span class="nav-label">Gaji Berkala</span>
                 </a>
 
                 <p class="sidebar-section-label">Laporan</p>
@@ -230,10 +240,10 @@
                             <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
                         </svg>
                     </span>
-                    Laporan Persuratan
+                    <span class="nav-label">Laporan Persuratan</span>
                 </a>
 
-                {{-- Buku Tamu (Admin) --}}
+                {{-- Buku Tamu --}}
                 <a href="{{ route('buku-tamu.index') }}"
                    data-tooltip="Buku Tamu"
                    class="sidebar-link {{ request()->routeIs('buku-tamu.index') || request()->routeIs('buku-tamu.show') ? 'active' : '' }}">
@@ -242,65 +252,78 @@
                             <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                         </svg>
                     </span>
-                    Buku Tamu
+                    <span class="nav-label">Buku Tamu</span>
                 </a>
 
-                {{-- Master Data - Persuratan --}}
+                {{-- Master Data --}}
                 <p class="sidebar-section-label">Master Data</p>
-                <div x-data="{ open: {{ request()->routeIs('jenis-surat.*') || request()->routeIs('klasifikasi-surat.*') || request()->routeIs('nomor-surat.*') ? 'true' : 'false' }} }">
-                    <a href="#" @click.prevent="open = !open"
-                       data-tooltip="Persuratan"
-                       class="sidebar-link {{ request()->routeIs('jenis-surat.*') || request()->routeIs('klasifikasi-surat.*') || request()->routeIs('nomor-surat.*') ? 'active' : '' }}">
-                        <span class="icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+
+                {{-- ── Persuratan (submenu) ── --}}
+                <div x-data="{ expanded: {{ request()->routeIs('jenis-surat.*') || request()->routeIs('klasifikasi-surat.*') || request()->routeIs('nomor-surat.*') ? 'true' : 'false' }} }">
+                    <div class="sidebar-link-row {{ request()->routeIs('jenis-surat.*') || request()->routeIs('klasifikasi-surat.*') || request()->routeIs('nomor-surat.*') ? 'active' : '' }}">
+                        <button type="button"
+                                class="sidebar-link-main"
+                                data-tooltip="Persuratan"
+                                @click="expanded = !expanded">
+                            <span class="icon">
+                                <svg style="pointer-events: none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                                </svg>
+                            </span>
+                            <span class="nav-label">Persuratan</span>
+                        </button>
+                        <button type="button" class="sidebar-arrow-btn" @click="expanded = !expanded"
+                                :aria-expanded="expanded" aria-label="Toggle Persuratan">
+                            <svg class="arrow-icon" :class="expanded ? 'rotated' : ''"
+                                 style="pointer-events: none;"
+                                 width="11" height="11" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2.5"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"/>
                             </svg>
-                        </span>
-                        Persuratan
-                        <span class="arrow" :class="open ? 'rotated' : ''">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                        </span>
-                    </a>
-                    <div class="sidebar-submenu" x-show="open">
+                        </button>
+                    </div>
+                    <div class="sidebar-submenu" x-show="expanded">
                         <a href="{{ route('jenis-surat.index') }}"
-                           class="sidebar-submenu-link {{ request()->routeIs('jenis-surat.*') ? 'active' : '' }}">
-                            Jenis Surat
-                        </a>
+                           class="sidebar-submenu-link {{ request()->routeIs('jenis-surat.*') ? 'active' : '' }}">Jenis Surat</a>
                         <a href="{{ route('klasifikasi-surat.index') }}"
-                           class="sidebar-submenu-link {{ request()->routeIs('klasifikasi-surat.*') ? 'active' : '' }}">
-                            Klasifikasi Surat
-                        </a>
+                           class="sidebar-submenu-link {{ request()->routeIs('klasifikasi-surat.*') ? 'active' : '' }}">Klasifikasi Surat</a>
                         <a href="{{ route('nomor-surat.index') }}"
-                           class="sidebar-submenu-link {{ request()->routeIs('nomor-surat.*') ? 'active' : '' }}">
-                            Nomor Surat
-                        </a>
+                           class="sidebar-submenu-link {{ request()->routeIs('nomor-surat.*') ? 'active' : '' }}">Nomor Surat</a>
                     </div>
                 </div>
 
-                {{-- Master Data - Kepegawaian & Organisasi --}}
-                <div x-data="{ open: {{ request()->routeIs('unit-kerja.*') || request()->routeIs('pegawai.*') ? 'true' : 'false' }} }">
-                    <a href="#" @click.prevent="open = !open"
-                       data-tooltip="Kepeg. & Organisasi"
-                       class="sidebar-link {{ request()->routeIs('unit-kerja.*') || request()->routeIs('pegawai.*') ? 'active' : '' }}">
-                        <span class="icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                {{-- ── Kepeg & Organisasi (submenu) ── --}}
+                <div x-data="{ expanded: {{ request()->routeIs('unit-kerja.*') || request()->routeIs('pegawai.*') ? 'true' : 'false' }} }">
+                    <div class="sidebar-link-row {{ request()->routeIs('unit-kerja.*') || request()->routeIs('pegawai.*') ? 'active' : '' }}">
+                        <button type="button"
+                                class="sidebar-link-main"
+                                data-tooltip="Kepeg. &amp; Organisasi"
+                                @click="expanded = !expanded">
+                            <span class="icon">
+                                <svg style="pointer-events: none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                            </span>
+                            <span class="nav-label">Kepeg. &amp; Organisasi</span>
+                        </button>
+                        <button type="button" class="sidebar-arrow-btn" @click="expanded = !expanded"
+                                :aria-expanded="expanded" aria-label="Toggle Kepegawaian">
+                            <svg class="arrow-icon" :class="expanded ? 'rotated' : ''"
+                                 style="pointer-events: none;"
+                                 width="11" height="11" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2.5"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"/>
                             </svg>
-                        </span>
-                        Kepeg. & Organisasi
-                        <span class="arrow" :class="open ? 'rotated' : ''">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                        </span>
-                    </a>
-                    <div class="sidebar-submenu" x-show="open">
+                        </button>
+                    </div>
+                    <div class="sidebar-submenu" x-show="expanded">
                         <a href="{{ route('unit-kerja.index') }}"
-                           class="sidebar-submenu-link {{ request()->routeIs('unit-kerja.*') ? 'active' : '' }}">
-                            Unit Kerja
-                        </a>
+                           class="sidebar-submenu-link {{ request()->routeIs('unit-kerja.*') ? 'active' : '' }}">Unit Kerja</a>
                         <a href="{{ route('pegawai.index') }}"
-                           class="sidebar-submenu-link {{ request()->routeIs('pegawai.*') ? 'active' : '' }}">
-                            Pegawai
-                        </a>
+                           class="sidebar-submenu-link {{ request()->routeIs('pegawai.*') ? 'active' : '' }}">Pegawai</a>
                     </div>
                 </div>
 
@@ -314,37 +337,46 @@
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                         </svg>
                     </span>
-                    Daftar Pengguna
+                    <span class="nav-label">Daftar Pengguna</span>
                 </a>
 
                 <p class="sidebar-section-label">Pengaturan</p>
 
-                <div x-data="{ open: {{ request()->routeIs('pengaturan.*') ? 'true' : 'false' }} }">
-                    <a href="#" @click.prevent="open = !open"
-                       data-tooltip="Pengaturan"
-                       class="sidebar-link {{ request()->routeIs('pengaturan.*') ? 'active' : '' }}">
-                        <span class="icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                {{-- ── Pengaturan (submenu) ── --}}
+                <div x-data="{ expanded: {{ request()->routeIs('pengaturan.*') ? 'true' : 'false' }} }">
+                    <div class="sidebar-link-row {{ request()->routeIs('pengaturan.*') ? 'active' : '' }}">
+                        <button type="button"
+                                class="sidebar-link-main"
+                                data-tooltip="Pengaturan"
+                                @click="expanded = !expanded">
+                            <span class="icon">
+                                <svg style="pointer-events: none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                </svg>
+                            </span>
+                            <span class="nav-label">Pengaturan</span>
+                        </button>
+                        <button type="button" class="sidebar-arrow-btn" @click="expanded = !expanded"
+                                :aria-expanded="expanded" aria-label="Toggle Pengaturan">
+                            <svg class="arrow-icon" :class="expanded ? 'rotated' : ''"
+                                 style="pointer-events: none;"
+                                 width="11" height="11" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2.5"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"/>
                             </svg>
-                        </span>
-                        Pengaturan
-                        <span class="arrow" :class="open ? 'rotated' : ''">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                        </span>
-                    </a>
-                    <div class="sidebar-submenu" x-show="open">
+                        </button>
+                    </div>
+                    <div class="sidebar-submenu" x-show="expanded">
                         <a href="{{ route('pengaturan.index') }}"
-                           class="sidebar-submenu-link {{ request()->routeIs('pengaturan.index') ? 'active' : '' }}">
-                            Pengaturan Umum
-                        </a>
+                           class="sidebar-submenu-link {{ request()->routeIs('pengaturan.index') ? 'active' : '' }}">Pengaturan Umum</a>
                         <a href="{{ route('pengaturan.kepegawaian.index') }}"
-                           class="sidebar-submenu-link {{ request()->routeIs('pengaturan.kepegawaian.*') || request()->routeIs('pengaturan.kategori-bup.*') ? 'active' : '' }}">
-                            Pengaturan Kepegawaian
-                        </a>
+                           class="sidebar-submenu-link {{ request()->routeIs('pengaturan.kepegawaian.*') || request()->routeIs('pengaturan.kategori-bup.*') ? 'active' : '' }}">Pengaturan Kepegawaian</a>
                     </div>
                 </div>
             </nav>
+
+
 
             {{-- User Footer --}}
             <div class="sidebar-footer">
@@ -399,21 +431,45 @@
             </div>
         </aside>
 
+        {{-- ════════ DESKTOP SIDEBAR TOGGLE ════════ --}}
+        {{-- position:fixed di viewport level, bukan di dalam aside --}}
+        {{-- Sehingga tidak terpotong overflow:hidden sidebar --}}
+        <button class="sidebar-toggle-btn" id="btn-sidebar-toggle"
+                onclick="toggleSidebarCollapse()"
+                title="Collapse/Expand sidebar"
+                aria-label="Toggle sidebar">
+            <svg class="sidebar-toggle-icon" width="14" height="14"
+                 viewBox="0 0 24 24" fill="none"
+                 stroke="rgba(255,255,255,0.85)" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+        </button>
+
         {{-- ════════ MAIN CONTENT ════════ --}}
         <div class="main-content">
+
             {{-- Topbar --}}
             @isset($header)
             <header class="topbar">
-                <div>
-                    {{-- Breadcrumb --}}
-                    @isset($breadcrumb)
-                    <div style="font-size:11px; color:#94a3b8; margin-bottom:3px; display:flex; align-items:center; gap:4px;">
-                        <span>Aplikasi</span>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                        <span>{{ $breadcrumb }}</span>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    {{-- Mobile Hamburger --}}
+                    <button class="sidebar-hamburger" id="btn-hamburger" onclick="openMobileSidebar()" title="Buka menu" aria-label="Buka sidebar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
+                    </button>
+                    <div>
+                        {{-- Breadcrumb --}}
+                        @isset($breadcrumb)
+                        <div style="font-size:11px; color:#94a3b8; margin-bottom:3px; display:flex; align-items:center; gap:4px;">
+                            <span>Aplikasi</span>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                            <span>{{ $breadcrumb }}</span>
+                        </div>
+                        @endisset
+                        <div class="topbar-title">{{ $header }}</div>
                     </div>
-                    @endisset
-                    <div class="topbar-title">{{ $header }}</div>
                 </div>
                 <div class="flex items-center gap-2">
                     <div style="display:flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:7px 12px;">
@@ -435,8 +491,145 @@
             </main>
         </div>
 
+        {{-- ════════ SIDEBAR JS: Tooltip + Toggle + Mobile ════════ --}}
+        <div id="sidebar-tooltip" role="tooltip" aria-hidden="true"></div>
+
+        <script>
+        (function() {
+            /* ══════════════════════════════════════════════
+               TOOLTIP — hanya aktif saat compact
+            ══════════════════════════════════════════════ */
+            var tooltip = document.getElementById('sidebar-tooltip');
+            var hideTimer = null;
+
+            function isCompact() {
+                return document.documentElement.getAttribute('data-sidebar') === 'compact';
+            }
+
+            function showTooltip(el) {
+                if (!isCompact()) return;
+                var text = el.getAttribute('data-tooltip');
+                if (!text) return;
+                clearTimeout(hideTimer);
+                tooltip.textContent = text;
+                var rect = el.getBoundingClientRect();
+                tooltip.style.top       = (rect.top + rect.height / 2) + 'px';
+                tooltip.style.left      = (rect.right + 8) + 'px';
+                tooltip.style.transform = 'translateY(-50%)';
+                tooltip.classList.add('visible');
+            }
+
+            function hideTooltip() {
+                hideTimer = setTimeout(function() {
+                    tooltip.classList.remove('visible');
+                }, 80);
+            }
+
+            function attachTooltips(root) {
+                root = root || document;
+                root.querySelectorAll('.sidebar-link[data-tooltip], .sidebar-link-main[data-tooltip]').forEach(function(el) {
+                    if (el._tooltipAttached) return;
+                    el._tooltipAttached = true;
+                    el.addEventListener('mouseenter', function() { showTooltip(el); });
+                    el.addEventListener('mouseleave', hideTooltip);
+                    el.addEventListener('click', hideTooltip);
+                });
+            }
+
+            /* ══════════════════════════════════════════════
+               DESKTOP TOGGLE COLLAPSE
+            ══════════════════════════════════════════════ */
+            window.toggleSidebarCollapse = function() {
+                var html    = document.documentElement;
+                var current = html.getAttribute('data-sidebar') || 'full';
+                var next    = (current === 'compact') ? 'full' : 'compact';
+
+                html.setAttribute('data-sidebar', next);
+
+                /* Persist ke localStorage (same key as Theme Customizer) */
+                try {
+                    var s = JSON.parse(localStorage.getItem('sipas-theme-settings') || '{}');
+                    s.sidebar = next;
+                    localStorage.setItem('sipas-theme-settings', JSON.stringify(s));
+                } catch(e) {}
+
+                /* Sembunyikan tooltip saat switch ke full */
+                if (next !== 'compact') tooltip.classList.remove('visible');
+            };
+
+            /* ══════════════════════════════════════════════
+               MOBILE DRAWER
+            ══════════════════════════════════════════════ */
+            var overlay = document.getElementById('sidebar-overlay');
+            var sidebar = document.getElementById('sidebar');
+
+            window.openMobileSidebar = function() {
+                if (!sidebar || !overlay) return;
+                sidebar.classList.add('mobile-open');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                /* Escape key listener */
+                document._sidebarEsc = function(e) {
+                    if (e.key === 'Escape') window.closeMobileSidebar();
+                };
+                document.addEventListener('keydown', document._sidebarEsc);
+            };
+
+            window.closeMobileSidebar = function() {
+                if (!sidebar || !overlay) return;
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+                if (document._sidebarEsc) {
+                    document.removeEventListener('keydown', document._sidebarEsc);
+                    document._sidebarEsc = null;
+                }
+            };
+
+            /* ══════════════════════════════════════════════
+               INIT
+            ══════════════════════════════════════════════ */
+            document.addEventListener('DOMContentLoaded', function() {
+                attachTooltips();
+
+                /* MutationObserver: jika nav di-render ulang Alpine */
+                var obs = new MutationObserver(function(muts) {
+                    muts.forEach(function(m) {
+                        if (m.addedNodes.length) attachTooltips();
+                    });
+                });
+                var nav = document.querySelector('.sidebar-nav');
+                if (nav) obs.observe(nav, { childList: true, subtree: true });
+
+                /* Sembunyikan tooltip saat switch ke full */
+                new MutationObserver(function() {
+                    if (!isCompact()) tooltip.classList.remove('visible');
+                }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-sidebar'] });
+
+                /* Close mobile sidebar HANYA saat klik link yang navigasi ke halaman lain.
+                   JANGAN close saat klik toggle button submenu (.sidebar-link-main, .sidebar-arrow-btn)
+                   karena itu hanya expand/collapse submenu, bukan navigasi. */
+                document.querySelectorAll(
+                    '.sidebar-submenu-link, a.sidebar-link'
+                ).forEach(function(link) {
+                    link.addEventListener('click', function(e) {
+                        /* Jika link ini adalah navigasi nyata (bukan href="#") */
+                        var href = link.getAttribute('href');
+                        if (href && href !== '#') {
+                            if (sidebar && sidebar.classList.contains('mobile-open')) {
+                                window.closeMobileSidebar();
+                            }
+                        }
+                    });
+                });
+            });
+        })();
+        </script>
+
+
         {{-- ════════ DARK MODE: Dropdown & DOM Patches ════════ --}}
         {{-- Patch onmouseover/onmouseout dan Alpine :style yang inject warna hardcoded --}}
+
         <script>
         (function() {
             function isDark() {

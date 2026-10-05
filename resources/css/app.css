@@ -75,118 +75,192 @@
 
 
 /* =========================================================
+   SIDEBAR VARIABLES
+========================================================= */
+
+:root {
+    --sidebar-compact-width: 72px;
+    --sidebar-transition: 0.25s ease;
+}
+
+
+/* =========================================================
    SIDEBAR
 ========================================================= */
 
 @layer components {
 
     .sidebar {
-        @apply fixed top-0 left-0 h-screen flex flex-col z-30;
+        @apply fixed top-0 left-0 h-screen flex flex-col z-40;
 
         width: var(--sidebar-width);
         background: var(--sidebar-bg);
 
         border-right: 1px solid rgba(255, 255, 255, 0.08);
 
-        transition: transform 0.2s ease;
+        transition: width var(--sidebar-transition), transform var(--sidebar-transition);
+        overflow: hidden;
     }
 
 
     /* LOGO */
 
     .sidebar-logo {
-        @apply flex items-center gap-3 px-5 py-5;
-
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
         min-height: 76px;
-
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        flex-shrink: 0;
+        position: relative;
     }
 
     .sidebar-logo-icon {
         @apply flex items-center justify-center flex-shrink-0;
-
         width: 42px;
         height: 42px;
-
         border-radius: 8px;
-
         background: #ffffff;
         border: 2px solid #d7b24c;
     }
 
     .sidebar-logo-text {
-        @apply flex flex-col;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
     }
 
     .sidebar-logo-text .title {
         @apply text-white font-semibold leading-tight;
-
         font-size: 15px;
         letter-spacing: 0.2px;
+        white-space: nowrap;
     }
 
     .sidebar-logo-text .subtitle {
         @apply leading-tight;
-
         margin-top: 3px;
         color: rgba(255, 255, 255, 0.55);
         font-size: 11px;
+        white-space: nowrap;
+    }
+
+    /* Mobile close button inside sidebar (hidden on desktop) */
+    .sidebar-mobile-close {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        background: rgba(255,255,255,0.08);
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.15s;
+        margin-left: auto;
+    }
+
+    .sidebar-mobile-close:hover {
+        background: rgba(255,255,255,0.15);
+    }
+
+
+    /* DESKTOP TOGGLE BUTTON
+       Diletakkan FIXED di viewport agar tidak terpotong
+       overflow:hidden dari .sidebar */
+
+    .sidebar-toggle-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        position: fixed;
+        top: 96px;
+        left: calc(var(--sidebar-width) - 12px);
+
+        width: 24px;
+        height: 24px;
+
+        background: var(--sidebar-bg);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 50%;
+
+        cursor: pointer;
+        z-index: 45;
+
+        transition:
+            left var(--sidebar-transition),
+            background 0.15s,
+            border-color 0.15s;
+
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+
+    .sidebar-toggle-btn:hover {
+        background: #24547a;
+        border-color: rgba(255,255,255,0.4);
+    }
+
+    .sidebar-toggle-icon {
+        transition: transform var(--sidebar-transition);
     }
 
 
     /* NAVIGATION */
 
     .sidebar-nav {
-        @apply flex-1 overflow-y-auto py-4 px-3;
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 16px 12px;
 
         scrollbar-width: thin;
         scrollbar-color: rgba(255,255,255,.15) transparent;
     }
 
-    .sidebar-nav::-webkit-scrollbar {
-        width: 4px;
-    }
-
-    .sidebar-nav::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
+    .sidebar-nav::-webkit-scrollbar { width: 4px; }
+    .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
     .sidebar-nav::-webkit-scrollbar-thumb {
         background: rgba(255,255,255,.15);
         border-radius: 4px;
     }
 
 
-    /* SECTION */
+    /* SECTION LABEL */
 
     .sidebar-section-label {
-        @apply px-3 mb-2 mt-5;
-
+        padding: 0 12px;
+        margin: 20px 0 8px;
         color: rgba(255,255,255,.38);
-
         font-size: 10px;
         font-weight: 600;
-
         text-transform: uppercase;
         letter-spacing: 1px;
+        white-space: nowrap;
     }
 
 
     /* LINK */
 
     .sidebar-link {
-        @apply flex items-center gap-3 px-3 py-2.5 mb-1 no-underline;
-
-        color: rgba(255,255,255,.68);
-
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        margin-bottom: 2px;
         border-radius: 6px;
-
+        color: rgba(255,255,255,.68);
         font-size: 13px;
         font-weight: 500;
-
-        transition:
-            background-color .15s ease,
-            color .15s ease;
+        text-decoration: none;
+        position: relative;
+        white-space: nowrap;
+        transition: background-color .15s ease, color .15s ease;
     }
 
     .sidebar-link:hover {
@@ -197,8 +271,16 @@
     .sidebar-link.active {
         color: #ffffff;
         background: #24547a;
-
         box-shadow: inset 3px 0 0 #5ca66b;
+    }
+
+    /* NAV LABEL */
+    .nav-label {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
 
@@ -206,18 +288,12 @@
 
     .sidebar-link .icon {
         @apply flex items-center justify-center flex-shrink-0;
-
         width: 30px;
         height: 30px;
-
         border-radius: 5px;
-
         color: rgba(255,255,255,.68);
-
         background: transparent;
-
         font-size: 16px;
-
         transition: background-color .15s ease;
     }
 
@@ -236,45 +312,131 @@
 
     .sidebar-link .arrow {
         margin-left: auto;
-
-        font-size: 11px;
-
+        flex-shrink: 0;
         color: rgba(255,255,255,.4);
-
         transition: transform .15s ease;
     }
 
-    .sidebar-link .arrow svg {
+    .sidebar-link .arrow svg { transition: transform .15s ease; }
+    .sidebar-link .arrow.rotated svg { transform: rotate(180deg); }
+
+
+    /* ─── LINK ROW (parent yang punya submenu) ───
+       Struktur baru: div.sidebar-link-row berisi:
+       - button.sidebar-link-main (icon + label)
+       - button.sidebar-arrow-btn (chevron toggle)
+       Dipisah agar click area benar-benar terpisah. */
+
+    .sidebar-link-row {
+        display: flex;
+        align-items: center;
+        border-radius: var(--tc-radius-sm, 6px);
+        margin-bottom: 2px;
+        transition: background-color .15s ease;
+    }
+
+    .sidebar-link-row:hover {
+        background: rgba(255,255,255,.07);
+    }
+
+    .sidebar-link-row.active {
+        background: rgba(255,255,255,.08);
+    }
+
+    /* Tombol utama: mengambil semua sisa lebar */
+    .sidebar-link-main {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        min-width: 0;
+        padding: 8px 6px 8px 10px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: rgba(255,255,255,.72);
+        font-size: 13px;
+        font-weight: 500;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: color .15s ease;
+        border-radius: var(--tc-radius-sm, 6px) 0 0 var(--tc-radius-sm, 6px);
+    }
+
+    .sidebar-link-main:hover,
+    .sidebar-link-row.active .sidebar-link-main {
+        color: #ffffff;
+    }
+
+    /* Icon di dalam tombol utama */
+    .sidebar-link-main .icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 30px;
+        height: 30px;
+        border-radius: 5px;
+        color: rgba(255,255,255,.68);
+        background: transparent;
+        font-size: 16px;
+        transition: background-color .15s ease;
+    }
+
+    .sidebar-link-row.active .sidebar-link-main .icon,
+    .sidebar-link-row:hover .sidebar-link-main .icon {
+        color: #ffffff;
+    }
+
+    /* Tombol panah: area klik kecil di kanan */
+    .sidebar-arrow-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: rgba(255,255,255,.4);
+        border-radius: 0 var(--tc-radius-sm, 6px) var(--tc-radius-sm, 6px) 0;
+        transition: color .15s ease, background-color .15s ease;
+    }
+
+    .sidebar-arrow-btn:hover {
+        color: rgba(255,255,255,.8);
+        background: rgba(255,255,255,.06);
+    }
+
+    .sidebar-arrow-btn .arrow-icon {
         transition: transform .15s ease;
     }
 
-    .sidebar-link .arrow.rotated svg {
+    .sidebar-arrow-btn .arrow-icon.rotated {
         transform: rotate(180deg);
     }
 
 
-    /* SUBMENU (used for sidebar groups with children, e.g. Surat Masuk / Surat Keluar) */
+    /* SUBMENU */
 
-    .sidebar-submenu {
-        overflow: hidden;
-    }
+    .sidebar-submenu { overflow: hidden; }
 
     .sidebar-submenu-link {
-        @apply flex items-center gap-3 no-underline;
-
-        padding: 8px 12px 8px 45px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 10px 7px 42px;
         margin-bottom: 2px;
-
-        color: rgba(255,255,255,.55);
-
         border-radius: 6px;
-
+        color: rgba(255,255,255,.55);
         font-size: 12.5px;
         font-weight: 500;
-
-        transition:
-            background-color .15s ease,
-            color .15s ease;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: background-color .15s ease, color .15s ease;
     }
 
     .sidebar-submenu-link:hover {
@@ -285,7 +447,6 @@
     .sidebar-submenu-link.active {
         color: #ffffff;
         background: #24547a;
-
         box-shadow: inset 3px 0 0 #5ca66b;
     }
 
@@ -293,53 +454,53 @@
     /* FOOTER */
 
     .sidebar-footer {
-        @apply px-3 py-4;
-
+        padding: 12px;
         border-top: 1px solid rgba(255,255,255,.08);
+        flex-shrink: 0;
     }
 
     .sidebar-user-card {
-        @apply flex items-center gap-3 px-3 py-2.5;
-
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
         border-radius: 6px;
-
+        cursor: pointer;
         transition: background-color .15s ease;
     }
 
-    .sidebar-user-card:hover {
-        background: rgba(255,255,255,.06);
-    }
+    .sidebar-user-card:hover { background: rgba(255,255,255,.06); }
 
     .sidebar-avatar {
         @apply flex items-center justify-center flex-shrink-0;
-
         width: 36px;
         height: 36px;
-
         border-radius: 6px;
-
         background: #315b7e;
-
         color: #ffffff;
-
         font-size: 13px;
         font-weight: 600;
+    }
+
+    .sidebar-user-info {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
     }
 
     .sidebar-user-info .name {
         @apply text-white leading-tight;
-
         font-size: 13px;
         font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .sidebar-user-info .role {
         @apply leading-tight;
-
         margin-top: 2px;
-
         color: rgba(255,255,255,.45);
-
         font-size: 11px;
     }
 }
@@ -347,6 +508,7 @@
 
 /* =========================================================
    MAIN LAYOUT
+   main-content transitions alongside sidebar
 ========================================================= */
 
 @layer components {
@@ -359,6 +521,8 @@
 
         background: var(--page-bg);
         overflow-x: hidden;
+
+        transition: margin-left var(--sidebar-transition), width var(--sidebar-transition);
     }
 
 
@@ -449,6 +613,427 @@
 
         font-size: 12px;
     }
+}
+
+
+/* =========================================================
+   SIDEBAR COMPACT MODE  (data-sidebar="compact")
+   Text hilang dari layout sepenuhnya via display:none
+   ========================================================= */
+
+/* ── Sidebar width ── */
+[data-sidebar="compact"] .sidebar {
+    width: var(--sidebar-compact-width) !important;
+}
+
+/* ── Main content expand ── */
+[data-sidebar="compact"] .main-content {
+    margin-left: var(--sidebar-compact-width) !important;
+    width: calc(100% - var(--sidebar-compact-width)) !important;
+}
+
+/* ── Logo: center icon, hide text ── */
+[data-sidebar="compact"] .sidebar-logo {
+    padding: 16px 0 !important;
+    justify-content: center !important;
+    gap: 0 !important;
+}
+
+[data-sidebar="compact"] .sidebar-logo-text {
+    display: none !important;
+}
+
+/* ── Nav padding ── */
+[data-sidebar="compact"] .sidebar-nav {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+}
+
+/* ── Section labels: completely removed from layout ── */
+[data-sidebar="compact"] .sidebar-section-label {
+    display: none !important;
+}
+
+/* ── Link & Link Row: icon-only, centered ── */
+[data-sidebar="compact"] .sidebar-link,
+[data-sidebar="compact"] .sidebar-link-row {
+    justify-content: center !important;
+    gap: 0 !important;
+    padding: 8px !important;
+}
+
+[data-sidebar="compact"] .sidebar-link-main {
+    justify-content: center !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+}
+
+/* ── Nav label: removed from layout ── */
+[data-sidebar="compact"] .nav-label {
+    display: none !important;
+}
+
+/* ── Arrow & Arrow Button: hidden ── */
+[data-sidebar="compact"] .sidebar-link .arrow,
+[data-sidebar="compact"] .sidebar-arrow-btn {
+    display: none !important;
+}
+
+/* ── Icon: slightly larger for better click target ── */
+[data-sidebar="compact"] .sidebar-link .icon,
+[data-sidebar="compact"] .sidebar-link-main .icon {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 8px !important;
+}
+
+/* ── Submenu: hidden (no clipping risk) ── */
+[data-sidebar="compact"] .sidebar-submenu {
+    display: none !important;
+}
+
+/* ── Footer: avatar only ── */
+[data-sidebar="compact"] .sidebar-footer {
+    padding: 10px 6px !important;
+}
+
+[data-sidebar="compact"] .sidebar-user-card {
+    justify-content: center !important;
+    gap: 0 !important;
+    padding: 8px !important;
+}
+
+[data-sidebar="compact"] .sidebar-user-info {
+    display: none !important;
+}
+
+[data-sidebar="compact"] .sidebar-user-card > svg {
+    display: none !important;
+}
+
+[data-sidebar="compact"] .sidebar-footer .absolute {
+    display: none !important;
+}
+
+/* ── Active state preserved ── */
+[data-sidebar="compact"] .sidebar-link.active,
+[data-sidebar="compact"] .sidebar-link-row.active {
+    background: #24547a !important;
+    box-shadow: inset 3px 0 0 #5ca66b !important;
+}
+
+/* ── Toggle icon rotates 180deg when compact ── */
+[data-sidebar="compact"] .sidebar-toggle-icon {
+    transform: rotate(180deg) !important;
+}
+
+/* ── Toggle btn mengikuti lebar compact ── */
+[data-sidebar="compact"] .sidebar-toggle-btn {
+    left: calc(var(--sidebar-compact-width) - 12px) !important;
+}
+
+
+/* =========================================================
+   TOOLTIP — COMPACT SIDEBAR
+   Renders at body level via JS (#sidebar-tooltip)
+   ========================================================= */
+
+#sidebar-tooltip {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+
+    background: #1e293b;
+    color: #f1f5f9;
+
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    font-family: 'Inter', Arial, sans-serif;
+
+    padding: 5px 12px;
+    border-radius: 6px;
+
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+
+#sidebar-tooltip.visible {
+    opacity: 1;
+}
+
+#sidebar-tooltip::before {
+    content: '';
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-color: #1e293b;
+}
+
+
+/* =========================================================
+   MOBILE HAMBURGER + OVERLAY + DRAWER
+   < 1024px: sidebar jadi drawer dari kiri
+   ========================================================= */
+
+/* Mobile overlay
+   pointer-events:none secara default agar tidak pernah
+   menangkap klik saat tidak aktif (safety net) */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 38;
+    backdrop-filter: blur(2px);
+    pointer-events: none;  /* KRITIS: tidak pernah block click saat inactive */
+}
+
+/* Saat aktif di mobile: tampilkan overlay dan enable pointer */
+.sidebar-overlay.active {
+    display: block;
+    pointer-events: auto;
+}
+
+/* Hamburger: tersembunyi di desktop */
+.sidebar-hamburger {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    color: #64748b;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-hamburger:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+@media (max-width: 1023px) {
+
+    /* Sidebar: jadi drawer fixed, mulai di luar layar */
+    .sidebar {
+        transform: translateX(-100%) !important;
+        width: var(--sidebar-width) !important;
+        z-index: 39 !important;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.25);
+    }
+
+    /* Saat mobile open */
+    .sidebar.mobile-open {
+        transform: translateX(0) !important;
+    }
+
+    /* Main content tidak terpengaruh compact state */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+
+    /* Hamburger visible */
+    .sidebar-hamburger {
+        display: flex;
+    }
+
+    /* Mobile close button visible */
+    .sidebar-mobile-close {
+        display: flex !important;
+    }
+
+    /* Toggle btn tersembunyi di mobile */
+    .sidebar-toggle-btn {
+        display: none !important;
+    }
+
+    /* Logo text selalu visible di mobile drawer */
+    .sidebar-logo-text {
+        display: flex !important;
+    }
+
+    /* Nav labels selalu visible di mobile drawer */
+    [data-sidebar="compact"] .nav-label,
+    [data-sidebar="compact"] .sidebar-section-label {
+        display: block !important;
+    }
+
+    /* Section label back to normal in mobile */
+    [data-sidebar="compact"] .sidebar-section-label {
+        display: block !important;
+    }
+
+    /* Arrows visible in mobile */
+    [data-sidebar="compact"] .sidebar-link .arrow {
+        display: block !important;
+    }
+
+    /* Submenu visible in mobile drawer */
+    [data-sidebar="compact"] .sidebar-submenu {
+        display: block !important;
+    }
+
+    /* Footer normal in mobile */
+    [data-sidebar="compact"] .sidebar-user-info {
+        display: block !important;
+    }
+
+    [data-sidebar="compact"] .sidebar-user-card > svg {
+        display: block !important;
+    }
+
+    [data-sidebar="compact"] .sidebar-footer .absolute {
+        display: block !important;
+    }
+
+    /* Mobile: link layout kembali normal */
+    [data-sidebar="compact"] .sidebar-link {
+        justify-content: flex-start !important;
+        gap: 10px !important;
+        padding: 8px 10px !important;
+    }
+
+    [data-sidebar="compact"] .sidebar-link .icon {
+        width: 30px !important;
+        height: 30px !important;
+        border-radius: 5px !important;
+    }
+
+    [data-sidebar="compact"] .sidebar-logo {
+        padding: 16px 20px !important;
+        justify-content: flex-start !important;
+        gap: 12px !important;
+    }
+
+    [data-sidebar="compact"] .sidebar-nav {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    [data-sidebar="compact"] .sidebar-footer {
+        padding: 12px !important;
+    }
+
+    [data-sidebar="compact"] .sidebar-user-card {
+        justify-content: flex-start !important;
+        gap: 10px !important;
+        padding: 8px 10px !important;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE DASHBOARD
+   Override inline-style grids dari dashboard.blade.php
+   Harus pakai !important karena inline style lebih spesifik
+   ========================================================= */
+
+/* Tablet: <= 1024px */
+@media (max-width: 1023px) {
+
+    /* page-content padding lebih kecil */
+    .page-content {
+        padding: 16px !important;
+    }
+
+    /* topbar padding */
+    .topbar {
+        padding: 0 16px !important;
+    }
+}
+
+/* Tablet: <= 768px */
+@media (max-width: 768px) {
+
+    /* Stat cards: 4 kolom → 2 kolom */
+    .page-content div[style*="grid-template-columns:repeat(4"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Chart grids: 1.8fr 1fr → 1 kolom */
+    .page-content div[style*="grid-template-columns:1.8fr"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Welcome panel flex: stacking */
+    .page-content div[style*="background-color:#1e3a8a"] {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    /* Search bar */
+    .page-content form[style*="display:flex"][style*="gap:10px"] {
+        flex-wrap: wrap !important;
+    }
+}
+
+/* Mobile: <= 480px */
+@media (max-width: 480px) {
+
+    /* Stat cards: 2 kolom kecil */
+    .page-content div[style*="grid-template-columns:repeat(4"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+
+    /* page-content padding minimum */
+    .page-content {
+        padding: 12px !important;
+    }
+
+    /* Card padding lebih kecil */
+    .page-content div[style*="padding:20px"] {
+        padding: 14px !important;
+    }
+
+    /* Font size stat value */
+    .page-content div[style*="font-size:28px"] {
+        font-size: 22px !important;
+    }
+
+    /* Topbar title */
+    .topbar-title {
+        font-size: 15px !important;
+    }
+}
+
+/* =========================================================
+   OVERFLOW CONTROL
+   JANGAN gunakan overflow pada <body> — itu mengubah
+   containing block untuk position:fixed dan menyebabkan
+   hit area (click area) tidak sinkron dengan visual area.
+   Gunakan overflow-x:clip pada <html> — tidak membuat
+   scroll container sehingga position:fixed tetap correct.
+   ========================================================= */
+
+html {
+    overflow-x: clip;  /* safe: tidak membuat scroll container */
+}
+
+/* body TIDAK boleh punya overflow property */
+
+.page-content {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Tables: horizontal scroll pada container saja */
+.table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
 }
 
 
