@@ -60,7 +60,7 @@
                 <div class="form-group">
                     <label class="form-label" for="parent_id">Induk Unit Kerja (Opsional)</label>
                     <select id="parent_id" name="parent_id" class="form-control">
-                        <option value="">-- Tidak Ada (Sebagai Bidang) --</option>
+                        <option value="">-- Kosongkan (Unit Tingkat Atas) --</option>
                         @foreach($bidangs as $bidang)
                             <option value="{{ $bidang->id }}" {{ old('parent_id', $unitKerja->parent_id) == $bidang->id ? 'selected' : '' }}>
                                 {{ $bidang->nama }}
@@ -68,7 +68,7 @@
                         @endforeach
                     </select>
                     @error('parent_id') <p class="form-error">{{ $message }}</p> @enderror
-                    <p style="font-size:11px; color:#64748b; margin-top:6px;">Jika dikosongkan, unit ini akan dianggap sebagai Bidang. Jika dipilih, unit ini akan menjadi Seksi di bawah Bidang tersebut.</p>
+                    <p style="font-size:11px; color:#64748b; margin-top:6px;">Kosongkan untuk unit tingkat atas.</p>
                 </div>
 
                 <div style="display:flex; align-items:center; gap:12px; padding-top:4px; border-top:1px solid rgba(0,0,0,0.05); margin-top:4px;">

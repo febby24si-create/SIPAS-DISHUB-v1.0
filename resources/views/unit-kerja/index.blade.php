@@ -38,91 +38,143 @@
             </a>
         </div>
 
-        <div style="background:white; border-radius:20px; border:1px solid rgba(0,0,0,0.06); overflow:hidden;">
-            <div style="padding:18px 24px; border-bottom:1px solid rgba(0,0,0,0.05); display:flex; align-items:center; gap:10px;">
-                <div style="width:32px; height:32px; background:#eff6ff; border-radius:9px; display:flex; align-items:center; justify-content:center;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <style>
+            .explorer-item {
+                border-bottom: 1px solid var(--border-light, #f1f5f9);
+                transition: background-color 0.15s ease;
+            }
+            .explorer-item:hover {
+                background: rgba(0,0,0,0.02);
+            }
+            [data-theme="dark"] .explorer-item:hover {
+                background: rgba(255,255,255,0.03);
+            }
+            .explorer-child-container {
+                position: relative;
+                padding-left: 32px;
+            }
+            .explorer-child-line {
+                position: absolute;
+                left: 19px;
+                top: 0;
+                bottom: 0;
+                width: 1px;
+                background: var(--border, #e2e8f0);
+            }
+            .explorer-child-item {
+                display: flex;
+                align-items: center;
+                padding: 10px 20px 10px 14px;
+                position: relative;
+                transition: background-color 0.15s ease;
+            }
+            .explorer-child-item::before {
+                content: '';
+                position: absolute;
+                left: -13px;
+                top: 50%;
+                width: 12px;
+                height: 1px;
+                background: var(--border, #e2e8f0);
+            }
+            .explorer-child-item:hover {
+                background: rgba(0,0,0,0.02);
+            }
+            [data-theme="dark"] .explorer-child-item:hover {
+                background: rgba(255,255,255,0.03);
+            }
+        </style>
+
+        <div class="card" style="overflow:hidden;">
+            <div style="padding:16px 20px; border-bottom:1px solid var(--border, #e2e8f0); display:flex; align-items:center; gap:10px; background:var(--page-bg, #f8fafc);">
+                <div style="width:32px; height:32px; background:var(--tc-accent-soft, #eff6ff); border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tc-accent, #1d4ed8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                 </div>
-                <span style="font-size:14px; font-weight:700; color:#1e293b;">Daftar Unit Kerja</span>
+                <div style="flex:1;">
+                    <span style="font-size:14px; font-weight:700; color:var(--text-primary, #1e293b);">Struktur Organisasi</span>
+                </div>
             </div>
 
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th style="width:80px;">No.</th>
-                        <th>Kode Unit</th>
-                        <th>Nama Unit Kerja</th>
-                        <th>Kepala Unit</th>
-                        <th style="text-align:right; padding-right:24px;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($unitKerja as $bidang)
-                        <!-- Render Bidang -->
-                        <tr style="background:#f8fafc;">
-                            <td style="color:#94a3b8; font-size:13px; font-weight:600;">{{ $loop->iteration }}.</td>
-                            <td>
-                                <span style="display:inline-flex; align-items:center; padding:4px 10px; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; border-radius:8px; font-family:monospace; letter-spacing:0.5px;">
-                                    {{ $bidang->kode_unit }}
-                                </span>
-                            </td>
-                            <td style="font-weight:700; color:#1e293b;">{{ $bidang->nama }}</td>
-                            <td style="color:#64748b; font-size:13px;">
-                                @if($bidang->kepala)
-                                    <span style="font-weight:600; color:#334155;">{{ $bidang->kepala->nama }}</span><br>
-                                    NIP: {{ $bidang->kepala->nip }}
-                                @else
-                                    <span style="color:#94a3b8; font-style:italic;">Belum diatur</span>
-                                @endif
-                            </td>
-                            <td style="text-align:right; padding-right:20px;">
+            <div>
+                @forelse ($unitKerja as $bidang)
+                    <div x-data="{ expanded: true }" class="explorer-item">
+                        <div @click="expanded = !expanded" style="display:flex; align-items:center; padding:12px 20px; cursor:pointer;">
+                            <div style="width:24px; color:var(--text-muted, #94a3b8); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <svg x-show="!expanded" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                                <svg x-show="expanded" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><polyline points="6 9 12 15 18 9"/></svg>
+                            </div>
+                            <div style="color:#d97706; margin-right:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <svg x-show="!expanded" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                                <svg x-show="expanded" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                            </div>
+                            <div style="flex:1; min-width:0;">
+                                <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
+                                    <span style="font-weight:600; color:var(--text-primary, #1e293b); font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $bidang->nama }}</span>
+                                    <span style="font-family:monospace; font-size:11px; background:var(--tc-accent-soft, #eff6ff); color:var(--tc-accent, #1d4ed8); padding:2px 6px; border-radius:4px;">{{ $bidang->kode_unit }}</span>
+                                </div>
+                                <div style="font-size:12px; color:var(--text-muted, #64748b); margin-top:2px; display:flex; align-items:center; gap:6px;">
+                                    @if($bidang->kepala)
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                        {{ $bidang->kepala->nama }}
+                                    @else
+                                        <span style="font-style:italic; color:var(--text-muted, #94a3b8);">Kepala belum diatur</span>
+                                    @endif
+                                </div>
+                            </div>
+                            <div style="font-size:12px; font-weight:500; color:var(--text-muted, #64748b); padding:4px 10px; background:var(--page-bg, #f8fafc); border-radius:12px; margin-right:16px; white-space:nowrap; flex-shrink:0;">
+                                {{ $bidang->children->count() }} Sub Unit
+                            </div>
+                            <div @click.stop style="display:flex; gap:6px; flex-shrink:0;">
                                 <x-action-group>
                                     <x-action-btn type="edit" url="{{ route('unit-kerja.edit', $bidang) }}" />
-                                    <x-action-delete action="{{ route('unit-kerja.destroy', $bidang) }}" confirmMessage="Yakin ingin menghapus Bidang ini?" />
+                                    <x-action-delete action="{{ route('unit-kerja.destroy', $bidang) }}" confirmMessage="Yakin ingin menghapus unit ini?" />
                                 </x-action-group>
-                            </td>
-                        </tr>
-                        <!-- Render Seksi / Children -->
-                        @foreach($bidang->children as $seksi)
-                        <tr>
-                            <td></td>
-                            <td>
-                                <span style="display:inline-flex; align-items:center; padding:4px 8px; background:#f1f5f9; color:#475569; font-size:11px; font-weight:600; border-radius:6px; font-family:monospace; margin-left:15px;">
-                                    {{ $seksi->kode_unit }}
-                                </span>
-                            </td>
-                            <td style="font-weight:500; color:#334155;">
-                                <span style="color:#cbd5e1; font-family:monospace; margin-right:5px; margin-left:10px;">{{ $loop->last ? '└─' : '├─' }}</span>
-                                {{ $seksi->nama }}
-                            </td>
-                            <td style="color:#64748b; font-size:13px;">
-                                @if($seksi->kepala)
-                                    <span style="font-weight:600; color:#334155;">{{ $seksi->kepala->nama }}</span><br>
-                                    NIP: {{ $seksi->kepala->nip }}
-                                @else
-                                    <span style="color:#94a3b8; font-style:italic;">Belum diatur</span>
-                                @endif
-                            </td>
-                            <td style="text-align:right; padding-right:20px;">
-                                <x-action-group>
-                                    <x-action-btn type="edit" url="{{ route('unit-kerja.edit', $seksi) }}" />
-                                    <x-action-delete action="{{ route('unit-kerja.destroy', $seksi) }}" confirmMessage="Yakin ingin menghapus Seksi ini?" />
-                                </x-action-group>
-                            </td>
-                        </tr>
-                        @endforeach
-                    @empty
-                        <tr>
-                            <td colspan="5" style="text-align:center; padding:48px 24px; color:#94a3b8;">
-                                <p style="margin:0; font-size:14px; font-weight:500;">Belum ada data unit kerja</p>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                            </div>
+                        </div>
+
+                        <div x-show="expanded" class="explorer-child-container" style="display:none;">
+                            @if($bidang->children->count() > 0)
+                                <div class="explorer-child-line"></div>
+                            @endif
+                            @foreach($bidang->children as $seksi)
+                                <div class="explorer-child-item">
+                                    <div style="color:var(--text-muted, #94a3b8); margin-right:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                    </div>
+                                    <div style="flex:1; min-width:0;">
+                                        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
+                                            <span style="font-weight:500; color:var(--text-primary, #334155); font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $seksi->nama }}</span>
+                                            <span style="font-family:monospace; font-size:10px; background:var(--page-bg, #f1f5f9); color:var(--text-muted, #475569); padding:2px 6px; border-radius:4px;">{{ $seksi->kode_unit }}</span>
+                                        </div>
+                                        <div style="font-size:11.5px; color:var(--text-muted, #64748b); margin-top:2px; display:flex; align-items:center; gap:6px;">
+                                            @if($seksi->kepala)
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                                {{ $seksi->kepala->nama }}
+                                            @else
+                                                <span style="font-style:italic;">Kepala belum diatur</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div @click.stop style="display:flex; gap:6px; flex-shrink:0;">
+                                        <x-action-group>
+                                            <x-action-btn type="edit" url="{{ route('unit-kerja.edit', $seksi) }}" />
+                                            <x-action-delete action="{{ route('unit-kerja.destroy', $seksi) }}" confirmMessage="Yakin ingin menghapus sub unit ini?" />
+                                        </x-action-group>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @empty
+                    <div style="padding:40px 24px; text-align:center;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--border, #e2e8f0)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 12px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                        <p style="margin:0; font-size:14px; color:var(--text-muted, #94a3b8); font-weight:500;">Struktur organisasi belum dikonfigurasi.</p>
+                    </div>
+                @endforelse
+            </div>
 
             @if ($unitKerja->hasPages())
-                <div style="padding:14px 24px; border-top:1px solid rgba(0,0,0,0.05);">
+                <div style="padding:14px 20px; border-top:1px solid var(--border-light, #f1f5f9); background:var(--card-bg, #fff);">
                     {{ $unitKerja->links() }}
                 </div>
             @endif
