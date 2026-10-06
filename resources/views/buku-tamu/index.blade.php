@@ -1,13 +1,20 @@
 <x-app-layout>
     <x-slot name="header">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-            <div>
-                <h2 style="margin:0; font-size:18px; font-weight:600; color:#1e293b;">Buku Tamu</h2>
-                <p style="margin:2px 0 0; font-size:13px; font-weight:400; color:#64748b;">Data kunjungan tamu — Dinas Perhubungan Provinsi Riau</p>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            {{-- Icon + Title --}}
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:40px; height:40px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#1d4ed8; flex-shrink:0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                </div>
+                <div>
+                    <div style="font-size:17px; font-weight:600; color:#1e293b; line-height:1.2;">Buku Tamu</div>
+                    <div style="margin-top:2px; font-size:12.5px; color:#64748b;">Data kunjungan tamu — Dinas Perhubungan Provinsi Riau</div>
+                </div>
             </div>
+            {{-- Counter --}}
             <div style="text-align:right;">
-                <div style="font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Total Kunjungan</div>
-                <div style="font-size:16px; font-weight:700; color:#1e293b;">{{ $totalSemua }} <span style="font-size:13px; font-weight:500; color:#64748b;">Kunjungan</span></div>
+                <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px;">Total Kunjungan</div>
+                <div style="font-size:18px; font-weight:700; color:#1e293b; line-height:1.2;">{{ $totalSemua }} <span style="font-size:13px; font-weight:500; color:#64748b;">kunjungan</span></div>
             </div>
         </div>
     </x-slot>
@@ -40,8 +47,13 @@
     {{-- Grafik kunjungan per tanggal --}}
     @if(count($chartValues) > 0)
     <div style="background:#fff; border:1px solid rgba(0,0,0,0.06); border-radius:10px; padding:14px 18px; margin-bottom:16px;">
-        <p style="margin:0 0 12px; font-size:13px; font-weight:600; color:#475569;">Tren Kunjungan</p>
-        <canvas id="chartKunjungan" style="max-height:160px;"></canvas>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span style="font-size:13px; font-weight:600; color:#334155;">Tren Kunjungan</span>
+        </div>
+        <div style="position:relative; height:220px;">
+            <canvas id="chartKunjungan"></canvas>
+        </div>
     </div>
     @endif
 
@@ -126,36 +138,55 @@
             if (!canvas || typeof Chart === 'undefined') return;
 
             new Chart(canvas, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: @json($chartLabels),
                     datasets: [{
                         label: 'Kunjungan',
                         data: @json($chartValues),
-                        backgroundColor: 'rgba(29, 78, 216, 0.12)',
-                        borderColor: 'rgba(29, 78, 216, 0.7)',
-                        borderWidth: 1.5,
-                        borderRadius: 4,
-                        borderSkipped: false,
+                        borderColor: '#1d4ed8',
+                        borderWidth: 2,
+                        backgroundColor: 'rgba(29, 78, 216, 0.06)',
+                        pointBackgroundColor: '#1d4ed8',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '#1d4ed8',
+                        tension: 0.35,
+                        fill: true,
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
+                            backgroundColor: '#fff',
+                            titleColor: '#1e293b',
+                            bodyColor: '#475569',
+                            borderColor: '#e2e8f0',
+                            borderWidth: 1,
+                            padding: 10,
                             callbacks: {
-                                label: function(ctx) { return ' ' + ctx.parsed.y + ' kunjungan'; }
+                                title: function(ctx) { return ctx[0].label; },
+                                label: function(ctx) { return '  ' + ctx.parsed.y + ' kunjungan'; }
                             }
                         }
                     },
                     scales: {
-                        x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#64748b' } },
+                        x: {
+                            grid: { display: false },
+                            border: { display: false },
+                            ticks: { font: { size: 11 }, color: '#94a3b8', maxTicksLimit: 12 }
+                        },
                         y: {
                             beginAtZero: true,
-                            ticks: { stepSize: 1, precision: 0, font: { size: 11 }, color: '#64748b' },
-                            grid: { color: 'rgba(0,0,0,0.05)' }
+                            border: { display: false },
+                            ticks: { stepSize: 1, precision: 0, font: { size: 11 }, color: '#94a3b8' },
+                            grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false }
                         }
                     }
                 }

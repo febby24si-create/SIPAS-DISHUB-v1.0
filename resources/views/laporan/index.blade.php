@@ -1,5 +1,15 @@
 <x-app-layout>
-    <x-slot name="header">Laporan Persuratan</x-slot>
+    <x-slot name="header">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:40px; height:40px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#1d4ed8; flex-shrink:0;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            </div>
+            <div>
+                <div style="font-size:17px; font-weight:600; color:#1e293b; line-height:1.2;">Laporan Persuratan</div>
+                <div style="margin-top:2px; font-size:12.5px; color:#64748b;">Rekapitulasi data surat masuk dan surat keluar</div>
+            </div>
+        </div>
+    </x-slot>
 
     {{-- Header Tipis --}}
     <div style="margin-bottom:14px;">

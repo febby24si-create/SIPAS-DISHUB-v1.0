@@ -1,5 +1,15 @@
 <x-app-layout>
-    <x-slot name="header">Daftar Surat Masuk</x-slot>
+    <x-slot name="header">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:40px; height:40px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#15803d; flex-shrink:0;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            </div>
+            <div>
+                <div style="font-size:17px; font-weight:600; color:#1e293b; line-height:1.2;">Daftar Surat Masuk</div>
+                <div style="margin-top:2px; font-size:12.5px; color:#64748b;">Kelola dan pantau seluruh surat masuk</div>
+            </div>
+        </div>
+    </x-slot>
 
     <div style="display:flex; flex-direction:column; gap:20px;">
 

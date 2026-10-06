@@ -1,5 +1,15 @@
 <x-app-layout>
-    <x-slot name="header">Daftar Pengajuan Cuti</x-slot>
+    <x-slot name="header">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:40px; height:40px; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#059669; flex-shrink:0;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            </div>
+            <div>
+                <div style="font-size:17px; font-weight:600; color:#1e293b; line-height:1.2;">Daftar Pengajuan Cuti</div>
+                <div style="margin-top:2px; font-size:12.5px; color:#64748b;">Kelola pengajuan dan persetujuan cuti pegawai</div>
+            </div>
+        </div>
+    </x-slot>
 
     <div style="display:flex; flex-direction:column; gap:20px;">
         @if (session('status'))

@@ -1,5 +1,15 @@
 <x-app-layout>
-    <x-slot name="header">Daftar Pengguna</x-slot>
+    <x-slot name="header">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:40px; height:40px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#1d4ed8; flex-shrink:0;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div>
+                <div style="font-size:17px; font-weight:600; color:#1e293b; line-height:1.2;">Daftar Pengguna</div>
+                <div style="margin-top:2px; font-size:12.5px; color:#64748b;">Kelola akun dan hak akses pengguna sistem</div>
+            </div>
+        </div>
+    </x-slot>
 
     <div style="display:flex; flex-direction:column; gap:20px;">
 

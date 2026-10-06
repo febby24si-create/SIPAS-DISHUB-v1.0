@@ -1,5 +1,15 @@
 <x-app-layout>
-    <x-slot name="header">Master Pegawai</x-slot>
+    <x-slot name="header">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:40px; height:40px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#1d4ed8; flex-shrink:0;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+                <div style="font-size:17px; font-weight:600; color:#1e293b; line-height:1.2;">Master Pegawai</div>
+                <div style="margin-top:2px; font-size:12.5px; color:#64748b;">Kelola data pegawai Dinas Perhubungan</div>
+            </div>
+        </div>
+    </x-slot>
 
     <div style="display:flex; flex-direction:column; gap:20px;">
         @if (session('status'))
