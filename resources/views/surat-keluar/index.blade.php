@@ -112,10 +112,10 @@
                                 </span>
                             </td>
                             <td style="text-align:right; padding-right:16px;">
-                                <div style="display:flex; gap:8px; justify-content:flex-end;">
-                                    <a href="{{ route('surat-keluar.show', $item) }}" style="font-size:12px; font-weight:600; color:#1d4ed8; text-decoration:none;">Detail</a>
-                                    <a href="{{ route('surat-keluar.edit', $item) }}" style="font-size:12px; font-weight:600; color:#64748b; text-decoration:none;">Edit</a>
-                                </div>
+                                <x-action-group>
+                                    <x-action-btn type="view" url="{{ route('surat-keluar.show', $item) }}" />
+                                    <x-action-btn type="edit" url="{{ route('surat-keluar.edit', $item) }}" />
+                                </x-action-group>
                             </td>
                         </tr>
                     @empty

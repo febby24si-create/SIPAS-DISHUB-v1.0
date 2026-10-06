@@ -66,22 +66,10 @@
                                 @endif
                             </td>
                             <td style="text-align:right; padding-right:20px;">
-                                <div style="display:inline-flex; align-items:center; gap:6px;">
-                                    <a href="{{ route('unit-kerja.edit', $bidang) }}"
-                                       style="display:inline-flex; align-items:center; gap:5px; padding:7px 14px; background:#f0f9ff; color:#0369a1; font-size:12px; font-weight:600; border-radius:9px; text-decoration:none; border:1px solid #bae6fd; transition:all 0.15s;"
-                                       onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background='#f0f9ff'">
-                                        Edit
-                                    </a>
-                                    <form action="{{ route('unit-kerja.destroy', $bidang) }}" method="POST" class="inline"
-                                          onsubmit="return confirm('Yakin ingin menghapus Bidang ini?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit"
-                                                style="display:inline-flex; align-items:center; gap:5px; padding:7px 14px; background:#fff1f2; color:#be123c; font-size:12px; font-weight:600; border-radius:9px; border:1px solid #fecdd3; cursor:pointer; transition:all 0.15s;"
-                                                onmouseover="this.style.background='#ffe4e6'" onmouseout="this.style.background='#fff1f2'">
-                                            Hapus
-                                        </button>
-                                    </form>
-                                </div>
+                                <x-action-group>
+                                    <x-action-btn type="edit" url="{{ route('unit-kerja.edit', $bidang) }}" />
+                                    <x-action-delete action="{{ route('unit-kerja.destroy', $bidang) }}" confirmMessage="Yakin ingin menghapus Bidang ini?" />
+                                </x-action-group>
                             </td>
                         </tr>
                         <!-- Render Seksi / Children -->
@@ -106,22 +94,10 @@
                                 @endif
                             </td>
                             <td style="text-align:right; padding-right:20px;">
-                                <div style="display:inline-flex; align-items:center; gap:6px;">
-                                    <a href="{{ route('unit-kerja.edit', $seksi) }}"
-                                       style="display:inline-flex; align-items:center; gap:5px; padding:5px 12px; background:white; color:#475569; font-size:11px; font-weight:600; border-radius:7px; text-decoration:none; border:1px solid rgba(0,0,0,0.1); transition:all 0.15s;"
-                                       onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
-                                        Edit
-                                    </a>
-                                    <form action="{{ route('unit-kerja.destroy', $seksi) }}" method="POST" class="inline"
-                                          onsubmit="return confirm('Yakin ingin menghapus Seksi ini?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit"
-                                                style="display:inline-flex; align-items:center; gap:5px; padding:5px 12px; background:white; color:#be123c; font-size:11px; font-weight:600; border-radius:7px; border:1px solid #ffe4e6; cursor:pointer; transition:all 0.15s;"
-                                                onmouseover="this.style.background='#fff1f2'" onmouseout="this.style.background='white'">
-                                            Hapus
-                                        </button>
-                                    </form>
-                                </div>
+                                <x-action-group>
+                                    <x-action-btn type="edit" url="{{ route('unit-kerja.edit', $seksi) }}" />
+                                    <x-action-delete action="{{ route('unit-kerja.destroy', $seksi) }}" confirmMessage="Yakin ingin menghapus Seksi ini?" />
+                                </x-action-group>
                             </td>
                         </tr>
                         @endforeach

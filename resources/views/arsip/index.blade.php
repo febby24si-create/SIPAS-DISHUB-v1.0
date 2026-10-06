@@ -134,10 +134,9 @@
                             </td>
                             <td style="color:#64748b; font-size:13px;">{{ ($item->tanggal_surat ?? $item->tanggal_diterima)?->format('d M Y') }}</td>
                             <td style="text-align:center;">
-                                <a href="{{ route('arsip.show', $item) }}" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:white; color:#3b82f6; border:1px solid #bfdbfe; border-radius:8px; font-size:12px; font-weight:600; text-decoration:none;">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    Detail
-                                </a>
+                                <x-action-group style="justify-content:center;">
+                                    <x-action-btn type="view" url="{{ route('arsip.show', $item) }}" />
+                                </x-action-group>
                             </td>
                         </tr>
                     @empty

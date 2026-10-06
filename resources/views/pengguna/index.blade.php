@@ -65,20 +65,20 @@
                                     </span>
                                 @endif
                             </td>
-                            <td style="text-align:right; display:flex; justify-content:flex-end; gap:6px;">
-                                <a href="{{ route('pengguna.edit', $item) }}" style="padding:6px 12px; background:#f1f5f9; color:#475569; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">
-                                    Edit
-                                </a>
-                                @if(auth()->id() !== $item->id)
-                                    <form method="POST" action="{{ route('pengguna.toggle-status', $item) }}" style="display:inline;">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" onclick="return confirm('Yakin ingin {{ $item->is_active ? 'menonaktifkan' : 'mengaktifkan' }} akun ini?')"
-                                                style="padding:6px 12px; background:{{ $item->is_active ? '#fef2f2' : '#f0fdf4' }}; color:{{ $item->is_active ? '#dc2626' : '#166534' }}; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
-                                            {{ $item->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
-                                        </button>
-                                    </form>
-                                @endif
+                            <td style="text-align:right; padding-right:16px;">
+                                <x-action-group>
+                                    <x-action-btn type="edit" url="{{ route('pengguna.edit', $item) }}" />
+                                    @if(auth()->id() !== $item->id)
+                                        <form method="POST" action="{{ route('pengguna.toggle-status', $item) }}" class="inline">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" onclick="return confirm('Yakin ingin {{ $item->is_active ? 'menonaktifkan' : 'mengaktifkan' }} akun ini?')"
+                                                    style="display:inline-flex; align-items:center; justify-content:center; height:28px; padding:0 12px; background:{{ $item->is_active ? '#fff1f2' : '#f0fdf4' }}; color:{{ $item->is_active ? '#e11d48' : '#15803d' }}; border:1px solid {{ $item->is_active ? '#ffe4e6' : '#dcfce7' }}; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
+                                                {{ $item->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
+                                            </button>
+                                        </form>
+                                    @endif
+                                </x-action-group>
                             </td>
                         </tr>
                     @empty

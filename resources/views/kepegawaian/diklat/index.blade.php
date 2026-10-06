@@ -77,22 +77,10 @@
                                 @endif
                             </td>
                             <td style="text-align:right; padding-right:20px;">
-                                <div style="display:inline-flex; align-items:center; gap:6px;">
-                                    <a href="{{ route('pegawai.diklat.edit', [$pegawai, $d]) }}"
-                                       style="display:inline-flex; align-items:center; gap:5px; padding:7px 14px; background:#f0f9ff; color:#0369a1; font-size:12px; font-weight:600; border-radius:9px; text-decoration:none; border:1px solid #bae6fd;"
-                                       onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background='#f0f9ff'">
-                                        Edit
-                                    </a>
-                                    <form action="{{ route('pegawai.diklat.destroy', [$pegawai, $d]) }}" method="POST" class="inline"
-                                          onsubmit="return confirm('Yakin hapus riwayat diklat ini?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit"
-                                                style="display:inline-flex; align-items:center; gap:5px; padding:7px 14px; background:#fff1f2; color:#be123c; font-size:12px; font-weight:600; border-radius:9px; border:1px solid #fecdd3; cursor:pointer;"
-                                                onmouseover="this.style.background='#ffe4e6'" onmouseout="this.style.background='#fff1f2'">
-                                            Hapus
-                                        </button>
-                                    </form>
-                                </div>
+                                <x-action-group>
+                                    <x-action-btn type="edit" url="{{ route('pegawai.diklat.edit', [$pegawai, $d]) }}" />
+                                    <x-action-delete action="{{ route('pegawai.diklat.destroy', [$pegawai, $d]) }}" confirmMessage="Yakin hapus riwayat diklat ini?" />
+                                </x-action-group>
                             </td>
                         </tr>
                     @empty

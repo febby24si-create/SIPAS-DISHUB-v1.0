@@ -86,9 +86,9 @@
                                 </span>
                             </td>
                             <td style="padding:16px 24px; text-align:right;">
-                                <div style="display:flex; gap:8px; justify-content:flex-end;">
-                                    <a href="{{ route('kepegawaian.kgb.show', $item) }}" title="Detail" style="font-size:12px; font-weight:600; color:#1d4ed8; text-decoration:none;">Detail</a>
-                                </div>
+                                <x-action-group>
+                                    <x-action-btn type="view" url="{{ route('kepegawaian.kgb.show', $item) }}" />
+                                </x-action-group>
                             </td>
                         </tr>
                     @empty

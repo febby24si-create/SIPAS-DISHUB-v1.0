@@ -53,24 +53,10 @@
                             </td>
                             <td style="font-weight:500; color:#1e293b;">{{ $item->nama }}</td>
                             <td style="text-align:right; padding-right:20px;">
-                                <div style="display:inline-flex; align-items:center; gap:6px;">
-                                    <a href="{{ route('jenis-surat.edit', $item) }}"
-                                       style="display:inline-flex; align-items:center; gap:5px; padding:7px 14px; background:#f0f9ff; color:#0369a1; font-size:12px; font-weight:600; border-radius:9px; text-decoration:none; border:1px solid #bae6fd; transition:all 0.15s;"
-                                       onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background='#f0f9ff'">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                        Edit
-                                    </a>
-                                    <form action="{{ route('jenis-surat.destroy', $item) }}" method="POST" class="inline"
-                                          onsubmit="return confirm('Yakin ingin menghapus jenis surat ini?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit"
-                                                style="display:inline-flex; align-items:center; gap:5px; padding:7px 14px; background:#fff1f2; color:#be123c; font-size:12px; font-weight:600; border-radius:9px; border:1px solid #fecdd3; cursor:pointer; transition:all 0.15s;"
-                                                onmouseover="this.style.background='#ffe4e6'" onmouseout="this.style.background='#fff1f2'">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                                            Hapus
-                                        </button>
-                                    </form>
-                                </div>
+                                <x-action-group>
+                                    <x-action-btn type="edit" url="{{ route('jenis-surat.edit', $item) }}" />
+                                    <x-action-delete action="{{ route('jenis-surat.destroy', $item) }}" confirmMessage="Yakin ingin menghapus jenis surat ini?" />
+                                </x-action-group>
                             </td>
                         </tr>
                     @empty

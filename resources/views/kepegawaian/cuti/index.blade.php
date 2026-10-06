@@ -78,12 +78,12 @@
                                 </span>
                             </td>
                             <td style="padding:16px 24px; text-align:right;">
-                                <div style="display:flex; gap:8px; justify-content:flex-end;">
-                                    <a href="{{ route('kepegawaian.cuti.show', $item) }}" title="Detail" style="font-size:12px; font-weight:600; color:#1d4ed8; text-decoration:none;">Detail</a>
+                                <x-action-group>
+                                    <x-action-btn type="view" url="{{ route('kepegawaian.cuti.show', $item) }}" />
                                     @if(in_array(auth()->user()->role?->name, ['admin', 'staff']))
-                                        <a href="{{ route('kepegawaian.cuti.edit', $item) }}" title="Edit" style="font-size:12px; font-weight:600; color:#64748b; text-decoration:none;">Edit</a>
+                                        <x-action-btn type="edit" url="{{ route('kepegawaian.cuti.edit', $item) }}" />
                                     @endif
-                                </div>
+                                </x-action-group>
                             </td>
                         </tr>
                     @empty

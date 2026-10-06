@@ -1,81 +1,63 @@
 <x-app-layout>
-    <x-slot name="header">Buku Tamu</x-slot>
-
-    {{-- Ringkasan tipis --}}
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
-        <p style="margin:0; font-size:13px; color:#64748b;">Data kunjungan tamu — Dinas Perhubungan Provinsi Riau</p>
-        <div style="display:flex; gap:16px; font-size:13px; color:#374151;">
-            <span>Total Kunjungan: <strong>{{ $totalSemua }}</strong></span>
-            @if($adaFilter)
-                <span style="color:#1d4ed8;">Hasil Filter: <strong>{{ $totalFilter }}</strong></span>
-            @endif
+    <x-slot name="header">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div>
+                <h2 style="margin:0; font-size:18px; font-weight:600; color:#1e293b;">Buku Tamu</h2>
+                <p style="margin:2px 0 0; font-size:13px; font-weight:400; color:#64748b;">Data kunjungan tamu — Dinas Perhubungan Provinsi Riau</p>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Total Kunjungan</div>
+                <div style="font-size:16px; font-weight:700; color:#1e293b;">{{ $totalSemua }} <span style="font-size:13px; font-weight:500; color:#64748b;">Kunjungan</span></div>
+            </div>
         </div>
-    </div>
+    </x-slot>
 
     {{-- Filter --}}
-    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:14px 18px; margin-bottom:14px;">
-        <form method="GET" action="{{ route('buku-tamu.index') }}">
-            <div style="display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap;">
-                <div>
-                    <label style="display:block; font-size:11.5px; font-weight:600; color:#64748b; margin-bottom:4px;">Tanggal Mulai</label>
-                    <input type="date" name="start_date" value="{{ request('start_date') }}"
-                           style="border:1px solid #cbd5e1; border-radius:6px; padding:6px 10px; font-size:13px; color:#374151; outline:none;"
-                           onfocus="this.style.borderColor='#1d4ed8'" onblur="this.style.borderColor='#cbd5e1'">
-                </div>
-                <div>
-                    <label style="display:block; font-size:11.5px; font-weight:600; color:#64748b; margin-bottom:4px;">Tanggal Selesai</label>
-                    <input type="date" name="end_date" value="{{ request('end_date') }}"
-                           style="border:1px solid #cbd5e1; border-radius:6px; padding:6px 10px; font-size:13px; color:#374151; outline:none;"
-                           onfocus="this.style.borderColor='#1d4ed8'" onblur="this.style.borderColor='#cbd5e1'">
-                </div>
-                <button type="submit"
-                        style="padding:7px 18px; background:#1d4ed8; color:white; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;"
-                        onmouseover="this.style.background='#1e40af'" onmouseout="this.style.background='#1d4ed8'">
-                    Tampilkan
-                </button>
-                @if($adaFilter)
-                    <a href="{{ route('buku-tamu.index') }}"
-                       style="padding:7px 14px; background:#f1f5f9; color:#475569; border-radius:6px; font-size:13px; font-weight:600; text-decoration:none; border:1px solid #e2e8f0;">
-                        Reset
-                    </a>
-                @endif
+    <div style="background:#fff; border:1px solid rgba(0,0,0,0.06); border-radius:10px; padding:12px 16px; margin-bottom:16px;">
+        <form method="GET" action="{{ route('buku-tamu.index') }}" style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <label style="font-size:12px; font-weight:600; color:#475569;">Tanggal Mulai</label>
+                <input type="date" name="start_date" value="{{ request('start_date') }}" style="border:1px solid #cbd5e1; border-radius:6px; padding:4px 8px; font-size:13px; color:#334155; outline:none; height:32px; box-sizing:border-box;">
             </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <label style="font-size:12px; font-weight:600; color:#475569;">Tanggal Selesai</label>
+                <input type="date" name="end_date" value="{{ request('end_date') }}" style="border:1px solid #cbd5e1; border-radius:6px; padding:4px 8px; font-size:13px; color:#334155; outline:none; height:32px; box-sizing:border-box;">
+            </div>
+            <button type="submit" style="height:32px; padding:0 16px; background:#1d4ed8; color:white; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">
+                Tampilkan
+            </button>
+            @if($adaFilter)
+                <a href="{{ route('buku-tamu.index') }}" style="height:32px; display:inline-flex; align-items:center; padding:0 16px; background:#f8fafc; color:#475569; border:1px solid #e2e8f0; border-radius:6px; font-size:13px; font-weight:600; text-decoration:none;">
+                    Reset
+                </a>
+                <span style="font-size:12px; font-weight:500; color:#1d4ed8; margin-left:auto;">
+                    Menampilkan hasil filter ({{ $totalFilter }} data)
+                </span>
+            @endif
         </form>
-        @if($adaFilter)
-            <p style="margin:10px 0 0; font-size:12px; color:#1d4ed8;">
-                Filter aktif:
-                @if(request('start_date') && request('end_date'))
-                    {{ \Carbon\Carbon::parse(request('start_date'))->translatedFormat('d M Y') }} s.d. {{ \Carbon\Carbon::parse(request('end_date'))->translatedFormat('d M Y') }}
-                @elseif(request('start_date'))
-                    Mulai {{ \Carbon\Carbon::parse(request('start_date'))->translatedFormat('d M Y') }}
-                @else
-                    Sampai {{ \Carbon\Carbon::parse(request('end_date'))->translatedFormat('d M Y') }}
-                @endif
-            </p>
-        @endif
     </div>
 
     {{-- Grafik kunjungan per tanggal --}}
     @if(count($chartValues) > 0)
-    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:14px 18px; margin-bottom:14px;">
-        <p style="margin:0 0 12px; font-size:13px; font-weight:600; color:#1e293b;">Jumlah Kunjungan per Tanggal</p>
-        <canvas id="chartKunjungan" style="max-height:220px;"></canvas>
+    <div style="background:#fff; border:1px solid rgba(0,0,0,0.06); border-radius:10px; padding:14px 18px; margin-bottom:16px;">
+        <p style="margin:0 0 12px; font-size:13px; font-weight:600; color:#475569;">Tren Kunjungan</p>
+        <canvas id="chartKunjungan" style="max-height:160px;"></canvas>
     </div>
     @endif
 
     {{-- Tabel Daftar Kunjungan --}}
-    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
-        <div style="padding:12px 18px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-            <span style="font-size:13.5px; font-weight:700; color:#1e293b;">
-                Daftar Kunjungan Tamu
+    <div style="background:#fff; border:1px solid rgba(0,0,0,0.06); border-radius:10px; overflow:hidden;">
+        <div style="padding:12px 16px; border-bottom:1px solid rgba(0,0,0,0.05); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:14px; font-weight:600; color:#1e293b;">Daftar Kunjungan Tamu</span>
                 @if($bukuTamu->total() > 0)
-                    <span style="font-size:12px; font-weight:400; color:#64748b; margin-left:6px;">({{ $bukuTamu->total() }} data)</span>
+                    <span style="background:#f1f5f9; color:#475569; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600;">{{ $bukuTamu->total() }} data</span>
                 @endif
-            </span>
+            </div>
             <a href="{{ route('buku-tamu.qr') }}"
-               style="display:inline-flex; align-items:center; gap:5px; padding:6px 13px; background:#f0f9ff; color:#0369a1; font-size:12px; font-weight:600; border-radius:6px; text-decoration:none; border:1px solid #bae6fd;"
-               onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background='#f0f9ff'">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+               style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 12px; background:#f8fafc; color:#0369a1; font-size:12px; font-weight:600; border-radius:6px; text-decoration:none; border:1px solid #bae6fd; transition:all 0.15s;"
+               onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background='#f8fafc'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                 QR Buku Tamu
             </a>
         </div>
@@ -105,17 +87,15 @@
                             <td style="font-size:13px; color:#64748b; font-family:monospace; white-space:nowrap;">
                                 {{ substr($tamu->jam, 0, 5) }}
                             </td>
-                            <td style="font-size:13.5px; font-weight:600; color:#1e293b;">{{ $tamu->nama }}</td>
-                            <td style="font-size:13px; color:#64748b;">{{ $tamu->instansi ?? '—' }}</td>
-                            <td style="font-size:13px; color:#475569; font-family:monospace; white-space:nowrap;">{{ $tamu->no_hp }}</td>
-                            <td style="font-size:13px; color:#475569;">{{ $tamu->pegawai?->nama ?? '—' }}</td>
-                            <td style="font-size:13px; color:#475569;">{{ $tamu->unitKerja?->nama ?? '—' }}</td>
+                            <td style="font-size:13px; font-weight:600; color:#1e293b;">{{ $tamu->nama }}</td>
+                            <td style="font-size:12px; color:#475569;">{!! $tamu->instansi ? e($tamu->instansi) : '<span style="color:#cbd5e1;">—</span>' !!}</td>
+                            <td style="font-size:12px; color:#475569; font-family:monospace; white-space:nowrap;">{{ $tamu->no_hp }}</td>
+                            <td style="font-size:12px; color:#475569;">{!! $tamu->pegawai?->nama ? e($tamu->pegawai->nama) : '<span style="color:#cbd5e1;">—</span>' !!}</td>
+                            <td style="font-size:12px; color:#475569;">{!! $tamu->unitKerja?->nama ? e($tamu->unitKerja->nama) : '<span style="color:#cbd5e1;">—</span>' !!}</td>
                             <td style="text-align:right; padding-right:16px;">
-                                <a href="{{ route('buku-tamu.show', $tamu->id) }}"
-                                   style="display:inline-flex; align-items:center; padding:5px 12px; background:#f0fdf4; color:#15803d; font-size:12px; font-weight:600; border-radius:6px; text-decoration:none; border:1px solid #bbf7d0;"
-                                   onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
-                                    Detail
-                                </a>
+                                <x-action-group>
+                                    <x-action-btn type="view" url="{{ route('buku-tamu.show', $tamu->id) }}" />
+                                </x-action-group>
                             </td>
                         </tr>
                     @empty

@@ -122,14 +122,11 @@
                                         <span style="background:#f1f5f9; color:#475569; padding:2px 8px; border-radius:12px; font-size:12px;">Nonaktif</span>
                                     @endif
                                 </td>
-                                <td style="padding:12px 16px; display:flex; gap:8px;">
-                                    <a href="{{ route('pengaturan.kategori-bup.edit', $bup) }}" style="color:#2563eb; text-decoration:none; font-size:13px;">Edit</a>
-                                    
-                                    <form action="{{ route('pengaturan.kategori-bup.destroy', $bup) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kategori BUP ini?');" style="display:inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:13px; padding:0;">Hapus</button>
-                                    </form>
+                                <td style="padding:12px 16px;">
+                                    <x-action-group>
+                                        <x-action-btn type="edit" url="{{ route('pengaturan.kategori-bup.edit', $bup) }}" />
+                                        <x-action-delete action="{{ route('pengaturan.kategori-bup.destroy', $bup) }}" confirmMessage="Apakah Anda yakin ingin menghapus kategori BUP ini?" />
+                                    </x-action-group>
                                 </td>
                             </tr>
                             @empty

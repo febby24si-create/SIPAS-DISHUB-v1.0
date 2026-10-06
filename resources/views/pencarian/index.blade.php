@@ -135,12 +135,9 @@
                                     @php
                                         $routeDetail = $item->arah === 'masuk' ? route('surat-masuk.show', $item) : route('surat-keluar.show', $item);
                                     @endphp
-                                    <a href="{{ $routeDetail }}"
-                                       style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:#f8fafc; color:#1d4ed8; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; font-weight:600; text-decoration:none;"
-                                       onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                        Detail
-                                    </a>
+                                    <x-action-group>
+                                        <x-action-btn type="view" url="{{ $routeDetail }}" />
+                                    </x-action-group>
                                 </td>
                             </tr>
                         @empty

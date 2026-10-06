@@ -81,7 +81,7 @@
                 </div>
                 <div class="sidebar-logo-text">
                     <span class="title">SIPAS</span>
-                    <span class="subtitle">Dinas Perhubungan</span>
+                    <span class="subtitle">Dinas Perhubungan Provinsi Riau</span>
                 </div>
                 {{-- Mobile close button --}}
                 <button class="sidebar-mobile-close" id="btn-sidebar-close" onclick="closeMobileSidebar()" title="Tutup menu" aria-label="Tutup sidebar">
