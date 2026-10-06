@@ -216,30 +216,31 @@
                                     @click="toggleOpen($el)"
                                     @click.outside="open = false"
                                     class="form-control"
-                                    style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; background:#fff; cursor:pointer; min-height:42px; border: 1px solid {{ $errors->has('unit_kerja_id') ? '#fca5a5' : '#cbd5e1' }}; border-radius: 8px;">
-                                <span x-text="label || '-- Pilih Unit Kerja --'" :style="!label ? 'color:#94a3b8;' : 'color:#0f172a;'"></span>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+                                    style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; background:var(--card-bg, #fff); cursor:pointer; min-height:42px; border: 1px solid {{ $errors->has('unit_kerja_id') ? '#fca5a5' : 'var(--border, #cbd5e1)' }}; border-radius: 8px;">
+                                <span x-text="label || '-- Pilih Unit Kerja --'" :style="!label ? 'color:var(--text-muted, #94a3b8);' : 'color:var(--text-primary, #0f172a);'"></span>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:var(--text-muted, #64748b);"><polyline points="6 9 12 15 18 9"/></svg>
                             </button>
 
                             <div x-show="open"
                                  x-transition.opacity
                                  :style="direction === 'up'
-                                     ? 'display:flex; flex-direction:column-reverse; position:absolute; z-index:50; width:100%; bottom:calc(100% + 4px); background:white; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05); overflow:hidden;'
-                                     : 'display:flex; flex-direction:column; position:absolute; z-index:50; width:100%; top:calc(100% + 4px); background:white; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05); overflow:hidden;'"
+                                     ? 'display:flex; flex-direction:column-reverse; position:absolute; z-index:50; width:100%; bottom:calc(100% + 4px); background:var(--card-bg, #fff); border:1px solid var(--border, #e2e8f0); border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05); overflow:hidden;'
+                                     : 'display:flex; flex-direction:column; position:absolute; z-index:50; width:100%; top:calc(100% + 4px); background:var(--card-bg, #fff); border:1px solid var(--border, #e2e8f0); border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05); overflow:hidden;'"
                                  style="display:none;">
 
-                                <div style="padding:10px; border-bottom:1px solid #e2e8f0; background:#f8fafc; border-top-left-radius:8px; border-top-right-radius:8px;">
+                                <div style="padding:10px; border-bottom:1px solid var(--border, #e2e8f0); background:var(--page-bg, #f8fafc); border-top-left-radius:8px; border-top-right-radius:8px;">
                                     <div style="position:relative;">
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:12px; top:10px; color:#94a3b8;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:12px; top:10px; color:var(--text-muted, #94a3b8);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                                         <input type="text"
                                                x-model="search"
                                                placeholder="Cari unit kerja..."
-                                               style="width:100%; padding:8px 12px 8px 36px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; outline:none; box-sizing:border-box;"
+                                               class="form-control"
+                                               style="width:100%; padding:8px 12px 8px 36px; border:1px solid var(--border, #cbd5e1); border-radius:6px; font-size:13px; outline:none; box-sizing:border-box; background:var(--card-bg, #fff);"
                                                @click.stop>
                                     </div>
                                 </div>
 
-                                <div :style="'overflow-y:auto; max-height:' + maxListHeight + 'px; padding:6px 0 10px 0;'">
+                                <div :style="'overflow-y:auto; max-height:' + maxListHeight + 'px; padding:6px 0 10px 0; background:var(--card-bg, #fff);'">
                                     <template x-if="filteredData.length === 0">
                                         <div style="padding:16px; font-size:13px; color:#64748b; text-align:center;">
                                             Unit kerja tidak ditemukan.
@@ -248,21 +249,21 @@
 
                                     <template x-for="bidang in filteredData" :key="bidang.id">
                                         <div>
-                                            <div style="padding:8px 16px; font-size:11px; font-weight:700; color:#64748b; background:#f8fafc; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid #f1f5f9;" x-text="bidang.nama"></div>
+                                            <div style="padding:8px 16px; font-size:11px; font-weight:700; color:var(--text-muted, #64748b); background:var(--page-bg, #f8fafc); text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid var(--border-light, #f1f5f9);" x-text="bidang.nama"></div>
                                             <template x-for="seksi in bidang.seksis" :key="seksi.id">
                                                 <div @click="selectSeksi(seksi.id, seksi.nama)"
-                                                     style="padding:10px 16px 10px 24px; font-size:13px; color:#334155; cursor:pointer; display:flex; align-items:center; gap:8px;"
-                                                     onmouseover="this.style.backgroundColor='#eff6ff'"
+                                                     style="padding:10px 16px 10px 24px; font-size:13px; color:var(--text-primary, #334155); cursor:pointer; display:flex; align-items:center; gap:8px;"
+                                                     onmouseover="this.style.backgroundColor='rgba(0,0,0,0.03)'"
                                                      onmouseout="this.style.backgroundColor='transparent'">
                                                     <span x-text="seksi.nama"></span>
-                                                    <svg x-show="value == seksi.id" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;"><polyline points="20 6 9 17 4 12"/></svg>
+                                                    <svg x-show="value == seksi.id" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tc-accent, #2563eb)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;"><polyline points="20 6 9 17 4 12"/></svg>
                                                 </div>
                                             </template>
                                         </div>
                                     </template>
                                 </div>
 
-                                <div style="padding:8px 16px; border-top:1px solid #e2e8f0; background:#f8fafc; flex-shrink:0;">
+                                <div style="padding:8px 16px; border-top:1px solid var(--border, #e2e8f0); background:var(--page-bg, #f8fafc); flex-shrink:0;">
                                     <button type="button"
                                             @click.stop="value = ''; label = ''; search = '';"
                                             :disabled="!value"
