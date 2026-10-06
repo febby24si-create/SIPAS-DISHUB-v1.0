@@ -28,17 +28,35 @@ class BukuTamuController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nama' => 'required|string|max:255',
-            'no_hp' => 'required|string|max:20',
-            'keperluan' => 'required|string',
-            'instansi' => 'nullable|string|max:255',
-            'pegawai_id' => 'nullable|exists:pegawai,id',
+            'nama'          => 'required|string|max:255',
+            'no_hp'         => 'required|string|max:20',
+            'keperluan'     => 'required|string',
+            'instansi'      => 'nullable|string|max:255',
+            'pegawai_id'    => 'nullable|exists:pegawai,id',
             'unit_kerja_id' => 'nullable|exists:unit_kerja,id',
+            'spt_file'      => [
+                'nullable',
+                'file',
+                'max:10240',
+                'mimes:pdf,jpg,jpeg,png',
+            ],
         ]);
 
         // Server-side timestamp injection
         $validated['tanggal'] = now()->toDateString();
-        $validated['jam'] = now()->toTimeString();
+        $validated['jam']     = now()->toTimeString();
+
+        // Handle upload file SPT (opsional)
+        if ($request->hasFile('spt_file') && $request->file('spt_file')->isValid()) {
+            $file      = $request->file('spt_file');
+            $tahun     = now()->format('Y');
+            $bulan     = now()->format('m');
+            $namaFile  = \Illuminate\Support\Str::uuid() . '.' . strtolower($file->getClientOriginalExtension());
+            $path      = $file->storeAs("buku-tamu/{$tahun}/{$bulan}", $namaFile, 'public');
+            $validated['spt_file'] = $path;
+        } else {
+            unset($validated['spt_file']);
+        }
 
         BukuTamu::create($validated);
 

@@ -75,11 +75,39 @@
                 </div>
 
                 {{-- Keperluan (full-width) --}}
-                <div style="padding:14px 20px; grid-column:1 / -1;">
+                <div style="padding:14px 20px; border-bottom:1px solid #f1f5f9; grid-column:1 / -1;">
                     <p style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 8px;">Keperluan Kunjungan</p>
                     <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px;">
                         <p style="font-size:14px; color:#1e293b; margin:0; line-height:1.7;">{{ $bukuTamu->keperluan }}</p>
                     </div>
+                </div>
+
+                {{-- SPT (full-width) --}}
+                <div style="padding:14px 20px; grid-column:1 / -1;">
+                    <p style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 8px;">SPT (Surat Perintah Tugas)</p>
+                    @if($bukuTamu->spt_file)
+                        @php
+                            $sptUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($bukuTamu->spt_file);
+                            $sptExt = strtolower(pathinfo($bukuTamu->spt_file, PATHINFO_EXTENSION));
+                        @endphp
+                        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                            <a href="{{ $sptUrl }}" target="_blank" rel="noopener noreferrer"
+                               style="display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:7px; font-size:13px; font-weight:600; color:#1d4ed8; text-decoration:none;"
+                               onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                Lihat SPT
+                            </a>
+                            <a href="{{ $sptUrl }}" download
+                               style="display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:7px; font-size:13px; font-weight:600; color:#15803d; text-decoration:none;"
+                               onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Download
+                            </a>
+                            <span style="font-size:12px; color:#94a3b8; text-transform:uppercase;">{{ $sptExt }}</span>
+                        </div>
+                    @else
+                        <p style="font-size:14px; color:#94a3b8; font-style:italic; margin:0;">Belum ada SPT</p>
+                    @endif
                 </div>
 
             </div>

@@ -21,6 +21,7 @@ class BukuTamu extends Model
         'unit_kerja_id',
         'tanggal',
         'jam',
+        'spt_file',
     ];
 
     protected $casts = [
