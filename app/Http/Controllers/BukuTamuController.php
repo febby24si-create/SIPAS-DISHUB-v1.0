@@ -111,6 +111,37 @@ class BukuTamuController extends Controller
         $chartLabels = $chartData->pluck('tanggal')->map(fn($d) => \Carbon\Carbon::parse($d)->format('d/m'))->values()->toArray();
         $chartValues = $chartData->pluck('total')->values()->toArray();
 
+        // Pastikan SEMUA tanggal dalam rentang muncul di grafik (termasuk yang 0 kunjungan)
+        // Tentukan rentang: gunakan filter jika ada, atau min–max dari data
+        if ($chartData->isNotEmpty()) {
+            $dateStart = $request->filled('start_date')
+                ? \Carbon\Carbon::parse($request->start_date)
+                : \Carbon\Carbon::parse($chartData->first()->tanggal);
+            $dateEnd = $request->filled('end_date')
+                ? \Carbon\Carbon::parse($request->end_date)
+                : \Carbon\Carbon::parse($chartData->last()->tanggal);
+
+            // Map data aktual ke array indexed by tanggal (Y-m-d)
+            $dataByDate = $chartData->mapWithKeys(function ($item) {
+                return [
+                    \Carbon\Carbon::parse($item->tanggal)->format('Y-m-d') => (int) $item->total
+                ];
+            });
+
+            // Generate semua tanggal dalam rentang, isi 0 bila tidak ada data
+            $allLabels = [];
+            $allValues = [];
+            $period = \Carbon\CarbonPeriod::create($dateStart, $dateEnd);
+            foreach ($period as $date) {
+                $key = $date->format('Y-m-d');
+                $allLabels[] = $date->format('d/m');
+                $allValues[] = $dataByDate->get($key, 0);
+            }
+
+            $chartLabels = $allLabels;
+            $chartValues = $allValues;
+        }
+
         return view('buku-tamu.index', compact(
             'bukuTamu',
             'totalSemua',

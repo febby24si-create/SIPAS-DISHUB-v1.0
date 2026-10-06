@@ -45,17 +45,22 @@
     </div>
 
     {{-- Grafik kunjungan per tanggal --}}
-    @if(count($chartValues) > 0)
     <div style="background:#fff; border:1px solid rgba(0,0,0,0.06); border-radius:10px; padding:14px 18px; margin-bottom:16px;">
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             <span style="font-size:13px; font-weight:600; color:#334155;">Tren Kunjungan</span>
         </div>
-        <div style="position:relative; height:220px;">
-            <canvas id="chartKunjungan"></canvas>
-        </div>
+
+        @if(count($chartLabels) > 0)
+            <div style="position:relative; height:220px;">
+                <canvas id="chartKunjungan"></canvas>
+            </div>
+        @else
+            <div style="display:flex; align-items:center; justify-content:center; height:220px; color:#94a3b8; font-size:13px; font-weight:500;">
+                Belum ada data kunjungan pada periode ini.
+            </div>
+        @endif
     </div>
-    @endif
 
     {{-- Tabel Daftar Kunjungan --}}
     <div style="background:#fff; border:1px solid rgba(0,0,0,0.06); border-radius:10px; overflow:hidden;">
@@ -128,8 +133,8 @@
         @endif
     </div>
 
-    {{-- Chart.js --}}
-    @if(count($chartValues) > 0)
+    {{-- Chart.js — tampilkan jika ada data --}}
+    @if(count($chartLabels) > 0)
     @push('scripts')
     <script>
     (function () {
@@ -180,7 +185,16 @@
                         x: {
                             grid: { display: false },
                             border: { display: false },
-                            ticks: { font: { size: 11 }, color: '#94a3b8', maxTicksLimit: 12 }
+                            ticks: {
+                                font: { size: 11 },
+                                color: '#94a3b8',
+                                // Tampilkan semua label untuk rentang ≤31 hari
+                                // Untuk rentang lebih panjang, batasi agar tidak terlalu padat
+                                maxTicksLimit: {{ count($chartLabels) <= 31 ? count($chartLabels) : 16 }},
+                                autoSkip: {{ count($chartLabels) > 31 ? 'true' : 'false' }},
+                                maxRotation: 45,
+                                minRotation: 0
+                            }
                         },
                         y: {
                             beginAtZero: true,
