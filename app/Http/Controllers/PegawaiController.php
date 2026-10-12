@@ -5,14 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Pegawai;
 use App\Models\UnitKerja;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class PegawaiController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Pegawai::with('unitKerja')->latest();
+        $query = Pegawai::with('unitKerja.parent')->latest();
 
         // Optional filtering support
         if ($request->filled('unit_kerja_id')) {
@@ -21,9 +21,9 @@ class PegawaiController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('nip', 'like', "%{$search}%");
+                    ->orWhere('nip', 'like', "%{$search}%");
             });
         }
 
@@ -36,8 +36,9 @@ class PegawaiController extends Controller
     public function create()
     {
         $unitKerjas = UnitKerja::orderBy('nama')->get();
+
         return view('pegawai.form', [
-            'pegawai' => new Pegawai(),
+            'pegawai' => new Pegawai,
             'unitKerjas' => $unitKerjas,
         ]);
     }
@@ -61,8 +62,8 @@ class PegawaiController extends Controller
             'tmt' => 'required|date',
         ]);
 
-        DB::transaction(function () use ($validated, $request) {
-            $pegawai = new Pegawai();
+        $pegawai = DB::transaction(function () use ($validated, $request) {
+            $pegawai = new Pegawai;
             $pegawai->nip = $validated['nip'];
             $pegawai->nama = $validated['nama'];
             $pegawai->pangkat = $validated['pangkat'] ?? null;
@@ -76,22 +77,40 @@ class PegawaiController extends Controller
             $pegawai->tmt_jabatan = $validated['tmt_jabatan'] ?? null;
             $pegawai->unit_kerja_id = $validated['unit_kerja_id'] ?? null;
             $pegawai->status_aktif = $request->has('status_aktif') ? true : false;
-            
+
             // Pass the TMT input for the Observer to use
             $pegawai->tmt_input = $validated['tmt'];
-            
+
             // This will trigger the created event in PegawaiObserver
             $pegawai->save();
+
+            return $pegawai;
         });
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pegawai berhasil ditambahkan beserta histori awalnya.',
+                'pegawai' => $pegawai->load('unitKerja.parent'),
+            ], 201);
+        }
 
         return redirect()->route('pegawai.index')->with('status', 'Pegawai berhasil ditambahkan beserta histori awalnya.');
     }
 
-    public function show(Pegawai $pegawai)
+    public function show(Request $request, Pegawai $pegawai)
     {
-        $pegawai->load(['unitKerja', 'riwayatJabatanPangkat' => function($q) {
+        $pegawai->load(['unitKerja.parent', 'riwayatJabatanPangkat' => function ($q) {
             $q->orderBy('tmt', 'desc')->orderBy('created_at', 'desc');
         }]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'pegawai' => $pegawai,
+                'diklat_count' => $pegawai->riwayatDiklat()->count(),
+            ]);
+        }
 
         return view('pegawai.show', compact('pegawai'));
     }
@@ -99,6 +118,7 @@ class PegawaiController extends Controller
     public function edit(Pegawai $pegawai)
     {
         $unitKerjas = UnitKerja::orderBy('nama')->get();
+
         return view('pegawai.form', compact('pegawai', 'unitKerjas'));
     }
 
@@ -126,7 +146,7 @@ class PegawaiController extends Controller
             'tmt' => 'nullable|date', // TMT only needed if career fields changed, but making it nullable is safer. We'll enforce conditionally if needed.
         ]);
 
-        // If career fields are dirty, we'll need TMT. The observer will fallback to now() if not provided, 
+        // If career fields are dirty, we'll need TMT. The observer will fallback to now() if not provided,
         // but it's better to use user input if they changed it.
         if ($request->has('tmt') && $request->filled('tmt')) {
             $pegawai->tmt_input = $validated['tmt'];
@@ -145,8 +165,16 @@ class PegawaiController extends Controller
         $pegawai->tmt_jabatan = $validated['tmt_jabatan'] ?? null;
         $pegawai->unit_kerja_id = $validated['unit_kerja_id'] ?? null;
         $pegawai->status_aktif = $request->has('status_aktif') ? true : false;
-        
+
         $pegawai->save(); // This triggers updated event and isDirty checks
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pegawai berhasil diperbarui.',
+                'pegawai' => $pegawai->fresh()->load('unitKerja.parent'),
+            ]);
+        }
 
         return redirect()->route('pegawai.index')->with('status', 'Pegawai berhasil diperbarui.');
     }

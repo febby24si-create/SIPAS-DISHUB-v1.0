@@ -31,7 +31,7 @@
     }
 @endphp
 
-<a href="{{ $url }}" title="{{ $title }}" aria-label="{{ $title }}"
+<a href="{{ $url }}" title="{{ $title }}" aria-label="{{ $title }}" {{ $attributes }}
    style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; background:#f8fafc; color:{{ $color }}; border-radius:6px; border:1px solid #e2e8f0; text-decoration:none; transition:all 0.15s;"
    onmouseover="this.style.background='{{ $hoverBg }}'; this.style.borderColor='{{ $hoverBorder }}';" 
    onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
