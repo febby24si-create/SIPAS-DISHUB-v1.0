@@ -15,9 +15,11 @@ class SuratMasukController extends Controller
     public function index(Request $request)
     {
         $jenisSuratList = JenisSurat::orderBy('nama')->get();
+        $klasifikasiList = KlasifikasiSurat::where('status', 'aktif')->orderBy('nama')->get();
+        $bidangs = \App\Models\UnitKerja::whereNull('parent_id')->with('children')->orderBy('nama')->get();
 
         $suratMasuk = Surat::masuk()
-            ->with(['jenisSurat', 'klasifikasi'])
+            ->with(['jenisSurat', 'klasifikasi', 'unitKerja.parent'])
             ->when($request->filled('q'), fn ($q) => $q->where(function ($sub) use ($request) {
                 $sub->where('perihal', 'like', '%' . $request->q . '%')
                     ->orWhere('nomor_surat', 'like', '%' . $request->q . '%')
@@ -31,7 +33,7 @@ class SuratMasukController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('surat-masuk.index', compact('suratMasuk', 'jenisSuratList'));
+        return view('surat-masuk.index', compact('suratMasuk', 'jenisSuratList', 'klasifikasiList', 'bidangs'));
     }
 
     public function create()
@@ -100,13 +102,29 @@ class SuratMasukController extends Controller
             'aktivitas' => 'Mencatat surat masuk: ' . ($surat->nomor_surat ?? 'Tanpa Nomor'),
         ]);
 
+        if ($request->wantsJson()) {
+            $surat->load(['jenisSurat', 'klasifikasi', 'unitKerja.parent', 'creator']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Surat masuk berhasil dicatat.',
+                'surat'   => $this->formatSuratForJson($surat),
+            ], 201);
+        }
+
         return redirect()->route('surat-masuk.show', $surat)->with('status', 'Surat masuk berhasil dicatat.');
     }
 
-    public function show(Surat $surat)
+    public function show(Request $request, Surat $surat)
     {
         abort_if($surat->arah !== 'masuk', 404);
-        $surat->load(['jenisSurat', 'klasifikasi', 'creator']);
+        $surat->load(['jenisSurat', 'klasifikasi', 'unitKerja.parent', 'creator']);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'surat'   => $this->formatSuratForJson($surat),
+            ]);
+        }
 
         return view('surat-masuk.show', compact('surat'));
     }
@@ -152,16 +170,18 @@ class SuratMasukController extends Controller
         ]);
 
         if ($request->hasFile('file_dokumen')) {
-            // Hapus file lama
-            if ($surat->file_dokumen) {
-                Storage::disk('public')->delete($surat->file_dokumen);
-            }
-            // Tentukan folder: gunakan unit_kerja_id yang sudah ada di surat (jangan override dari request lama)
+            // Hapus file lama hanya setelah file baru berhasil disimpan
             $currentUnitKerjaId = $validated['unit_kerja_id'] ?? $surat->unit_kerja_id ?? null;
             $tahun = date('Y', strtotime($validated['tanggal_surat'] ?? $surat->tanggal_surat));
             $folder = ArsipPathHelper::build($currentUnitKerjaId, 'masuk', $tahun) ?? 'surat-masuk';
-            $validated['file_dokumen'] = $request->file('file_dokumen')->store($folder, 'public');
+            $newPath = $request->file('file_dokumen')->store($folder, 'public');
+            // Hapus file lama hanya setelah file baru tersimpan dengan sukses
+            if ($surat->file_dokumen) {
+                Storage::disk('public')->delete($surat->file_dokumen);
+            }
+            $validated['file_dokumen'] = $newPath;
         } else {
+            // Jangan sentuh file lama jika tidak ada file baru
             unset($validated['file_dokumen']);
         }
 
@@ -172,6 +192,15 @@ class SuratMasukController extends Controller
             'surat_id'  => $surat->id,
             'aktivitas' => 'Memperbarui surat masuk: ' . ($surat->nomor_surat ?? 'Tanpa Nomor'),
         ]);
+
+        if ($request->wantsJson()) {
+            $surat->load(['jenisSurat', 'klasifikasi', 'unitKerja.parent', 'creator']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Surat masuk berhasil diperbarui.',
+                'surat'   => $this->formatSuratForJson($surat),
+            ]);
+        }
 
         return redirect()->route('surat-masuk.show', $surat)->with('status', 'Surat masuk berhasil diperbarui.');
     }
@@ -206,5 +235,41 @@ class SuratMasukController extends Controller
         return Storage::disk('public')->download($surat->file_dokumen,
             'Surat-Masuk-' . ($surat->nomor_surat ? str_replace('/', '-', $surat->nomor_surat) : $surat->id) . '.' . pathinfo($surat->file_dokumen, PATHINFO_EXTENSION)
         );
+    }
+
+    /**
+     * Format surat data untuk respons JSON modal.
+     */
+    private function formatSuratForJson(Surat $surat): array
+    {
+        return [
+            'id'                   => $surat->id,
+            'jenis_surat_id'       => $surat->jenis_surat_id,
+            'jenis_surat_nama'     => $surat->jenisSurat?->nama,
+            'jenis_surat_kode'     => $surat->jenisSurat?->kode,
+            'klasifikasi_id'       => $surat->klasifikasi_id,
+            'klasifikasi_nama'     => $surat->klasifikasi?->nama,
+            'klasifikasi_kode'     => $surat->klasifikasi?->kode,
+            'unit_kerja_id'        => $surat->unit_kerja_id,
+            'unit_kerja_nama'      => $surat->unitKerja?->nama,
+            'induk_unit_kerja_nama'=> $surat->unitKerja?->parent?->nama,
+            'bidang_id'            => $surat->unitKerja?->parent_id,
+            'nomor_surat'          => $surat->nomor_surat,
+            'perihal'              => $surat->perihal,
+            'pengirim'             => $surat->pengirim,
+            'tanggal_surat'        => $surat->tanggal_surat?->format('Y-m-d'),
+            'tanggal_surat_formatted' => $surat->tanggal_surat?->translatedFormat('d F Y'),
+            'tanggal_diterima'     => $surat->tanggal_diterima?->format('Y-m-d'),
+            'tanggal_diterima_formatted' => $surat->tanggal_diterima?->translatedFormat('d F Y'),
+            'status'               => $surat->status,
+            'file_dokumen'         => $surat->file_dokumen,
+            'file_dokumen_basename'=> $surat->file_dokumen ? basename($surat->file_dokumen) : null,
+            'download_url'         => $surat->file_dokumen ? route('surat-masuk.download', $surat) : null,
+            'creator_name'         => $surat->creator?->name,
+            'created_at_formatted' => $surat->created_at?->translatedFormat('d F Y, H:i'),
+            'show_url'             => route('surat-masuk.show', $surat),
+            'edit_url'             => route('surat-masuk.edit', $surat),
+            'destroy_url'          => route('surat-masuk.destroy', $surat),
+        ];
     }
 }
