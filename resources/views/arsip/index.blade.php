@@ -156,9 +156,16 @@
                     @forelse ($arsipGroups as $group)
                         <x-date-group-row :group="$group" :colspan="8" :partial="$arsip->hasPages()" noun="arsip" />
                         @foreach ($group['items'] as $row)
-                            @php $item = $row['surat']; @endphp
+                            @php
+                                $item = $row['surat'];
+
+                                // Aksen tipis di tepi baris agar arah terbaca sekilas,
+                                // tanpa mewarnai seluruh baris.
+                                $arahRow = strtolower(trim((string) $item->arah));
+                                $rowAccent = $arahRow === 'masuk' ? '#10b981' : ($arahRow === 'keluar' ? '#3b82f6' : '#94a3b8');
+                            @endphp
                             <tr>
-                                <td style="color:#94a3b8; font-size:13px;">{{ $row['no'] }}.</td>
+                                <td style="border-left:3px solid {{ $rowAccent }}; color:#94a3b8; font-size:13px;">{{ $row['no'] }}.</td>
                                 <td style="font-family:monospace; font-size:12px; color:#334155;">{{ $item->nomor_surat ?? '-' }}</td>
                                 <td style="font-weight:500; color:#1e293b;">{{ $item->perihal }}</td>
                                 <td style="font-size:12px; color:#475569;">
@@ -178,23 +185,11 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <span style="display:inline-flex; align-items:center; gap:5px; padding:4px 10px; background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:600; border-radius:8px;">
-                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.83z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-                                        {{ $item->jenisSurat->kode ?? '-' }}
-                                    </span>
+                                    {{-- Badge jenis surat memakai warna arah agar satu baris terlihat seragam. --}}
+                                    <x-arah-badge :arah="$item->arah" icon="tag" :label="$item->jenisSurat->kode ?? '-'" />
                                 </td>
                                 <td>
-                                    @if ($item->arah === 'masuk')
-                                        <span style="display:inline-flex; align-items:center; gap:5px; padding:4px 10px; background:#ecfdf5; color:#059669; font-size:11px; font-weight:600; border-radius:20px;">
-                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 7 7 17"/><path d="M17 17H7V7"/></svg>
-                                            Masuk
-                                        </span>
-                                    @else
-                                        <span style="display:inline-flex; align-items:center; gap:5px; padding:4px 10px; background:#fffbeb; color:#d97706; font-size:11px; font-weight:600; border-radius:20px;">
-                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
-                                            Keluar
-                                        </span>
-                                    @endif
+                                    <x-arah-badge :arah="$item->arah" />
                                 </td>
                                 <td style="color:#64748b; font-size:13px;">
                                     <span style="display:inline-flex; align-items:center; gap:6px;">

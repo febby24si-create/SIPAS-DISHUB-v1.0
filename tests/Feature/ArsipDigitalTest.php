@@ -297,6 +297,156 @@ class ArsipDigitalTest extends TestCase
         $this->assertStringContainsString('Jumlah surat pada kelompok tanggal ini', $keluar);
     }
 
+    // ── 8: Warna & ikon arah (masuk hijau / keluar biru / netral) ──────
+
+    public function test_arsip_masuk_memakai_latar_hijau_dan_ikon_arrow_down_left(): void
+    {
+        $this->buatArsip('Surat Masuk Hijau', $this->now(), ['arah' => 'masuk']);
+
+        $tbody = $this->tbody();
+
+        // Badge arah: latar hijau lembut, teks kontras, ikon arrow-down-left.
+        $this->assertStringContainsString('background:#ecfdf5; color:#047857', $tbody);
+        $this->assertStringContainsString('<path d="M17 7 7 17"/><path d="M17 17H7V7"/>', $tbody);
+        $this->assertStringContainsString('Masuk', $tbody);
+
+        // Tidak memakai warna/ikon keluar (pasangan warna badge, bukan warna lain di halaman).
+        $this->assertStringNotContainsString('background:#eff6ff; color:#1d4ed8', $tbody);
+        $this->assertStringNotContainsString('<path d="M7 7h10v10"/>', $tbody);
+
+        // Aksen tipis di tepi baris ikut berwarna hijau.
+        $this->assertStringContainsString('border-left:3px solid #10b981', $tbody);
+    }
+
+    public function test_arsip_keluar_memakai_latar_biru_dan_ikon_arrow_up_right(): void
+    {
+        $this->buatArsip('Surat Keluar Biru', $this->now(), ['arah' => 'keluar']);
+
+        $tbody = $this->tbody();
+
+        // Badge arah: latar biru lembut, teks kontras, ikon arrow-up-right.
+        $this->assertStringContainsString('background:#eff6ff; color:#1d4ed8', $tbody);
+        $this->assertStringContainsString('<path d="M7 7h10v10"/><path d="M7 17 17 7"/>', $tbody);
+        $this->assertStringContainsString('Keluar', $tbody);
+
+        // Warna amber lama tidak lagi dipakai.
+        $this->assertStringNotContainsString('color:#d97706', $tbody);
+        $this->assertStringNotContainsString('background:#fffbeb; color:#d97706', $tbody);
+
+        // Aksen tipis di tepi baris ikut berwarna biru.
+        $this->assertStringContainsString('border-left:3px solid #3b82f6', $tbody);
+    }
+
+    public function test_arah_tidak_tersedia_atau_tidak_dikenal_tampil_netral(): void
+    {
+        // Nilai di luar enum: "arsip" (tidak dikenal) dan "" (tidak tersedia).
+        $this->buatArsip('Arah Tidak Dikenal', $this->now(), ['arah' => 'arsip']);
+        $this->buatArsip('Arah Kosong', $this->now()->subHour(), ['arah' => '']);
+
+        $tbody = $this->tbody();
+
+        // Keduanya tetap tampil di daftar.
+        $this->assertStringContainsString('Arah Tidak Dikenal', $tbody);
+        $this->assertStringContainsString('Arah Kosong', $tbody);
+
+        // Label netral — tidak memaksakan warna maupun teks masuk/keluar.
+        $this->assertSame(2, substr_count($tbody, 'Tidak Diketahui'));
+        $this->assertStringContainsString('background:#f1f5f9; color:#4b5563', $tbody);
+        $this->assertStringNotContainsString('Masuk', $tbody);
+        $this->assertStringNotContainsString('Keluar', $tbody);
+        $this->assertStringNotContainsString('background:#ecfdf5; color:#047857', $tbody);
+        $this->assertStringNotContainsString('background:#eff6ff; color:#1d4ed8', $tbody);
+
+        // Aksen tepi baris netral (abu-abu), bukan hijau/biru.
+        $this->assertStringContainsString('border-left:3px solid #94a3b8', $tbody);
+        $this->assertStringNotContainsString('border-left:3px solid #10b981', $tbody);
+        $this->assertStringNotContainsString('border-left:3px solid #3b82f6', $tbody);
+    }
+
+    public function test_aksen_tepi_baris_membedakan_arah_pada_tabel_daftar(): void
+    {
+        $this->buatArsip('Baris Masuk', $this->now(), ['arah' => 'masuk']);
+        $this->buatArsip('Baris Keluar', $this->now()->subHour(), ['arah' => 'keluar']);
+        $this->buatArsip('Baris Netral', $this->now()->subHours(2), ['arah' => 'diabnormal']);
+
+        $tbody = $this->tbody();
+
+        foreach (['#10b981', '#3b82f6', '#94a3b8'] as $aksen) {
+            $this->assertStringContainsString('border-left:3px solid '.$aksen, $tbody);
+        }
+    }
+
+    // ── 9: Konsistensi badge daftar ↔ detail ────────────────────────────
+
+    public function test_badge_pada_halaman_daftar_sesuai_halaman_detail(): void
+    {
+        $masuk = $this->buatArsip('Detail Masuk', $this->now(), ['arah' => 'masuk']);
+        $keluar = $this->buatArsip('Detail Keluar', $this->now()->subHour(), ['arah' => 'keluar']);
+
+        $daftar = $this->arsipHtml();
+        $detailMasuk = $this->arsipDetail($masuk);
+        $detailKeluar = $this->arsipDetail($keluar);
+
+        // Badge arah (pil) memakai markup yang sama persis di daftar dan detail.
+        $pilMasuk = 'background:#ecfdf5; color:#047857; font-size:11px; font-weight:600; border-radius:20px; white-space:nowrap;';
+        $pilKeluar = 'background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:600; border-radius:20px; white-space:nowrap;';
+
+        $this->assertStringContainsString($pilMasuk, $daftar);
+        $this->assertStringContainsString($pilMasuk, $detailMasuk);
+        $this->assertStringContainsString($pilKeluar, $daftar);
+        $this->assertStringContainsString($pilKeluar, $detailKeluar);
+
+        $this->assertStringContainsString('<path d="M17 7 7 17"/><path d="M17 17H7V7"/>', $detailMasuk);
+        $this->assertStringContainsString('<path d="M7 7h10v10"/><path d="M7 17 17 7"/>', $detailKeluar);
+
+        // Warna arah lama (amber) sudah tidak dipakai pada halaman arsip.
+        $this->assertStringNotContainsString('color:#d97706', $daftar);
+        $this->assertStringNotContainsString('color:#d97706', $detailKeluar);
+    }
+
+    public function test_badge_jenis_surat_mengikuti_warna_arah_di_daftar_dan_detail(): void
+    {
+        $masuk = $this->buatArsip('Jenis Masuk', $this->now(), ['arah' => 'masuk']);
+        $keluar = $this->buatArsip('Jenis Keluar', $this->now()->subHour(), ['arah' => 'keluar']);
+
+        $daftar = $this->arsipHtml();
+        $detailMasuk = $this->arsipDetail($masuk);
+        $detailKeluar = $this->arsipDetail($keluar);
+
+        // Badge jenis (sudut membulat 8px) memakai warna arah di daftar & detail.
+        $jenisMasuk = 'background:#ecfdf5; color:#047857; font-size:11px; font-weight:600; border-radius:8px; white-space:nowrap;';
+        $jenisKeluar = 'background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:600; border-radius:8px; white-space:nowrap;';
+
+        $this->assertStringContainsString($jenisMasuk, $daftar);
+        $this->assertStringContainsString($jenisKeluar, $daftar);
+        $this->assertStringContainsString($jenisMasuk, $detailMasuk);
+        $this->assertStringContainsString($jenisKeluar, $detailKeluar);
+
+        // Ikon tag tetap dipakai pada badge jenis, dan teksnya tetap kode jenis surat "SK".
+        $this->assertTrue($this->badgeMengandungTeks($daftar, $jenisMasuk, 'SK'), 'Badge jenis (daftar) tidak berisi kode SK.');
+        $this->assertTrue($this->badgeMengandungTeks($daftar, $jenisKeluar, 'SK'), 'Badge jenis (daftar) tidak berisi kode SK.');
+        $this->assertTrue($this->badgeMengandungTeks($detailMasuk, $jenisMasuk, 'SK'), 'Badge jenis (detail) tidak berisi kode SK.');
+        $this->assertTrue($this->badgeMengandungTeks($detailKeluar, $jenisKeluar, 'SK'), 'Badge jenis (detail) tidak berisi kode SK.');
+
+        // Nama jenis surat tetap ditampilkan di halaman detail.
+        $this->assertStringContainsString('Surat Keputusan', $detailMasuk);
+    }
+
+    public function test_arah_tidak_dikenal_pada_halaman_detail_juga_tampil_netral(): void
+    {
+        $surat = $this->buatArsip('Detail Tanpa Arah', $this->now(), ['arah' => 'tanpa-arah']);
+
+        $detail = $this->arsipDetail($surat);
+
+        $this->assertStringContainsString('Tidak Diketahui', $detail);
+        $this->assertStringContainsString('background:#f1f5f9; color:#4b5563', $detail);
+        $this->assertStringNotContainsString('background:#ecfdf5; color:#047857', $detail);
+        $this->assertStringNotContainsString('background:#eff6ff; color:#1d4ed8', $detail);
+
+        // Aksen hero memakai warna netral, bukan hijau/biru.
+        $this->assertStringContainsString('rgba(148,163,184,0.15)', $detail);
+    }
+
     // ── Helper pengujian ────────────────────────────────────────────────
 
     private function now(): Carbon
@@ -345,6 +495,31 @@ class ArsipDigitalTest extends TestCase
             ->getContent();
     }
 
+    /** Muat halaman detail arsip (arsip.show) dan kembalikan HTML-nya. */
+    private function arsipDetail(Surat $surat): string
+    {
+        return $this->actingAs($this->user)
+            ->get(route('arsip.show', $surat))
+            ->assertStatus(200)
+            ->assertViewIs('arsip.show')
+            ->getContent();
+    }
+
+    /**
+     * Apakah ada badge dengan potongan gaya $gaya yang memuat teks $teks di dalamnya?
+     * Dipakai untuk memastikan isi badge (mis. kode jenis surat) ikut terbawa.
+     */
+    private function badgeMengandungTeks(string $html, string $gaya, string $teks): bool
+    {
+        $pos = strpos($html, $gaya);
+
+        if ($pos === false) {
+            return false;
+        }
+
+        return str_contains(substr($html, $pos, 500), $teks);
+    }
+
     private function tbody(array $query = []): string
     {
         return $this->tbodyFrom($this->arsipHtml($query));
@@ -373,7 +548,8 @@ class ArsipDigitalTest extends TestCase
     /** @return array<int, int> */
     private function nomorUrut(string $tbody): array
     {
-        preg_match_all('~<td style="color:#94a3b8; font-size:13px;">(\d+)\.</td>~', $tbody, $matches);
+        // Sel ubin "No." diberi awalan aksen arah, jadi cocokkan bagian gaya warna/tipografinya.
+        preg_match_all('~<td style="[^"]*color:#94a3b8; font-size:13px;">(\d+)\.</td>~', $tbody, $matches);
 
         return array_map('intval', $matches[1]);
     }

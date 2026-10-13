@@ -12,7 +12,6 @@ use App\Http\Controllers\DisposisiController;
 use App\Http\Controllers\ArsipController;
 use App\Http\Controllers\PencarianController;
 use App\Http\Controllers\LaporanController;
-use App\Http\Controllers\NomorSuratController;
 use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\PengaturanController;
 use App\Http\Controllers\UnitKerjaController;
@@ -47,7 +46,8 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('jenis-surat', JenisSuratController::class);
     Route::resource('klasifikasi-surat', KlasifikasiSuratController::class)->except(['show']);
     // Route::resource('template-surat', TemplateSuratController::class); // DINONAKTIFKAN
-    Route::get('nomor-surat', [NomorSuratController::class, 'index'])->name('nomor-surat.index');
+    // Menu "Nomor Surat" dihapus: hanya halaman bacaan format, tidak menyimpan konfigurasi.
+    // Penomoran otomatis tetap berjalan lewat DocumentNumberService pada Surat Keluar.
     Route::resource('unit-kerja', UnitKerjaController::class)->except(['show']);
     Route::resource('pegawai', PegawaiController::class);
 

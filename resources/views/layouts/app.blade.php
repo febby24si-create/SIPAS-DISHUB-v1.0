@@ -259,8 +259,8 @@
                 <p class="sidebar-section-label">Master Data</p>
 
                 {{-- ── Persuratan (submenu) ── --}}
-                <div x-data="{ expanded: {{ request()->routeIs('jenis-surat.*') || request()->routeIs('klasifikasi-surat.*') || request()->routeIs('nomor-surat.*') ? 'true' : 'false' }} }">
-                    <div class="sidebar-link-row {{ request()->routeIs('jenis-surat.*') || request()->routeIs('klasifikasi-surat.*') || request()->routeIs('nomor-surat.*') ? 'active' : '' }}">
+                <div x-data="{ expanded: {{ request()->routeIs('jenis-surat.*') || request()->routeIs('klasifikasi-surat.*') ? 'true' : 'false' }} }">
+                    <div class="sidebar-link-row {{ request()->routeIs('jenis-surat.*') || request()->routeIs('klasifikasi-surat.*') ? 'active' : '' }}">
                         <button type="button"
                                 class="sidebar-link-main"
                                 data-tooltip="Persuratan"
@@ -288,8 +288,6 @@
                            class="sidebar-submenu-link {{ request()->routeIs('jenis-surat.*') ? 'active' : '' }}">Jenis Surat</a>
                         <a href="{{ route('klasifikasi-surat.index') }}"
                            class="sidebar-submenu-link {{ request()->routeIs('klasifikasi-surat.*') ? 'active' : '' }}">Klasifikasi Surat</a>
-                        <a href="{{ route('nomor-surat.index') }}"
-                           class="sidebar-submenu-link {{ request()->routeIs('nomor-surat.*') ? 'active' : '' }}">Nomor Surat</a>
                     </div>
                 </div>
 

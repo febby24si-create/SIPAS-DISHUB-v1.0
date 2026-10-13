@@ -38,7 +38,13 @@
             </div>
             
             {{-- Decorative circles --}}
-            <div style="position:absolute; top:-50%; right:-10%; width:300px; height:300px; background:radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(0,0,0,0) 70%); border-radius:50%; z-index:1;"></div>
+            {{-- Decorative circle: aksen kecil yang diwarnai menurut arah surat --}}
+            @php
+                $arahHero = strtolower(trim((string) $surat->arah));
+                $glowColor = $arahHero === 'masuk' ? 'rgba(16,185,129,0.18)'
+                    : ($arahHero === 'keluar' ? 'rgba(59,130,246,0.18)' : 'rgba(148,163,184,0.15)');
+            @endphp
+            <div style="position:absolute; top:-50%; right:-10%; width:300px; height:300px; background:radial-gradient(circle, {{ $glowColor }} 0%, rgba(0,0,0,0) 70%); border-radius:50%; z-index:1;"></div>
         </div>
 
         {{-- Grid Info --}}
@@ -67,7 +73,11 @@
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.83z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
                                 Jenis Surat
                             </span>
-                            <div style="color:#334155; font-size:14px; font-weight:500;">{{ $surat->jenisSurat->nama ?? '-' }}</div>
+                            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                {{-- Badge jenis surat sama dengan halaman daftar: warna & ikon mengikuti arah surat. --}}
+                                <x-arah-badge :arah="$surat->arah" icon="tag" :label="$surat->jenisSurat->kode ?? '-'" />
+                                <span style="color:#334155; font-size:14px; font-weight:500;">{{ $surat->jenisSurat->nama ?? '-' }}</span>
+                            </div>
                         </div>
                         <div>
                             <span style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:#94a3b8; margin-bottom:4px; text-transform:uppercase;">
@@ -95,19 +105,8 @@
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>
                                 Arah Surat
                             </span>
-                            <div style="color:#334155; font-size:14px; font-weight:500;">
-                                @if ($surat->arah === 'masuk')
-                                    <span style="display:inline-flex; align-items:center; gap:5px; color:#059669;">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 7 7 17"/><path d="M17 17H7V7"/></svg>
-                                        Masuk
-                                    </span>
-                                @else
-                                    <span style="display:inline-flex; align-items:center; gap:5px; color:#d97706;">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
-                                        Keluar
-                                    </span>
-                                @endif
-                            </div>
+                            {{-- Badge arah sama persis dengan kolom "Arah" pada halaman daftar. --}}
+                            <x-arah-badge :arah="$surat->arah" />
                         </div>
                         <div>
                             <span style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:#94a3b8; margin-bottom:4px; text-transform:uppercase;">
