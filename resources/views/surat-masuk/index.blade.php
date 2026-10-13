@@ -52,6 +52,8 @@
                 'file_dokumen'          => $item->file_dokumen,
                 'file_dokumen_basename' => $item->file_dokumen ? basename($item->file_dokumen) : null,
                 'download_url'          => $item->file_dokumen ? route('surat-masuk.download', $item) : null,
+                'is_pdf'                => $item->file_dokumen ? strtolower(pathinfo($item->file_dokumen, PATHINFO_EXTENSION)) === 'pdf' : false,
+                'view_url'              => ($item->file_dokumen && strtolower(pathinfo($item->file_dokumen, PATHINFO_EXTENSION)) === 'pdf') ? route('surat-masuk.preview', $item) : null,
                 'show_url'              => route('surat-masuk.show', $item),
                 'edit_url'              => route('surat-masuk.edit', $item),
                 'destroy_url'           => route('surat-masuk.destroy', $item),
@@ -133,6 +135,16 @@
         </form>
 
         {{-- ── Table ── --}}
+        @php
+            // Kelompokkan baris berdasarkan tanggal input (created_at) memakai zona waktu aplikasi.
+            $smGroups = \App\Helpers\DateGroupHelper::groupByInputDate($suratMasuk);
+        @endphp
+
+        {{-- Template header kelompok "Hari Ini" untuk baris yang disisipkan lewat AJAX --}}
+        <template id="sm-today-group-template">
+            <x-date-group-row :group="\App\Helpers\DateGroupHelper::todayGroup()" :colspan="8" />
+        </template>
+
         <div style="background:var(--card-bg,white); border-radius:20px; border:1px solid var(--border,rgba(0,0,0,0.06)); overflow:hidden;">
             <table class="data-table">
                 <thead>
@@ -148,9 +160,12 @@
                     </tr>
                 </thead>
                 <tbody id="surat-masuk-table-body">
-                    @forelse ($suratMasuk as $item)
-                        <tr id="surat-masuk-row-{{ $item->id }}">
-                            <td style="color:#94a3b8; font-size:13px;">{{ $suratMasuk->firstItem() + $loop->index }}.</td>
+                    @forelse ($smGroups as $group)
+                        <x-date-group-row :group="$group" :colspan="8" :partial="$suratMasuk->hasPages()" />
+                        @foreach ($group['items'] as $row)
+                            @php $item = $row['surat']; @endphp
+                            <tr data-surat-row id="surat-masuk-row-{{ $item->id }}">
+                            <td style="color:#94a3b8; font-size:13px;">{{ $row['no'] }}.</td>
                             <td style="font-family:monospace; font-size:12px; color:#334155;">{{ $item->nomor_surat ?? '-' }}</td>
                             <td style="font-weight:500; color:var(--text-primary,#1e293b); max-width:220px;">
                                 <a href="{{ route('surat-masuk.show', $item) }}"
@@ -181,7 +196,8 @@
                                     <x-action-btn type="edit" url="{{ route('surat-masuk.edit', $item) }}" @click.prevent="openEdit({{ $item->id }})" />
                                 </x-action-group>
                             </td>
-                        </tr>
+                            </tr>
+                        @endforeach
                     @empty
                         <tr id="empty-surat-masuk-row">
                             <td colspan="8" style="text-align:center; padding:48px 24px; color:#94a3b8;">
@@ -252,25 +268,31 @@
                             <div class="sipas-form-row">
                                 <div class="form-group" style="flex:1;">
                                     <label class="form-label" for="c_jenis_surat_id">Jenis Surat <span style="color:#ef4444;">*</span></label>
-                                    <select id="c_jenis_surat_id" x-model="createForm.jenis_surat_id" class="form-control"
-                                            :class="{'sipas-input-error': createErrors.jenis_surat_id}">
-                                        <option value="">-- Pilih Jenis Surat --</option>
-                                        <template x-for="j in jenisSuratList" :key="j.id">
-                                            <option :value="j.id" x-text="j.nama"></option>
-                                        </template>
-                                    </select>
+                                    <div class="sm-input-wrap">
+                                        <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                        <select id="c_jenis_surat_id" x-model="createForm.jenis_surat_id" class="form-control"
+                                                :class="{'sipas-input-error': createErrors.jenis_surat_id}">
+                                            <option value="">-- Pilih Jenis Surat --</option>
+                                            <template x-for="j in jenisSuratList" :key="j.id">
+                                                <option :value="j.id" x-text="j.nama"></option>
+                                            </template>
+                                        </select>
+                                    </div>
                                     <template x-if="createErrors.jenis_surat_id">
                                         <p class="form-error" x-text="createErrors.jenis_surat_id[0]"></p>
                                     </template>
                                 </div>
                                 <div class="form-group" style="flex:1;">
                                     <label class="form-label" for="c_klasifikasi_id">Klasifikasi <span style="font-weight:400; color:#94a3b8;">(opsional)</span></label>
-                                    <select id="c_klasifikasi_id" x-model="createForm.klasifikasi_id" class="form-control">
-                                        <option value="">-- Tanpa Klasifikasi --</option>
-                                        <template x-for="k in klasifikasiList" :key="k.id">
-                                            <option :value="k.id" x-text="k.kode + ' - ' + k.nama"></option>
-                                        </template>
-                                    </select>
+                                    <div class="sm-input-wrap">
+                                        <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.83z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                                        <select id="c_klasifikasi_id" x-model="createForm.klasifikasi_id" class="form-control">
+                                            <option value="">-- Tanpa Klasifikasi --</option>
+                                            <template x-for="k in klasifikasiList" :key="k.id">
+                                                <option :value="k.id" x-text="k.kode + ' - ' + k.nama"></option>
+                                            </template>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
@@ -302,9 +324,10 @@
                                     <button type="button" @click="toggle($el)" @click.outside="open = false"
                                             class="form-control"
                                             :class="{'sipas-input-error': createErrors.unit_kerja_id || createErrors.bidang_id}"
-                                            style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; cursor:pointer;">
+                                            style="display:flex; justify-content:space-between; align-items:center; gap:8px; width:100%; text-align:left; cursor:pointer;">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:var(--text-muted,#94a3b8);"><rect x="9" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="16" y="16" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><line x1="12" y1="12" x2="12" y2="8"/></svg>
                                         <span x-text="createForm.unit_kerja_label || '-- Pilih Seksi/Unit Kerja --'"
-                                              :style="!createForm.unit_kerja_label ? 'color:var(--text-muted,#94a3b8);' : 'color:var(--text-primary,#1e293b);'"></span>
+                                              :style="!createForm.unit_kerja_label ? 'color:var(--text-muted,#94a3b8); flex:1;' : 'color:var(--text-primary,#1e293b); flex:1;'"></span>
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
                                     </button>
                                     <div x-show="open" x-transition.opacity
@@ -358,14 +381,20 @@
                             {{-- Row: Nomor Surat --}}
                             <div class="form-group">
                                 <label class="form-label" for="c_nomor_surat">Nomor Surat <span style="font-weight:400; color:#94a3b8;">(dari pengirim, opsional)</span></label>
-                                <input id="c_nomor_surat" type="text" x-model="createForm.nomor_surat" class="form-control" placeholder="Contoh: 123/DKP/2026">
+                                <div class="sm-input-wrap">
+                                    <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                    <input id="c_nomor_surat" type="text" x-model="createForm.nomor_surat" class="form-control" placeholder="Contoh: 123/DKP/2026">
+                                </div>
                             </div>
 
                             {{-- Row: Perihal --}}
                             <div class="form-group">
                                 <label class="form-label" for="c_perihal">Perihal <span style="color:#ef4444;">*</span></label>
-                                <input id="c_perihal" type="text" x-model="createForm.perihal" class="form-control"
-                                       :class="{'sipas-input-error': createErrors.perihal}" placeholder="Tuliskan perihal/subjek surat">
+                                <div class="sm-input-wrap">
+                                    <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+                                    <input id="c_perihal" type="text" x-model="createForm.perihal" class="form-control"
+                                           :class="{'sipas-input-error': createErrors.perihal}" placeholder="Tuliskan perihal/subjek surat">
+                                </div>
                                 <template x-if="createErrors.perihal">
                                     <p class="form-error" x-text="createErrors.perihal[0]"></p>
                                 </template>
@@ -374,23 +403,32 @@
                             {{-- Row: Pengirim --}}
                             <div class="form-group">
                                 <label class="form-label" for="c_pengirim">Pengirim</label>
-                                <input id="c_pengirim" type="text" x-model="createForm.pengirim" class="form-control" placeholder="Nama instansi atau individu pengirim">
+                                <div class="sm-input-wrap">
+                                    <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+                                    <input id="c_pengirim" type="text" x-model="createForm.pengirim" class="form-control" placeholder="Nama instansi atau individu pengirim">
+                                </div>
                             </div>
 
                             {{-- Row: Tanggal Surat + Tanggal Diterima --}}
                             <div class="sipas-form-row">
                                 <div class="form-group" style="flex:1;">
                                     <label class="form-label" for="c_tanggal_surat">Tanggal Surat <span style="color:#ef4444;">*</span></label>
-                                    <input id="c_tanggal_surat" type="date" x-model="createForm.tanggal_surat" class="form-control"
-                                           :class="{'sipas-input-error': createErrors.tanggal_surat}">
+                                    <div class="sm-input-wrap">
+                                        <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                        <input id="c_tanggal_surat" type="date" x-model="createForm.tanggal_surat" class="form-control"
+                                               :class="{'sipas-input-error': createErrors.tanggal_surat}">
+                                    </div>
                                     <template x-if="createErrors.tanggal_surat">
                                         <p class="form-error" x-text="createErrors.tanggal_surat[0]"></p>
                                     </template>
                                 </div>
                                 <div class="form-group" style="flex:1;">
                                     <label class="form-label" for="c_tanggal_diterima">Tanggal Diterima <span style="color:#ef4444;">*</span></label>
-                                    <input id="c_tanggal_diterima" type="date" x-model="createForm.tanggal_diterima" class="form-control"
-                                           :class="{'sipas-input-error': createErrors.tanggal_diterima}">
+                                    <div class="sm-input-wrap">
+                                        <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/></svg>
+                                        <input id="c_tanggal_diterima" type="date" x-model="createForm.tanggal_diterima" class="form-control"
+                                               :class="{'sipas-input-error': createErrors.tanggal_diterima}">
+                                    </div>
                                     <template x-if="createErrors.tanggal_diterima">
                                         <p class="form-error" x-text="createErrors.tanggal_diterima[0]"></p>
                                     </template>
@@ -401,18 +439,62 @@
                             <div class="sipas-form-row">
                                 <div class="form-group" style="flex:1;">
                                     <label class="form-label" for="c_status">Status</label>
-                                    <select id="c_status" x-model="createForm.status" class="form-control">
-                                        <option value="final">Final</option>
-                                        <option value="diproses">Diproses</option>
-                                        <option value="selesai">Selesai</option>
-                                        <option value="draft">Draft</option>
-                                    </select>
+                                    <div class="sm-input-wrap">
+                                        <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                        <select id="c_status" x-model="createForm.status" class="form-control">
+                                            <option value="final">Final</option>
+                                            <option value="diproses">Diproses</option>
+                                            <option value="selesai">Selesai</option>
+                                            <option value="draft">Draft</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="form-group" style="flex:1;">
-                                    <label class="form-label" for="c_file_dokumen">Dokumen Scan <span style="font-weight:400; color:#94a3b8;">(PDF, JPG, DOC, maks 10MB)</span></label>
-                                    <input id="c_file_dokumen" type="file" name="file_dokumen" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                                           class="form-control" style="font-size:13px; background:var(--page-bg,#f8fafc);"
-                                           @change="createFileSelected = $event.target.files[0] ? $event.target.files[0].name : null">
+                                    <label class="form-label" for="c_file_dokumen">Dokumen Scan <span style="font-weight:400; color:#94a3b8;">(opsional)</span></label>
+
+                                    {{-- Upload card (belum ada file) --}}
+                                    <div class="sm-file-card" x-show="!createFile.name">
+                                        <input id="c_file_dokumen" type="file" name="file_dokumen" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                               class="sm-file-input" x-ref="createFileInput" @change="onCreateFile($event)">
+                                        <label for="c_file_dokumen" class="sm-file-drop">
+                                            <span class="sm-file-pdf">
+                                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                            </span>
+                                            <span class="sm-file-title">Unggah Dokumen Surat</span>
+                                            <span class="sm-file-hint">Format: PDF, JPG, PNG, DOC, DOCX &middot; Maks 10MB</span>
+                                            <span class="sm-file-btn">
+                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                                Pilih File
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    {{-- File terpilih --}}
+                                    <div class="sm-file-selected" x-show="createFile.name" style="display:none;">
+                                        <div class="sm-file-icon">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                            <span class="sm-file-ext" x-text="createFile.ext"></span>
+                                        </div>
+                                        <div class="sm-file-meta">
+                                            <span class="sm-file-name" x-text="createFile.name"></span>
+                                            <span class="sm-file-size" x-text="createFile.sizeLabel"></span>
+                                            <span class="sm-file-status">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                                File siap diunggah
+                                            </span>
+                                        </div>
+                                        <div class="sm-file-actions">
+                                            <button type="button" @click="openCreateFilePicker()">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/></svg>
+                                                Ganti
+                                            </button>
+                                            <button type="button" class="sm-file-cancel" @click="clearCreateFile()">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                                Batal
+                                            </button>
+                                        </div>
+                                    </div>
+
                                     <template x-if="createErrors.file_dokumen">
                                         <p class="form-error" x-text="createErrors.file_dokumen[0]"></p>
                                     </template>
@@ -448,11 +530,11 @@
              aria-modal="true"
              aria-labelledby="sm-modal-detail-title">
 
-            <div class="sipas-modal-dialog" style="max-width:680px;" @click.stop>
+            <div class="sipas-modal-dialog sm-detail-dialog" style="max-width:680px;" @click.stop>
                 <div class="sipas-modal-header">
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:34px; height:34px; background:rgba(37,99,235,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#2563eb; flex-shrink:0;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <div class="sm-detail-head-ic">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 .8-1.6l8-6a2 2 0 0 1 2.4 0l8 6Z"/><path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10"/></svg>
                         </div>
                         <div>
                             <h3 id="sm-modal-detail-title" style="font-size:15px; font-weight:700; color:var(--text-primary,#1e293b); margin:0; line-height:1.2;">Detail Surat Masuk</h3>
@@ -473,72 +555,183 @@
                                 <span style="display:inline-flex; padding:4px 12px; font-size:11px; font-weight:700; border-radius:6px; text-transform:capitalize;"
                                       :style="statusStyle(activeSurat.status)"
                                       x-text="activeSurat.status"></span>
-                                <span style="font-size:13px; color:#64748b; font-family:monospace;" x-text="activeSurat.nomor_surat || '-'"></span>
+                                <span style="font-size:13px; color:var(--text-muted,#64748b); font-family:monospace;" x-text="activeSurat.nomor_surat || '-'"></span>
                             </div>
 
-                            {{-- Perihal --}}
-                            <div style="padding:14px 16px; background:var(--page-bg,#f8fafc); border:1px solid var(--border,#e2e8f0); border-radius:8px; margin-bottom:20px;">
-                                <p style="font-size:16px; font-weight:700; color:var(--text-primary,#1e293b); margin:0;" x-text="activeSurat.perihal"></p>
+                            {{-- ── Informasi Surat ── --}}
+                            <div class="sm-section">
+                                <div class="sm-section-head">
+                                    <span class="sm-section-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+                                    <span class="sm-section-title">Informasi Surat</span>
+                                </div>
+
+                                {{-- Perihal --}}
+                                <div class="sm-perihal" style="margin-bottom:10px;">
+                                    <span class="sm-meta-ic sm-perihal-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg></span>
+                                    <div class="sm-meta-body">
+                                        <span class="sm-meta-label">Perihal</span>
+                                        <p class="sm-perihal-text" x-text="activeSurat.perihal || '-'"></p>
+                                    </div>
+                                </div>
+
+                                <div class="sm-meta-grid">
+                                    <div class="sm-meta-card">
+                                        <span class="sm-meta-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg></span>
+                                        <div class="sm-meta-body">
+                                            <span class="sm-meta-label">Nomor Surat</span>
+                                            <span class="sm-meta-val" style="font-family:monospace;" x-text="activeSurat.nomor_surat || '-'"></span>
+                                        </div>
+                                    </div>
+                                    <div class="sm-meta-card">
+                                        <span class="sm-meta-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+                                        <div class="sm-meta-body">
+                                            <span class="sm-meta-label">Jenis Surat</span>
+                                            <span class="sm-meta-val" x-text="activeSurat.jenis_surat_nama || '-'"></span>
+                                        </div>
+                                    </div>
+                                    <div class="sm-meta-card">
+                                        <span class="sm-meta-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.83z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span>
+                                        <div class="sm-meta-body">
+                                            <span class="sm-meta-label">Klasifikasi</span>
+                                            <span class="sm-meta-val" x-text="activeSurat.klasifikasi_kode ? (activeSurat.klasifikasi_kode + ' - ' + activeSurat.klasifikasi_nama) : '-'"></span>
+                                        </div>
+                                    </div>
+                                    <div class="sm-meta-card">
+                                        <span class="sm-meta-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></span>
+                                        <div class="sm-meta-body">
+                                            <span class="sm-meta-label">Asal Surat</span>
+                                            <span class="sm-meta-val" x-text="activeSurat.pengirim || '-'"></span>
+                                        </div>
+                                    </div>
+                                    <div class="sm-meta-card">
+                                        <span class="sm-meta-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8.01" y2="14"/><line x1="12" y1="14" x2="12.01" y2="14"/><line x1="16" y1="14" x2="16.01" y2="14"/><line x1="8" y1="18" x2="8.01" y2="18"/><line x1="12" y1="18" x2="12.01" y2="18"/><line x1="16" y1="18" x2="16.01" y2="18"/></svg></span>
+                                        <div class="sm-meta-body">
+                                            <span class="sm-meta-label">Tanggal Surat</span>
+                                            <span class="sm-meta-val" x-text="activeSurat.tanggal_surat_formatted || '-'"></span>
+                                        </div>
+                                    </div>
+                                    <div class="sm-meta-card">
+                                        <span class="sm-meta-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span>
+                                        <div class="sm-meta-body">
+                                            <span class="sm-meta-label">Tanggal Diterima</span>
+                                            <span class="sm-meta-val" x-text="activeSurat.tanggal_diterima_formatted || '-'"></span>
+                                        </div>
+                                    </div>
+                                    <div class="sm-meta-card">
+                                        <span class="sm-meta-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                                        <div class="sm-meta-body">
+                                            <span class="sm-meta-label">Dicatat Oleh</span>
+                                            <span class="sm-meta-val" x-text="activeSurat.creator_name || '-'"></span>
+                                        </div>
+                                    </div>
+                                    <div class="sm-meta-card">
+                                        <span class="sm-meta-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                                        <div class="sm-meta-body">
+                                            <span class="sm-meta-label">Tanggal Input</span>
+                                            <span class="sm-meta-val" x-text="activeSurat.created_at_formatted || '-'"></span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            {{-- Info Grid --}}
-                            <div class="sipas-info-grid" style="margin-bottom:20px;">
-                                <div class="sipas-info-box">
-                                    <span class="sipas-info-label">Jenis Surat</span>
-                                    <span class="sipas-info-val" x-text="activeSurat.jenis_surat_nama || '-'"></span>
+                            {{-- ── Unit Kerja Tujuan ── --}}
+                            <div class="sm-section">
+                                <div class="sm-section-head">
+                                    <span class="sm-section-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="16" y="16" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><line x1="12" y1="12" x2="12" y2="8"/></svg></span>
+                                    <span class="sm-section-title">Unit Kerja Tujuan</span>
                                 </div>
-                                <div class="sipas-info-box">
-                                    <span class="sipas-info-label">Klasifikasi</span>
-                                    <span class="sipas-info-val" x-text="activeSurat.klasifikasi_kode ? (activeSurat.klasifikasi_kode + ' - ' + activeSurat.klasifikasi_nama) : '-'"></span>
-                                </div>
-                                <div class="sipas-info-box">
-                                    <span class="sipas-info-label">Nomor Surat</span>
-                                    <span class="sipas-info-val" style="font-family:monospace;" x-text="activeSurat.nomor_surat || '-'"></span>
-                                </div>
-                                <div class="sipas-info-box">
-                                    <span class="sipas-info-label">Pengirim</span>
-                                    <span class="sipas-info-val" x-text="activeSurat.pengirim || '-'"></span>
-                                </div>
-                                <div class="sipas-info-box">
-                                    <span class="sipas-info-label">Tanggal Surat</span>
-                                    <span class="sipas-info-val" x-text="activeSurat.tanggal_surat_formatted || '-'"></span>
-                                </div>
-                                <div class="sipas-info-box">
-                                    <span class="sipas-info-label">Tanggal Diterima</span>
-                                    <span class="sipas-info-val" x-text="activeSurat.tanggal_diterima_formatted || '-'"></span>
-                                </div>
-                                <div class="sipas-info-box">
-                                    <span class="sipas-info-label">Unit Kerja (Seksi)</span>
-                                    <span class="sipas-info-val" x-text="activeSurat.unit_kerja_nama || '-'"></span>
-                                </div>
-                                <div class="sipas-info-box">
-                                    <span class="sipas-info-label">Bidang Induk</span>
-                                    <span class="sipas-info-val" x-text="activeSurat.induk_unit_kerja_nama || '-'"></span>
-                                </div>
-                                <div class="sipas-info-box">
-                                    <span class="sipas-info-label">Dicatat Oleh</span>
-                                    <span class="sipas-info-val" x-text="activeSurat.creator_name || '-'"></span>
-                                </div>
-                                <div class="sipas-info-box">
-                                    <span class="sipas-info-label">Tanggal Input</span>
-                                    <span class="sipas-info-val" x-text="activeSurat.created_at_formatted || '-'"></span>
+                                <div class="sm-meta-grid">
+                                    <div class="sm-meta-card">
+                                        <span class="sm-meta-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span>
+                                        <div class="sm-meta-body">
+                                            <span class="sm-meta-label">Bidang</span>
+                                            <span class="sm-meta-val" x-text="activeSurat.induk_unit_kerja_nama || '-'"></span>
+                                        </div>
+                                    </div>
+                                    <div class="sm-meta-card">
+                                        <span class="sm-meta-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg></span>
+                                        <div class="sm-meta-body">
+                                            <span class="sm-meta-label">Seksi / Sub Bagian</span>
+                                            <span class="sm-meta-val" x-text="activeSurat.unit_kerja_nama || '-'"></span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            {{-- Dokumen --}}
-                            <template x-if="activeSurat.file_dokumen">
-                                <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--page-bg,#f8fafc); border:1px solid var(--border,#e2e8f0); border-radius:8px;">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
-                                    <span style="font-size:13px; font-weight:500; color:#475569; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;" x-text="activeSurat.file_dokumen_basename"></span>
-                                    <a :href="activeSurat.download_url" style="font-size:12px; font-weight:600; color:#2563eb; text-decoration:none; white-space:nowrap;">Download</a>
+                            {{-- ── Dokumen Lampiran ── --}}
+                            <div class="sm-section" style="margin-bottom:0;">
+                                <div class="sm-section-head">
+                                    <span class="sm-section-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-3a2 2 0 0 1-2-2V2"/><path d="M9 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h7l5 5v9a2 2 0 0 1-2 2Z"/><path d="M3 7.6v12.8A1.6 1.6 0 0 0 4.6 22h9.8"/></svg></span>
+                                    <span class="sm-section-title">Dokumen Lampiran</span>
                                 </div>
-                            </template>
+
+                                <template x-if="activeSurat.file_dokumen">
+                                    <div>
+                                        <div class="sm-pdf-card">
+                                            <span class="sm-pdf-ic">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                                <span class="sm-pdf-ext" x-text="fileExt(activeSurat.file_dokumen_basename)"></span>
+                                            </span>
+                                            <div class="sm-pdf-meta">
+                                                <span class="sm-pdf-name" x-text="activeSurat.file_dokumen_basename"></span>
+                                                <span class="sm-pdf-status">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                                    Dokumen tersedia
+                                                </span>
+                                            </div>
+                                            <div class="sm-pdf-actions">
+                                                <template x-if="isPdfSurat()">
+                                                    <button type="button" @click="toggleDocPreview()" class="sm-doc-btn">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                        <span x-text="docPreviewOpen ? 'Tutup Pratinjau' : 'Lihat Dokumen'"></span>
+                                                    </button>
+                                                </template>
+                                                <template x-if="isPdfSurat()">
+                                                    <a :href="activeSurat.view_url" target="_blank" rel="noopener" class="sm-doc-btn">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                                        Buka di tab baru
+                                                    </a>
+                                                </template>
+                                                <a :href="activeSurat.download_url" class="sm-doc-btn is-primary">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                                    Unduh
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        {{-- Dokumen non-PDF: petunjuk agar tetap jelas --}}
+                                        <template x-if="!isPdfSurat()">
+                                            <p class="sm-note">Pratinjau dalam modal hanya tersedia untuk dokumen PDF. Silakan unduh untuk membuka dokumen ini.</p>
+                                        </template>
+
+                                        {{-- Pratinjau PDF inline (viewer bawaan browser, tanpa dependency) --}}
+                                        <template x-if="isPdfSurat()">
+                                            <div x-show="docPreviewOpen" style="display:none; margin-top:12px;">
+                                                <template x-if="docPreviewOpen">
+                                                    <iframe :src="activeSurat.view_url" title="Pratinjau Dokumen Surat Masuk" class="sm-pdf-frame"></iframe>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                {{-- Dokumen tidak tersedia --}}
+                                <template x-if="!activeSurat.file_dokumen">
+                                    <div class="sm-empty">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                        Dokumen tidak tersedia untuk surat ini.
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                     </template>
                 </div>
 
                 <div class="sipas-modal-footer">
-                    <button type="button" @click="closeDetail()" class="sipas-btn-secondary">Tutup</button>
+                    <button type="button" @click="closeDetail()" class="sipas-btn-secondary">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        Tutup
+                    </button>
                     <button type="button" @click="editFromDetail()" class="sipas-btn-primary">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         Edit Surat
@@ -591,25 +784,31 @@
                             <div class="sipas-form-row">
                                 <div class="form-group" style="flex:1;">
                                     <label class="form-label" for="e_jenis_surat_id">Jenis Surat <span style="color:#ef4444;">*</span></label>
-                                    <select id="e_jenis_surat_id" x-model="editForm.jenis_surat_id" class="form-control"
-                                            :class="{'sipas-input-error': editErrors.jenis_surat_id}">
-                                        <option value="">-- Pilih Jenis Surat --</option>
-                                        <template x-for="j in jenisSuratList" :key="j.id">
-                                            <option :value="j.id" x-text="j.nama" :selected="editForm.jenis_surat_id == j.id"></option>
-                                        </template>
-                                    </select>
+                                    <div class="sm-input-wrap">
+                                        <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                        <select id="e_jenis_surat_id" x-model="editForm.jenis_surat_id" class="form-control"
+                                                :class="{'sipas-input-error': editErrors.jenis_surat_id}">
+                                            <option value="">-- Pilih Jenis Surat --</option>
+                                            <template x-for="j in jenisSuratList" :key="j.id">
+                                                <option :value="j.id" x-text="j.nama" :selected="editForm.jenis_surat_id == j.id"></option>
+                                            </template>
+                                        </select>
+                                    </div>
                                     <template x-if="editErrors.jenis_surat_id">
                                         <p class="form-error" x-text="editErrors.jenis_surat_id[0]"></p>
                                     </template>
                                 </div>
                                 <div class="form-group" style="flex:1;">
                                     <label class="form-label" for="e_klasifikasi_id">Klasifikasi <span style="font-weight:400; color:#94a3b8;">(opsional)</span></label>
-                                    <select id="e_klasifikasi_id" x-model="editForm.klasifikasi_id" class="form-control">
-                                        <option value="">-- Tanpa Klasifikasi --</option>
-                                        <template x-for="k in klasifikasiList" :key="k.id">
-                                            <option :value="k.id" x-text="k.kode + ' - ' + k.nama"></option>
-                                        </template>
-                                    </select>
+                                    <div class="sm-input-wrap">
+                                        <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.83z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                                        <select id="e_klasifikasi_id" x-model="editForm.klasifikasi_id" class="form-control">
+                                            <option value="">-- Tanpa Klasifikasi --</option>
+                                            <template x-for="k in klasifikasiList" :key="k.id">
+                                                <option :value="k.id" x-text="k.kode + ' - ' + k.nama"></option>
+                                            </template>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
@@ -641,9 +840,10 @@
                                     <button type="button" @click="toggle($el)" @click.outside="open = false"
                                             class="form-control"
                                             :class="{'sipas-input-error': editErrors.unit_kerja_id || editErrors.bidang_id}"
-                                            style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; cursor:pointer;">
+                                            style="display:flex; justify-content:space-between; align-items:center; gap:8px; width:100%; text-align:left; cursor:pointer;">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:var(--text-muted,#94a3b8);"><rect x="9" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="16" y="16" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><line x1="12" y1="12" x2="12" y2="8"/></svg>
                                         <span x-text="editForm.unit_kerja_label || '-- Pilih Seksi/Unit Kerja --'"
-                                              :style="!editForm.unit_kerja_label ? 'color:var(--text-muted,#94a3b8);' : 'color:var(--text-primary,#1e293b);'"></span>
+                                              :style="!editForm.unit_kerja_label ? 'color:var(--text-muted,#94a3b8); flex:1;' : 'color:var(--text-primary,#1e293b); flex:1;'"></span>
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
                                     </button>
                                     <div x-show="open" x-transition.opacity
@@ -697,14 +897,20 @@
                             {{-- Nomor Surat --}}
                             <div class="form-group">
                                 <label class="form-label" for="e_nomor_surat">Nomor Surat <span style="font-weight:400; color:#94a3b8;">(opsional)</span></label>
-                                <input id="e_nomor_surat" type="text" x-model="editForm.nomor_surat" class="form-control" placeholder="Contoh: 001/DISNAS/2024">
+                                <div class="sm-input-wrap">
+                                    <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                    <input id="e_nomor_surat" type="text" x-model="editForm.nomor_surat" class="form-control" placeholder="Contoh: 001/DISNAS/2024">
+                                </div>
                             </div>
 
                             {{-- Perihal --}}
                             <div class="form-group">
                                 <label class="form-label" for="e_perihal">Perihal <span style="color:#ef4444;">*</span></label>
-                                <input id="e_perihal" type="text" x-model="editForm.perihal" class="form-control"
-                                       :class="{'sipas-input-error': editErrors.perihal}" placeholder="Perihal surat...">
+                                <div class="sm-input-wrap">
+                                    <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+                                    <input id="e_perihal" type="text" x-model="editForm.perihal" class="form-control"
+                                           :class="{'sipas-input-error': editErrors.perihal}" placeholder="Perihal surat...">
+                                </div>
                                 <template x-if="editErrors.perihal">
                                     <p class="form-error" x-text="editErrors.perihal[0]"></p>
                                 </template>
@@ -713,23 +919,32 @@
                             {{-- Pengirim --}}
                             <div class="form-group">
                                 <label class="form-label" for="e_pengirim">Pengirim</label>
-                                <input id="e_pengirim" type="text" x-model="editForm.pengirim" class="form-control" placeholder="Nama instansi / orang pengirim">
+                                <div class="sm-input-wrap">
+                                    <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+                                    <input id="e_pengirim" type="text" x-model="editForm.pengirim" class="form-control" placeholder="Nama instansi / orang pengirim">
+                                </div>
                             </div>
 
                             {{-- Tanggal --}}
                             <div class="sipas-form-row">
                                 <div class="form-group" style="flex:1;">
                                     <label class="form-label" for="e_tanggal_surat">Tanggal Surat <span style="color:#ef4444;">*</span></label>
-                                    <input id="e_tanggal_surat" type="date" x-model="editForm.tanggal_surat" class="form-control"
-                                           :class="{'sipas-input-error': editErrors.tanggal_surat}">
+                                    <div class="sm-input-wrap">
+                                        <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                        <input id="e_tanggal_surat" type="date" x-model="editForm.tanggal_surat" class="form-control"
+                                               :class="{'sipas-input-error': editErrors.tanggal_surat}">
+                                    </div>
                                     <template x-if="editErrors.tanggal_surat">
                                         <p class="form-error" x-text="editErrors.tanggal_surat[0]"></p>
                                     </template>
                                 </div>
                                 <div class="form-group" style="flex:1;">
                                     <label class="form-label" for="e_tanggal_diterima">Tanggal Diterima <span style="color:#ef4444;">*</span></label>
-                                    <input id="e_tanggal_diterima" type="date" x-model="editForm.tanggal_diterima" class="form-control"
-                                           :class="{'sipas-input-error': editErrors.tanggal_diterima}">
+                                    <div class="sm-input-wrap">
+                                        <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/></svg>
+                                        <input id="e_tanggal_diterima" type="date" x-model="editForm.tanggal_diterima" class="form-control"
+                                               :class="{'sipas-input-error': editErrors.tanggal_diterima}">
+                                    </div>
                                     <template x-if="editErrors.tanggal_diterima">
                                         <p class="form-error" x-text="editErrors.tanggal_diterima[0]"></p>
                                     </template>
@@ -739,34 +954,95 @@
                             {{-- Status --}}
                             <div class="form-group">
                                 <label class="form-label" for="e_status">Status</label>
-                                <select id="e_status" x-model="editForm.status" class="form-control" style="max-width:320px;">
-                                    <option value="final">Final</option>
-                                    <option value="diproses">Diproses</option>
-                                    <option value="selesai">Selesai</option>
-                                    <option value="draft">Draft</option>
-                                </select>
+                                <div class="sm-input-wrap" style="max-width:320px;">
+                                    <svg class="sm-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                    <select id="e_status" x-model="editForm.status" class="form-control">
+                                        <option value="final">Final</option>
+                                        <option value="diproses">Diproses</option>
+                                        <option value="selesai">Selesai</option>
+                                        <option value="draft">Draft</option>
+                                    </select>
+                                </div>
                             </div>
 
-                            {{-- Dokumen lama --}}
+                            {{-- Dokumen lama (dokumen saat ini) --}}
                             <template x-if="editForm.file_dokumen_basename">
-                                <div style="padding:10px 14px; background:var(--page-bg,#f8fafc); border:1px solid var(--border,#e2e8f0); border-radius:8px;">
-                                    <div style="display:flex; align-items:center; gap:10px;">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
-                                        <span style="font-size:12px; color:#475569; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;" x-text="editForm.file_dokumen_basename"></span>
-                                        <a :href="editForm.download_url" style="font-size:11px; font-weight:600; color:#2563eb; text-decoration:none; white-space:nowrap;">Download</a>
+                                <div class="form-group">
+                                    <label class="form-label">Dokumen Saat Ini</label>
+                                    <div class="sm-file-selected">
+                                        <div class="sm-file-icon">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                            <span class="sm-file-ext" x-text="fileExt(editForm.file_dokumen_basename)"></span>
+                                        </div>
+                                        <div class="sm-file-meta">
+                                            <span class="sm-file-name" x-text="editForm.file_dokumen_basename"></span>
+                                            <span class="sm-file-status is-current">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                                Dokumen tersimpan
+                                            </span>
+                                        </div>
+                                        <div class="sm-file-actions">
+                                            <a :href="editForm.download_url" class="sm-file-link">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                                Unduh
+                                            </a>
+                                        </div>
                                     </div>
-                                    <p style="font-size:11px; color:#64748b; margin:6px 0 0;">Biarkan kosong untuk mempertahankan file di atas. Upload file baru untuk mengganti.</p>
                                 </div>
                             </template>
 
-                            {{-- Upload file baru --}}
+                            {{-- Upload / ganti dokumen --}}
                             <div class="form-group">
                                 <label class="form-label" for="e_file_dokumen">
                                     <span x-text="editForm.file_dokumen_basename ? 'Ganti Dokumen' : 'Upload Dokumen'"></span>
-                                    <span style="font-weight:400; color:#94a3b8;">(PDF, JPG, PNG, DOC, DOCX, maks 10MB)</span>
+                                    <span style="font-weight:400; color:#94a3b8;">(opsional)</span>
                                 </label>
-                                <input id="e_file_dokumen" type="file" name="file_dokumen" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                                       class="form-control" style="font-size:13px; background:var(--page-bg,#f8fafc);">
+
+                                {{-- File pengganti terpilih (ditampilkan terpisah dari dokumen lama) --}}
+                                <div class="sm-file-selected" x-show="editNewFile.name" style="display:none;">
+                                    <div class="sm-file-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                        <span class="sm-file-ext" x-text="editNewFile.ext"></span>
+                                    </div>
+                                    <div class="sm-file-meta">
+                                        <span class="sm-file-name" x-text="editNewFile.name"></span>
+                                        <span class="sm-file-size" x-text="editNewFile.sizeLabel"></span>
+                                        <span class="sm-file-status">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                            File pengganti siap diunggah
+                                        </span>
+                                    </div>
+                                    <div class="sm-file-actions">
+                                        <button type="button" @click="openEditFilePicker()">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/></svg>
+                                            Ganti
+                                        </button>
+                                        <button type="button" class="sm-file-cancel" @click="clearEditFile()">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                            Batal
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {{-- Upload card (tampil bila belum ada file pengganti) --}}
+                                <div class="sm-file-card" x-show="!editNewFile.name">
+                                    <input id="e_file_dokumen" type="file" name="file_dokumen" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                           class="sm-file-input" x-ref="editFileInput" @change="onEditFile($event)">
+                                    <label for="e_file_dokumen" class="sm-file-drop">
+                                        <span class="sm-file-pdf">
+                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                        </span>
+                                        <span class="sm-file-title" x-text="editForm.file_dokumen_basename ? 'Pilih Dokumen Pengganti' : 'Unggah Dokumen Surat'"></span>
+                                        <span class="sm-file-hint">Format: PDF, JPG, PNG, DOC, DOCX &middot; Maks 10MB</span>
+                                        <span class="sm-file-btn">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                            Pilih File
+                                        </span>
+                                    </label>
+                                </div>
+
+                                <p style="font-size:11px; color:var(--text-muted,#64748b); margin:0;">Biarkan kosong untuk mempertahankan dokumen lama. Pilih file baru untuk menggantinya.</p>
+
                                 <template x-if="editErrors.file_dokumen">
                                     <p class="form-error" x-text="editErrors.file_dokumen[0]"></p>
                                 </template>
@@ -1014,6 +1290,207 @@
         to   { transform: rotate(360deg); }
     }
 
+    /* ── Input with leading icon ──────────────────────── */
+    .sm-input-wrap { position: relative; display: block; }
+    .sm-input-wrap > .form-control { padding-left: 36px; }
+    .sm-input-icon {
+        position: absolute;
+        left: 11px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        height: 16px;
+        color: var(--text-muted, #94a3b8);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* ── File upload card ─────────────────────────────── */
+    .sm-file-card {
+        position: relative;
+        border: 1.5px dashed var(--border, #cbd5e1);
+        border-radius: 10px;
+        background: var(--page-bg, #f8fafc);
+        padding: 18px 16px;
+        text-align: center;
+        transition: border-color 0.15s, background 0.15s;
+    }
+    .sm-file-card:hover { border-color: var(--tc-accent, #2563eb); background: rgba(37, 99, 235, 0.03); }
+    .sm-file-input {
+        position: absolute;
+        width: 1px; height: 1px;
+        padding: 0; margin: -1px;
+        overflow: hidden; clip: rect(0, 0, 0, 0);
+        white-space: nowrap; border: 0;
+    }
+    .sm-file-drop { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+    .sm-file-pdf {
+        width: 46px; height: 46px;
+        border-radius: 12px;
+        background: rgba(37, 99, 235, 0.08);
+        color: var(--tc-accent, #2563eb);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .sm-file-title { font-size: 13.5px; font-weight: 600; color: var(--text-primary, #1e293b); }
+    .sm-file-hint { font-size: 11.5px; color: var(--text-muted, #64748b); }
+    .sm-file-btn {
+        margin-top: 6px;
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 7px 14px;
+        background: var(--tc-accent, #2563eb);
+        color: #ffffff;
+        border: none; border-radius: 7px;
+        font-size: 12.5px; font-weight: 600; cursor: pointer;
+    }
+    .sm-file-selected {
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px 14px;
+        background: var(--page-bg, #f8fafc);
+        border: 1px solid var(--border, #e2e8f0);
+        border-radius: 10px;
+    }
+    .sm-file-selected + .sm-file-selected { margin-top: 8px; }
+    .sm-file-selected + .sm-file-card { margin-top: 8px; }
+    .sm-file-card + .sm-file-selected { margin-top: 8px; }
+    .sm-file-icon {
+        position: relative;
+        width: 38px; height: 38px; flex-shrink: 0;
+        border-radius: 9px;
+        background: rgba(37, 99, 235, 0.08);
+        color: var(--tc-accent, #2563eb);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .sm-file-ext {
+        position: absolute; bottom: -4px; right: -5px;
+        font-size: 8px; font-weight: 800; letter-spacing: 0.3px;
+        background: var(--tc-accent, #2563eb); color: #ffffff;
+        border-radius: 4px; padding: 1px 4px;
+        line-height: 1.3;
+    }
+    .sm-file-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .sm-file-name {
+        font-size: 13px; font-weight: 600; color: var(--text-primary, #1e293b);
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .sm-file-size { font-size: 11.5px; color: var(--text-muted, #64748b); }
+    .sm-file-status { font-size: 11px; font-weight: 600; color: #059669; display: inline-flex; align-items: center; gap: 4px; }
+    .sm-file-status.is-current { color: var(--text-muted, #64748b); }
+    .sm-file-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
+    .sm-file-actions button {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 6px 10px; border-radius: 7px;
+        font-size: 11.5px; font-weight: 600; cursor: pointer;
+        border: 1px solid var(--border, #cbd5e1);
+        background: var(--card-bg, #ffffff);
+        color: var(--text-primary, #334155);
+    }
+    .sm-file-actions button:hover { background: var(--page-bg, #f1f5f9); }
+    .sm-file-actions .sm-file-cancel { color: #ef4444; border-color: #fecaca; }
+    .sm-file-actions .sm-file-cancel:hover { background: #fef2f2; }
+    .sm-file-link {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 6px 10px; border-radius: 7px;
+        font-size: 11.5px; font-weight: 600;
+        border: 1px solid var(--border, #cbd5e1);
+        background: var(--card-bg, #ffffff);
+        color: var(--tc-accent, #2563eb);
+        text-decoration: none; white-space: nowrap;
+    }
+
+    /* ── Document action buttons (detail modal) ───────── */
+    .sm-doc-btn {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 7px 12px; border-radius: 7px;
+        font-size: 12px; font-weight: 600; cursor: pointer;
+        border: 1px solid var(--border, #cbd5e1);
+        background: var(--card-bg, #ffffff);
+        color: var(--text-primary, #334155);
+        text-decoration: none; white-space: nowrap;
+    }
+    .sm-doc-btn:hover { background: var(--page-bg, #f1f5f9); }
+    .sm-doc-btn.is-primary { color: var(--tc-accent, #2563eb); }
+
+    /* ── Detail modal (scoped) ───────────────────────── */
+    .sm-detail-dialog { --sm-green: #15803d; --sm-green-soft: rgba(21, 128, 61, 0.10); }
+    .sm-detail-head-ic {
+        width: 34px; height: 34px; flex-shrink: 0;
+        border-radius: 8px;
+        background: var(--sm-green-soft);
+        color: var(--sm-green);
+        display: flex; align-items: center; justify-content: center;
+    }
+
+    .sm-section { margin-bottom: 20px; }
+    .sm-section-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .sm-section-ic {
+        width: 26px; height: 26px; flex-shrink: 0;
+        border-radius: 7px;
+        background: var(--sm-green-soft);
+        color: var(--sm-green);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .sm-section-ic svg { width: 15px; height: 15px; }
+    .sm-section-title { font-size: 13px; font-weight: 700; color: var(--text-primary, #1e293b); letter-spacing: 0.2px; }
+
+    .sm-meta-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .sm-meta-card {
+        display: flex; align-items: flex-start; gap: 10px;
+        padding: 10px 12px; min-width: 0;
+        background: var(--page-bg, #f8fafc);
+        border: 1px solid var(--border, #e2e8f0);
+        border-radius: 8px;
+    }
+    .sm-meta-ic { flex-shrink: 0; margin-top: 1px; color: var(--text-muted, #64748b); display: inline-flex; }
+    .sm-meta-ic svg { width: 15px; height: 15px; }
+    .sm-meta-body { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .sm-meta-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; color: var(--text-muted, #64748b); }
+    .sm-meta-val { font-size: 13px; font-weight: 600; color: var(--text-primary, #1e293b); overflow-wrap: anywhere; word-break: break-word; }
+
+    .sm-perihal {
+        display: flex; align-items: flex-start; gap: 12px;
+        padding: 14px 16px;
+        background: var(--page-bg, #f8fafc);
+        border: 1px solid var(--border, #e2e8f0);
+        border-left: 3px solid var(--sm-green);
+        border-radius: 8px;
+    }
+    .sm-perihal-ic { margin-top: 3px; }
+    .sm-perihal-text { font-size: 15px; font-weight: 700; line-height: 1.45; color: var(--text-primary, #1e293b); margin: 0; overflow-wrap: anywhere; word-break: break-word; }
+
+    .sm-pdf-card {
+        display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        padding: 12px 14px;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 10px;
+    }
+    .sm-pdf-ic {
+        position: relative; width: 40px; height: 40px; flex-shrink: 0;
+        border-radius: 9px;
+        background: #fee2e2; color: #dc2626;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .sm-pdf-ext {
+        position: absolute; bottom: -4px; right: -5px;
+        font-size: 8px; font-weight: 800; letter-spacing: 0.3px;
+        background: #dc2626; color: #ffffff; border-radius: 4px; padding: 1px 4px; line-height: 1.3;
+    }
+    .sm-pdf-meta { flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 3px; }
+    .sm-pdf-name { font-size: 13px; font-weight: 600; color: var(--text-primary, #1e293b); overflow-wrap: anywhere; word-break: break-word; }
+    .sm-pdf-status { font-size: 11px; font-weight: 600; color: #16a34a; display: inline-flex; align-items: center; gap: 4px; }
+    .sm-pdf-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
+    .sm-pdf-frame { width: 100%; height: 460px; border: 1px solid var(--border, #e2e8f0); border-radius: 8px; background: #ffffff; display: block; }
+    .sm-note { font-size: 11.5px; color: var(--text-muted, #64748b); margin: 8px 0 0; }
+    .sm-empty {
+        display: flex; align-items: center; gap: 10px;
+        padding: 12px 16px;
+        background: var(--page-bg, #f8fafc);
+        border: 1px dashed var(--border, #e2e8f0);
+        border-radius: 8px;
+        color: var(--text-muted, #64748b);
+        font-size: 12.5px;
+    }
+
     /* ── Dark Mode Overrides ──────────────────────────── */
     [data-theme="dark"] .sipas-modal-dialog {
         background-color: #1e293b !important;
@@ -1058,6 +1535,32 @@
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
     }
     [data-theme="dark"] .form-label { color: #cbd5e1 !important; }
+    [data-theme="dark"] .sm-input-icon { color: #64748b; }
+    [data-theme="dark"] .sm-file-card { background: #162032 !important; border-color: #334155 !important; }
+    [data-theme="dark"] .sm-file-card:hover { border-color: var(--tc-accent, #3b82f6) !important; background: rgba(59, 130, 246, 0.06) !important; }
+    [data-theme="dark"] .sm-file-selected { background: #162032 !important; border-color: #334155 !important; }
+    [data-theme="dark"] .sm-file-name { color: #e2e8f0 !important; }
+    [data-theme="dark"] .sm-file-size { color: #94a3b8 !important; }
+    [data-theme="dark"] .sm-file-actions button,
+    [data-theme="dark"] .sm-file-link { background: #1e293b !important; border-color: #334155 !important; color: #cbd5e1 !important; }
+    [data-theme="dark"] .sm-file-actions .sm-file-cancel { color: #f87171 !important; border-color: #7f1d1d !important; }
+    [data-theme="dark"] .sm-doc-btn { background: #1e293b !important; border-color: #334155 !important; color: #cbd5e1 !important; }
+    [data-theme="dark"] .sm-doc-btn.is-primary { color: #60a5fa !important; }
+    [data-theme="dark"] .sm-detail-dialog { --sm-green: #4ade80; --sm-green-soft: rgba(74, 222, 128, 0.12); }
+    [data-theme="dark"] .sm-meta-card,
+    [data-theme="dark"] .sm-perihal,
+    [data-theme="dark"] .sm-empty { background: #162032 !important; border-color: #334155 !important; }
+    [data-theme="dark"] .sm-meta-val,
+    [data-theme="dark"] .sm-perihal-text { color: #e2e8f0 !important; }
+    [data-theme="dark"] .sm-meta-label,
+    [data-theme="dark"] .sm-meta-ic,
+    [data-theme="dark"] .sm-empty,
+    [data-theme="dark"] .sm-note { color: #94a3b8 !important; }
+    [data-theme="dark"] .sm-section-title { color: #e2e8f0 !important; }
+    [data-theme="dark"] .sm-pdf-card { background: rgba(220, 38, 38, 0.10) !important; border-color: rgba(248, 113, 113, 0.35) !important; }
+    [data-theme="dark"] .sm-pdf-ic { background: rgba(220, 38, 38, 0.20) !important; color: #f87171 !important; }
+    [data-theme="dark"] .sm-pdf-name { color: #e2e8f0 !important; }
+    [data-theme="dark"] .sm-pdf-status { color: #4ade80 !important; }
 
     /* ── Responsive ───────────────────────────────────── */
     @media (max-width: 640px) {
@@ -1066,6 +1569,9 @@
             gap: 12px;
         }
         .sipas-info-grid { grid-template-columns: 1fr; }
+        .sm-meta-grid { grid-template-columns: 1fr; }
+        .sm-pdf-actions { width: 100%; }
+        .sm-doc-btn { flex: 1; justify-content: center; }
         .sipas-modal-dialog { max-height: calc(100vh - 24px); }
         .sipas-modal-header { padding: 14px 16px; }
         .sipas-modal-body { padding: 16px; }
@@ -1093,6 +1599,7 @@
             editModalOpen: false,
 
             activeSurat: null,
+            docPreviewOpen: false,
 
             createForm: {
                 jenis_surat_id: '', klasifikasi_id: '', unit_kerja_id: '', bidang_id: '',
@@ -1115,6 +1622,58 @@
 
             toast: { show: false, message: '', type: 'success', timer: null },
 
+            createFile: { name: null, size: null, sizeLabel: '', ext: '' },
+            editNewFile: { name: null, size: null, sizeLabel: '', ext: '' },
+
+            formatBytes(bytes) {
+                if (!bytes && bytes !== 0) return '';
+                const units = ['B', 'KB', 'MB', 'GB'];
+                let n = bytes;
+                let i = 0;
+                while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+                const val = (i === 0 || n >= 10) ? Math.round(n) : n.toFixed(1);
+                return val + ' ' + units[i];
+            },
+
+            fileExt(name) {
+                if (!name) return 'FILE';
+                const parts = name.split('.');
+                const ext = parts.length > 1 ? parts.pop() : 'FILE';
+                return ext.toUpperCase().slice(0, 4);
+            },
+
+            onCreateFile(e) {
+                const f = e.target.files && e.target.files[0];
+                if (!f) { this.clearCreateFile(); return; }
+                this.createFile = { name: f.name, size: f.size, sizeLabel: this.formatBytes(f.size), ext: this.fileExt(f.name) };
+            },
+
+            clearCreateFile() {
+                const fi = this.$refs.createFileInput;
+                if (fi) fi.value = '';
+                this.createFile = { name: null, size: null, sizeLabel: '', ext: '' };
+            },
+
+            openCreateFilePicker() {
+                if (this.$refs.createFileInput) this.$refs.createFileInput.click();
+            },
+
+            onEditFile(e) {
+                const f = e.target.files && e.target.files[0];
+                if (!f) { this.clearEditFile(); return; }
+                this.editNewFile = { name: f.name, size: f.size, sizeLabel: this.formatBytes(f.size), ext: this.fileExt(f.name) };
+            },
+
+            clearEditFile() {
+                const fi = this.$refs.editFileInput;
+                if (fi) fi.value = '';
+                this.editNewFile = { name: null, size: null, sizeLabel: '', ext: '' };
+            },
+
+            openEditFilePicker() {
+                if (this.$refs.editFileInput) this.$refs.editFileInput.click();
+            },
+
             init() {
                 window.__suratMasukHandler = this;
                 this.$watch('createModalOpen', () => this.updateBodyLock());
@@ -1124,6 +1683,16 @@
 
             updateBodyLock() {
                 document.body.style.overflow = (this.createModalOpen || this.detailModalOpen || this.editModalOpen) ? 'hidden' : '';
+            },
+
+            isPdfSurat() {
+                if (!this.activeSurat) return false;
+                if (this.activeSurat.is_pdf) return true;
+                return this.fileExt(this.activeSurat.file_dokumen_basename) === 'PDF';
+            },
+
+            toggleDocPreview() {
+                this.docPreviewOpen = !this.docPreviewOpen;
             },
 
             statusStyle(status) {
@@ -1146,8 +1715,8 @@
                 this.createErrors = {};
                 this.createGeneralError = '';
                 this.savingCreate = false;
-                // Reset file input
-                const fi = document.getElementById('c_file_dokumen');
+                this.createFile = { name: null, size: null, sizeLabel: '', ext: '' };
+                const fi = this.$refs.createFileInput;
                 if (fi) fi.value = '';
                 this.createModalOpen = true;
             },
@@ -1207,8 +1776,7 @@
 
                         this.savingCreate = false;
                         this.createModalOpen = false;
-                        const fi2 = document.getElementById('c_file_dokumen');
-                        if (fi2) fi2.value = '';
+                        this.clearCreateFile();
                         this.showToast((json && json.message) ? json.message : 'Surat masuk berhasil dicatat.', 'success');
                     } else {
                         this.savingCreate = false;
@@ -1235,6 +1803,7 @@
                 const sc = statusMap[s.status] || ['#f1f5f9','#475569'];
 
                 const tr = document.createElement('tr');
+                tr.setAttribute('data-surat-row', '');
                 tr.id = 'surat-masuk-row-' + s.id;
                 tr.innerHTML = `
                     <td style="color:#94a3b8; font-size:13px; padding-left:16px;">—</td>
@@ -1263,7 +1832,13 @@
                         </div>
                     </td>
                 `;
-                tbody.insertBefore(tr, tbody.firstChild);
+                // Sisipkan ke kelompok tanggal input hari ini agar header tanggal tetap benar.
+                const groupTemplate = document.getElementById('sm-today-group-template');
+                if (window.DateGroupTable && groupTemplate) {
+                    window.DateGroupTable.insertRow({ tbody, template: groupTemplate, emptyRow: empty, row: tr });
+                } else {
+                    tbody.insertBefore(tr, tbody.firstChild);
+                }
             },
 
             // ── DETAIL ─────────────────────────────────────
@@ -1271,6 +1846,7 @@
                 const item = this.suratMap[id];
                 if (!item) return;
                 this.activeSurat = { ...item };
+                this.docPreviewOpen = false;
                 this.detailModalOpen = true;
 
                 // Optionally refresh from server for latest data
@@ -1289,6 +1865,7 @@
 
             closeDetail() {
                 this.detailModalOpen = false;
+                this.docPreviewOpen = false;
             },
 
             editFromDetail() {
@@ -1325,8 +1902,8 @@
                     download_url:          item.download_url || null,
                 };
 
-                // Reset file input
-                const fi = document.getElementById('e_file_dokumen');
+                this.editNewFile = { name: null, size: null, sizeLabel: '', ext: '' };
+                const fi = this.$refs.editFileInput;
                 if (fi) fi.value = '';
 
                 this.editModalOpen = true;

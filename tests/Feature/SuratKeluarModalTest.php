@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\JenisSurat;
 use App\Models\KlasifikasiSurat;
+use App\Models\PengajuanCuti;
 use App\Models\Surat;
 use App\Models\UnitKerja;
 use App\Models\User;
@@ -449,5 +450,231 @@ class SuratKeluarModalTest extends TestCase
 
         // Harus redirect ke show, bukan JSON
         $response->assertRedirect();
+    }
+
+    // ── Test 14: Tombol Hapus hanya untuk data yang boleh dihapus ──────
+
+    public function test_tombol_hapus_tidak_dirender_untuk_surat_final_di_tabel_index(): void
+    {
+        $html = $this->actingAs($this->user)->get(route('surat-keluar.index'))->getContent();
+
+        $body = $this->tableBodyOf($html, 'sk-table-body');
+        $this->assertNotSame('', $body, 'Tabel index harus memiliki tbody ber-id sk-table-body.');
+        $this->assertStringContainsString('Surat Final Test', $body);
+        $this->assertStringNotContainsString('title="Hapus"', $body, 'Surat final tidak boleh memiliki tombol Hapus di tabel.');
+
+        // Tombol Hapus di modal Detail dijaga agar hanya muncul untuk surat non-final
+        $this->assertStringContainsString('activeSurat && !activeSurat.is_final', $html);
+        $this->assertStringContainsString('askDeleteActive()', $html);
+        $this->assertStringContainsString('Surat final tidak dapat diedit atau dihapus', $html);
+    }
+
+    public function test_halaman_draft_menyediakan_tombol_hapus_dengan_konfirmasi(): void
+    {
+        $html = $this->actingAs($this->user)->get(route('surat-keluar.draft'))->getContent();
+
+        $body = $this->tableBodyOf($html, 'skd-tbody');
+        $this->assertNotSame('', $body, 'Halaman draft harus memiliki tbody ber-id skd-tbody.');
+        $this->assertStringContainsString('title="Hapus"', $body);
+        $this->assertStringContainsString('data-url="'.route('surat-keluar.destroy', $this->suratDraft).'"', $body);
+        // Identitas surat aktual dipakai pada dialog konfirmasi
+        $this->assertStringContainsString('data-perihal="Draft Surat Test"', $body);
+
+        // Dialog konfirmasi: tombol Batal + Hapus dan indikator loading
+        $this->assertStringContainsString('skd-btn-danger', $html);
+        $this->assertStringContainsString('Batal', $html);
+        $this->assertStringContainsString('Menghapus...', $html);
+    }
+
+    // ── Test 15: Penghapusan draft ──────────────────────────────────────
+
+    public function test_destroy_draft_via_ajax_berhasil_dan_file_ikut_dihapus(): void
+    {
+        Storage::fake('public');
+        $path = 'surat-keluar/draft-lampiran.pdf';
+        Storage::disk('public')->put($path, 'isi draft');
+        $this->suratDraft->update(['file_dokumen' => $path]);
+
+        $draftId = $this->suratDraft->id;
+
+        $response = $this->actingAs($this->user)
+            ->deleteJson(route('surat-keluar.destroy', $this->suratDraft));
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'message' => 'Draft surat keluar berhasil dihapus.',
+            ]);
+
+        $this->assertDatabaseMissing('surat', ['id' => $draftId]);
+        Storage::disk('public')->assertMissing($path);
+
+        // Jejak aktivitas tetap tercatat walau baris surat sudah dihapus
+        $this->assertDatabaseHas('activity_logs', [
+            'aktivitas' => 'Menghapus draft surat keluar: #'.$draftId,
+        ]);
+    }
+
+    public function test_destroy_draft_tanpa_file_tetap_berhasil(): void
+    {
+        $draftId = $this->suratDraft->id;
+
+        $this->actingAs($this->user)
+            ->deleteJson(route('surat-keluar.destroy', $this->suratDraft))
+            ->assertStatus(200);
+
+        $this->assertDatabaseMissing('surat', ['id' => $draftId]);
+    }
+
+    public function test_destroy_draft_konvensional_tanpa_ajax_tetap_redirect(): void
+    {
+        $draftId = $this->suratDraft->id;
+
+        $this->actingAs($this->user)
+            ->delete(route('surat-keluar.destroy', $this->suratDraft))
+            ->assertRedirect(route('surat-keluar.index'));
+
+        $this->assertDatabaseMissing('surat', ['id' => $draftId]);
+    }
+
+    // ── Test 16: Perlindungan surat final, arsip, dan sumber rela ──────
+
+    public function test_destroy_surat_final_via_ajax_menghasilkan_403(): void
+    {
+        $this->actingAs($this->user)
+            ->deleteJson(route('surat-keluar.destroy', $this->suratFinal))
+            ->assertStatus(403);
+
+        $this->assertDatabaseHas('surat', [
+            'id' => $this->suratFinal->id,
+            'status' => 'final',
+            'nomor_surat' => '001/SK/10/2026',
+        ]);
+    }
+
+    public function test_hapus_draft_tidak_mempengaruhi_surat_final_di_arsip(): void
+    {
+        $finalId = $this->suratFinal->id;
+
+        $this->actingAs($this->user)
+            ->deleteJson(route('surat-keluar.destroy', $this->suratDraft))
+            ->assertStatus(200);
+
+        // Surat final (sumber Arsip Digital) tetap utuh
+        $this->assertDatabaseHas('surat', [
+            'id' => $finalId,
+            'status' => 'final',
+            'nomor_surat' => '001/SK/10/2026',
+        ]);
+    }
+
+    public function test_destroy_draft_dari_sumber_lain_ditolak_dan_dokumen_dipertahankan(): void
+    {
+        Storage::fake('public');
+        $path = 'surat-keluar/dari-sumber-lain.pdf';
+        Storage::disk('public')->put($path, 'isi');
+
+        $this->suratDraft->update([
+            'file_dokumen' => $path,
+            'source_type' => PengajuanCuti::class,
+            'source_id' => 99,
+        ]);
+
+        $this->actingAs($this->user)
+            ->deleteJson(route('surat-keluar.destroy', $this->suratDraft))
+            ->assertStatus(403);
+
+        // Data dan file tidak boleh hilang saat penghapusan gagal
+        $this->assertDatabaseHas('surat', ['id' => $this->suratDraft->id]);
+        Storage::disk('public')->assertExists($path);
+    }
+
+    public function test_destroy_surat_masuk_lewat_route_surat_keluar_menghasilkan_404(): void
+    {
+        $suratMasuk = Surat::create([
+            'jenis_surat_id' => $this->jenisSurat->id,
+            'arah' => 'masuk',
+            'perihal' => 'Surat Masuk Test',
+            'tanggal_surat' => now()->format('Y-m-d'),
+            'status' => 'final',
+            'created_by' => $this->user->id,
+        ]);
+
+        $this->actingAs($this->user)
+            ->deleteJson(route('surat-keluar.destroy', $suratMasuk))
+            ->assertStatus(404);
+
+        $this->assertDatabaseHas('surat', ['id' => $suratMasuk->id]);
+    }
+
+    // ── Test 17: Kontrol akses penghapusan ──────────────────────────────
+
+    public function test_destroy_tanpa_auth_ditolak(): void
+    {
+        $draftId = $this->suratDraft->id;
+
+        $this->deleteJson(route('surat-keluar.destroy', $this->suratDraft))->assertStatus(401);
+        $this->delete(route('surat-keluar.destroy', $this->suratDraft))->assertRedirect(route('login'));
+
+        $this->assertDatabaseHas('surat', ['id' => $draftId]);
+    }
+
+    // ── Test 18: Nomor surat tidak dipakai ulang setelah penghapusan ────
+
+    public function test_penghapusan_draft_tidak_membuat_nomor_surat_digunakan_ulang(): void
+    {
+        $this->actingAs($this->user)->postJson(route('surat-keluar.store'), [
+            'jenis_surat_id' => $this->jenisSurat->id,
+            'klasifikasi_id' => $this->klasifikasi->id,
+            'bidang_id' => $this->bidang->id,
+            'unit_kerja_id' => $this->seksi->id,
+            'perihal' => 'Final Pertama',
+            'tanggal_surat' => now()->format('Y-m-d'),
+            'status' => 'final',
+        ])->assertStatus(201);
+
+        $nomorPertama = Surat::where('perihal', 'Final Pertama')->value('nomor_surat');
+        $this->assertNotNull($nomorPertama);
+
+        // Hapus draft (draft tidak memiliki nomor surat)
+        $this->actingAs($this->user)
+            ->deleteJson(route('surat-keluar.destroy', $this->suratDraft))
+            ->assertStatus(200);
+
+        // Nomor yang sudah diterbitkan tetap ada dan tidak dibebaskan
+        $this->assertDatabaseHas('surat', ['nomor_surat' => $nomorPertama, 'status' => 'final']);
+
+        $this->actingAs($this->user)->postJson(route('surat-keluar.store'), [
+            'jenis_surat_id' => $this->jenisSurat->id,
+            'klasifikasi_id' => $this->klasifikasi->id,
+            'bidang_id' => $this->bidang->id,
+            'unit_kerja_id' => $this->seksi->id,
+            'perihal' => 'Final Kedua',
+            'tanggal_surat' => now()->format('Y-m-d'),
+            'status' => 'final',
+        ])->assertStatus(201);
+
+        $nomorKedua = Surat::where('perihal', 'Final Kedua')->value('nomor_surat');
+        $this->assertNotNull($nomorKedua);
+        $this->assertNotEquals($nomorPertama, $nomorKedua, 'Nomor surat yang sudah diterbitkan tidak boleh dipakai ulang.');
+    }
+
+    /**
+     * Ambil isi elemen tbody tertentu dari HTML agar assertion UI tidak
+     * tertukar dengan elemen lain di halaman (mis. tombol "Hapus filter").
+     */
+    private function tableBodyOf(string $html, string $id): string
+    {
+        $needle = '<tbody id="'.$id.'">';
+        $start = strpos($html, $needle);
+        if ($start === false) {
+            return '';
+        }
+        $end = strpos($html, '</tbody>', $start);
+        if ($end === false) {
+            return '';
+        }
+
+        return substr($html, $start, $end - $start);
     }
 }

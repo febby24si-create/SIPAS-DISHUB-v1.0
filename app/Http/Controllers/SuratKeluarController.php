@@ -260,28 +260,38 @@ class SuratKeluarController extends Controller
         return redirect()->route('surat-keluar.show', $surat)->with('status', 'Surat keluar berhasil diperbarui.');
     }
 
-    public function destroy(Surat $surat)
+    public function destroy(Request $request, Surat $surat)
     {
         abort_if($surat->arah !== 'keluar', 404);
+
+        // Aturan existing: hanya draft yang boleh dihapus.
         abort_if($surat->status === 'final', 403, 'Surat final tidak dapat dihapus.');
 
-        if ($surat->file_dokumen) {
-            Storage::disk('public')->delete($surat->file_dokumen);
-        }
-        if ($surat->file_word) {
-            Storage::disk('public')->delete($surat->file_word);
-        }
-        if ($surat->file_pdf) {
-            Storage::disk('public')->delete($surat->file_pdf);
+        // Lindungi relasi sumber (mis. pengajuan kepegawaian): jangan putus relasi otomatis.
+        abort_if($surat->source_type !== null, 403, 'Surat keluar yang berasal dari sumber lain tidak dapat dihapus.');
+
+        // Kumpulkan path file; file hanya dihapus setelah baris surat berhasil dihapus.
+        $label = $surat->nomor_surat ?: ('#'.$surat->id);
+        $filePaths = array_filter([$surat->file_dokumen, $surat->file_word, $surat->file_pdf]);
+
+        $surat->delete();
+
+        foreach ($filePaths as $path) {
+            Storage::disk('public')->delete($path);
         }
 
         ActivityLog::create([
             'user_id' => auth()->id(),
-            'surat_id' => $surat->id,
-            'aktivitas' => 'Menghapus draft surat keluar',
+            'surat_id' => null,
+            'aktivitas' => 'Menghapus draft surat keluar: '.$label,
         ]);
 
-        $surat->delete();
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Draft surat keluar berhasil dihapus.',
+            ]);
+        }
 
         return redirect()->route('surat-keluar.index')->with('status', 'Surat keluar berhasil dihapus.');
     }

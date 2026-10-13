@@ -71,6 +71,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('surat-masuk/{surat}', [SuratMasukController::class, 'update'])->name('surat-masuk.update');
     Route::delete('surat-masuk/{surat}', [SuratMasukController::class, 'destroy'])->name('surat-masuk.destroy');
     Route::get('surat-masuk/{surat}/download', [SuratMasukController::class, 'download'])->name('surat-masuk.download');
+    Route::get('surat-masuk/{surat}/preview', [SuratMasukController::class, 'preview'])->name('surat-masuk.preview');
 
     // Persuratan - Surat Keluar
     Route::get('surat-keluar', [SuratKeluarController::class, 'index'])->name('surat-keluar.index');

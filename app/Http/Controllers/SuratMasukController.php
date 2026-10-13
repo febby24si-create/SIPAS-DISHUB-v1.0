@@ -238,6 +238,32 @@ class SuratMasukController extends Controller
     }
 
     /**
+     * Tampilkan dokumen surat masuk secara inline (preview PDF di browser).
+     *
+     * Hanya file yang benar-benar melekat pada surat ini yang dilayani
+     * (tidak ada parameter path), tetap di bawah middleware auth.
+     */
+    public function preview(Surat $surat)
+    {
+        abort_if($surat->arah !== 'masuk', 404);
+
+        if (!$surat->file_dokumen || !Storage::disk('public')->exists($surat->file_dokumen)) {
+            abort(404, 'File dokumen tidak ditemukan.');
+        }
+
+        if (strtolower(pathinfo($surat->file_dokumen, PATHINFO_EXTENSION)) !== 'pdf') {
+            abort(404, 'Pratinjau hanya tersedia untuk dokumen PDF.');
+        }
+
+        $name = 'Surat-Masuk-' . ($surat->nomor_surat ? str_replace('/', '-', $surat->nomor_surat) : $surat->id) . '.pdf';
+
+        return Storage::disk('public')->response($surat->file_dokumen, $name, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $name . '"',
+        ], 'inline');
+    }
+
+    /**
      * Format surat data untuk respons JSON modal.
      */
     private function formatSuratForJson(Surat $surat): array
@@ -265,6 +291,8 @@ class SuratMasukController extends Controller
             'file_dokumen'         => $surat->file_dokumen,
             'file_dokumen_basename'=> $surat->file_dokumen ? basename($surat->file_dokumen) : null,
             'download_url'         => $surat->file_dokumen ? route('surat-masuk.download', $surat) : null,
+            'is_pdf'               => $surat->file_dokumen ? strtolower(pathinfo($surat->file_dokumen, PATHINFO_EXTENSION)) === 'pdf' : false,
+            'view_url'             => ($surat->file_dokumen && strtolower(pathinfo($surat->file_dokumen, PATHINFO_EXTENSION)) === 'pdf') ? route('surat-masuk.preview', $surat) : null,
             'creator_name'         => $surat->creator?->name,
             'created_at_formatted' => $surat->created_at?->translatedFormat('d F Y, H:i'),
             'show_url'             => route('surat-masuk.show', $surat),
