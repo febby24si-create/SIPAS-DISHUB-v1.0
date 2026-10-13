@@ -2,11 +2,16 @@
     'group',
     'colspan' => 8,
     'partial' => false,
+    'noun' => 'surat',
 ])
 
 {{--
     Baris pemisah kelompok tanggal input di dalam tabel (bukan tabel terpisah).
-    Dipakai oleh tabel Surat Masuk, Surat Keluar, dan Draft Surat Keluar.
+    Dipakai oleh tabel Surat Masuk, Surat Keluar, Draft Surat Keluar, dan Arsip Digital.
+
+    Prop "noun" hanya menentukan satuan jumlah (mis. "surat" atau "arsip");
+    nilai bawaannya mempertahankan tampilan lama sehingga Surat Masuk dan
+    Surat Keluar tidak berubah.
 --}}
 <tr class="dtg-row" data-date-group="{{ $group['key'] }}" @if(($group['prefix'] ?? null) === \App\Helpers\DateGroupHelper::TODAY_LABEL) data-today="1" @endif>
     <td class="dtg-cell" colspan="{{ $colspan }}">
@@ -19,7 +24,7 @@
                 <span class="dtg-sep" aria-hidden="true">&mdash;</span>
             @endif
             <span class="dtg-date">{{ $group['label'] }}</span>
-            <span class="dtg-count" title="{{ $partial ? 'Jumlah surat yang tampil pada halaman ini' : 'Jumlah surat pada kelompok tanggal ini' }}">{{ $group['count'] }} surat</span>
+            <span class="dtg-count" title="{{ $partial ? 'Jumlah '.$noun.' yang tampil pada halaman ini' : 'Jumlah '.$noun.' pada kelompok tanggal ini' }}">{{ $group['count'] }} {{ $noun }}</span>
         </span>
     </td>
 </tr>

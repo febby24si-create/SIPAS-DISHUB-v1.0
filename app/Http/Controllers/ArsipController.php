@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Surat;
 use App\Models\UnitKerja;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ArsipController extends Controller
 {
@@ -48,18 +49,27 @@ class ArsipController extends Controller
             ->when(!$validSeksiId && $seksiIdsOfBidang !== null,
                 fn ($q) => $q->whereIn('unit_kerja_id', $seksiIdsOfBidang)
             )
-            ->when($request->filled('tahun'), fn ($q) => $q->whereYear('tanggal_surat', $request->tahun)
-                ->orWhereYear('tanggal_diterima', $request->tahun)
-            )
+            // Filter tahun: grupkan OR agar tidak lolos dari syarat status='final'
+            ->when($request->filled('tahun'), fn ($q) => $q->where(function ($q) use ($request) {
+                $q->whereYear('tanggal_surat', $request->tahun)
+                    ->orWhereYear('tanggal_diterima', $request->tahun);
+            }))
             ->latest()
             ->paginate(10)
             ->withQueryString();
 
-        // Daftar tahun yang tersedia untuk dropdown
+        // Daftar tahun yang tersedia untuk dropdown.
+        // Ekspresi tahun disesuaikan dengan driver database (pola sama dengan DashboardController)
+        // supaya query tetap berjalan pada MySQL (produksi) maupun SQLite (pengujian).
+        $tahunExpr = DB::connection()->getDriverName() === 'sqlite'
+            ? "CAST(strftime('%Y', COALESCE(tanggal_surat, tanggal_diterima)) AS INTEGER)"
+            : 'YEAR(COALESCE(tanggal_surat, tanggal_diterima))';
+
         $tahunList = Surat::where('status', 'final')
-            ->selectRaw('YEAR(COALESCE(tanggal_surat, tanggal_diterima)) as tahun')
-            ->whereNotNull('tanggal_surat')
-            ->orWhereNotNull('tanggal_diterima')
+            ->selectRaw($tahunExpr.' as tahun')
+            ->where(function ($q) {
+                $q->whereNotNull('tanggal_surat')->orWhereNotNull('tanggal_diterima');
+            })
             ->distinct()
             ->orderByDesc('tahun')
             ->pluck('tahun')
