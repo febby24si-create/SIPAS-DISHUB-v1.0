@@ -7,7 +7,9 @@ use App\Models\ActivityLog;
 use App\Models\JenisSurat;
 use App\Models\KlasifikasiSurat;
 use App\Models\Surat;
+use App\Models\UnitKerja;
 use App\Services\DocumentNumberService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -16,14 +18,16 @@ class SuratKeluarController extends Controller
     public function index(Request $request)
     {
         $jenisSuratList = JenisSurat::orderBy('nama')->get();
+        $klasifikasiList = KlasifikasiSurat::where('status', 'aktif')->orderBy('nama')->get();
+        $bidangs = UnitKerja::whereNull('parent_id')->with('children')->orderBy('nama')->get();
 
         $suratKeluar = Surat::keluar()
             ->where('status', '!=', 'draft')
-            ->with(['jenisSurat', 'klasifikasi'])
+            ->with(['jenisSurat', 'klasifikasi', 'unitKerja.parent', 'creator'])
             ->when($request->filled('q'), fn ($q) => $q->where(function ($sub) use ($request) {
-                $sub->where('perihal', 'like', '%' . $request->q . '%')
-                    ->orWhere('nomor_surat', 'like', '%' . $request->q . '%')
-                    ->orWhere('tujuan', 'like', '%' . $request->q . '%');
+                $sub->where('perihal', 'like', '%'.$request->q.'%')
+                    ->orWhere('nomor_surat', 'like', '%'.$request->q.'%')
+                    ->orWhere('tujuan', 'like', '%'.$request->q.'%');
             }))
             ->when($request->filled('jenis_surat_id'), fn ($q) => $q->where('jenis_surat_id', $request->jenis_surat_id))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->status))
@@ -33,7 +37,7 @@ class SuratKeluarController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('surat-keluar.index', compact('suratKeluar', 'jenisSuratList'));
+        return view('surat-keluar.index', compact('suratKeluar', 'jenisSuratList', 'klasifikasiList', 'bidangs'));
     }
 
     public function draft(Request $request)
@@ -51,7 +55,7 @@ class SuratKeluarController extends Controller
     {
         $jenisSuratList = JenisSurat::orderBy('nama')->get();
         $klasifikasiList = KlasifikasiSurat::where('status', 'aktif')->orderBy('nama')->get();
-        $bidangs = \App\Models\UnitKerja::whereNull('parent_id')->with('children')->orderBy('nama')->get();
+        $bidangs = UnitKerja::whereNull('parent_id')->with('children')->orderBy('nama')->get();
 
         return view('surat-keluar.create', compact('jenisSuratList', 'klasifikasiList', 'bidangs'));
     }
@@ -61,26 +65,26 @@ class SuratKeluarController extends Controller
         $validated = $request->validate([
             'jenis_surat_id' => 'required|exists:jenis_surat,id',
             'klasifikasi_id' => 'nullable|exists:klasifikasi_surat,id',
-            'bidang_id'      => 'required|exists:unit_kerja,id',
-            'unit_kerja_id'  => [
+            'bidang_id' => 'required|exists:unit_kerja,id',
+            'unit_kerja_id' => [
                 'required',
                 'exists:unit_kerja,id',
                 function ($attribute, $value, $fail) use ($request) {
-                    $seksi = \App\Models\UnitKerja::find($value);
-                    if (!$seksi || $seksi->parent_id === null) {
+                    $seksi = UnitKerja::find($value);
+                    if (! $seksi || $seksi->parent_id === null) {
                         $fail('Unit kerja yang dipilih harus berupa Seksi, bukan Bidang.');
                     }
                     if ($seksi && $seksi->parent_id != $request->bidang_id) {
                         $fail('Seksi yang dipilih tidak sesuai dengan Bidang.');
                     }
-                }
+                },
             ],
-            'nomor_surat'    => 'nullable|string|max:255',
-            'perihal'        => 'required|string|max:500',
-            'tujuan'         => 'nullable|string|max:255',
-            'tanggal_surat'  => 'required|date',
-            'status'         => 'nullable|in:draft,final',
-            'file_dokumen'   => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
+            'nomor_surat' => 'nullable|string|max:255',
+            'perihal' => 'required|string|max:500',
+            'tujuan' => 'nullable|string|max:255',
+            'tanggal_surat' => 'required|date',
+            'status' => 'nullable|in:draft,final',
+            'file_dokumen' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
         ]);
 
         $path = null;
@@ -93,10 +97,13 @@ class SuratKeluarController extends Controller
 
         $nomorSurat = $validated['nomor_surat'] ?? null;
         $status = $validated['status'] ?? 'final';
-        
+
         // Auto-generate number if final and number is empty
         if ($status === 'final' && empty($nomorSurat)) {
-            $nomorSurat = DocumentNumberService::generate($validated['klasifikasi_id'] ?? null, \Carbon\Carbon::parse($validated['tanggal_surat']));
+            $nomorSurat = DocumentNumberService::generate(
+                $validated['klasifikasi_id'] ?? null,
+                Carbon::parse($validated['tanggal_surat'])
+            );
         } elseif ($status === 'draft') {
             $nomorSurat = null; // Pastikan nomor kosong jika draft
         }
@@ -104,34 +111,53 @@ class SuratKeluarController extends Controller
         $surat = Surat::create([
             'jenis_surat_id' => $validated['jenis_surat_id'],
             'klasifikasi_id' => $validated['klasifikasi_id'] ?? null,
-            'unit_kerja_id'  => $validated['unit_kerja_id'],
-            'arah'           => 'keluar',
-            'nomor_surat'    => $nomorSurat,
-            'perihal'        => $validated['perihal'],
-            'tujuan'         => $validated['tujuan'] ?? null,
-            'tanggal_surat'  => $validated['tanggal_surat'],
-            'file_dokumen'   => $path,
-            'status'         => $status,
-            'created_by'     => auth()->id(),
+            'unit_kerja_id' => $validated['unit_kerja_id'],
+            'arah' => 'keluar',
+            'nomor_surat' => $nomorSurat,
+            'perihal' => $validated['perihal'],
+            'tujuan' => $validated['tujuan'] ?? null,
+            'tanggal_surat' => $validated['tanggal_surat'],
+            'file_dokumen' => $path,
+            'status' => $status,
+            'created_by' => auth()->id(),
         ]);
 
-        $logMessage = $surat->status === 'final' 
-            ? 'Memfinalisasi surat keluar: ' . $surat->nomor_surat 
+        $logMessage = $surat->status === 'final'
+            ? 'Memfinalisasi surat keluar: '.$surat->nomor_surat
             : 'Mencatat draft surat keluar';
 
         ActivityLog::create([
-            'user_id'   => auth()->id(),
-            'surat_id'  => $surat->id,
+            'user_id' => auth()->id(),
+            'surat_id' => $surat->id,
             'aktivitas' => $logMessage,
         ]);
+
+        if ($request->wantsJson()) {
+            $surat->load(['jenisSurat', 'klasifikasi', 'unitKerja.parent', 'creator']);
+
+            return response()->json([
+                'success' => true,
+                'message' => $surat->status === 'final'
+                    ? 'Surat keluar berhasil dicatat dan diterbitkan.'
+                    : 'Draft surat keluar berhasil dicatat.',
+                'surat' => $this->formatSuratForJson($surat),
+            ], 201);
+        }
 
         return redirect()->route('surat-keluar.show', $surat)->with('status', 'Surat keluar berhasil dicatat.');
     }
 
-    public function show(Surat $surat)
+    public function show(Request $request, Surat $surat)
     {
         abort_if($surat->arah !== 'keluar', 404);
-        $surat->load(['jenisSurat', 'klasifikasi', 'creator', 'template']);
+        $surat->load(['jenisSurat', 'klasifikasi', 'unitKerja.parent', 'creator', 'template']);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'surat' => $this->formatSuratForJson($surat),
+            ]);
+        }
 
         return view('surat-keluar.show', compact('surat'));
     }
@@ -140,9 +166,10 @@ class SuratKeluarController extends Controller
     {
         abort_if($surat->arah !== 'keluar', 404);
         abort_if($surat->status === 'final', 403, 'Surat final tidak dapat diedit.');
+
         $jenisSuratList = JenisSurat::orderBy('nama')->get();
         $klasifikasiList = KlasifikasiSurat::where('status', 'aktif')->orderBy('nama')->get();
-        $bidangs = \App\Models\UnitKerja::whereNull('parent_id')->with('children')->orderBy('nama')->get();
+        $bidangs = UnitKerja::whereNull('parent_id')->with('children')->orderBy('nama')->get();
 
         return view('surat-keluar.edit', compact('surat', 'jenisSuratList', 'klasifikasiList', 'bidangs'));
     }
@@ -155,63 +182,80 @@ class SuratKeluarController extends Controller
         $validated = $request->validate([
             'jenis_surat_id' => 'required|exists:jenis_surat,id',
             'klasifikasi_id' => 'nullable|exists:klasifikasi_surat,id',
-            'bidang_id'      => 'nullable|exists:unit_kerja,id',
-            'unit_kerja_id'  => [
+            'bidang_id' => 'nullable|exists:unit_kerja,id',
+            'unit_kerja_id' => [
                 'nullable',
                 'exists:unit_kerja,id',
                 function ($attribute, $value, $fail) use ($request) {
-                    $seksi = \App\Models\UnitKerja::find($value);
-                    if (!$seksi || $seksi->parent_id === null) {
+                    $seksi = UnitKerja::find($value);
+                    if (! $seksi || $seksi->parent_id === null) {
                         $fail('Unit kerja yang dipilih harus berupa Seksi, bukan Bidang.');
                     }
                     if ($seksi && $request->filled('bidang_id') && $seksi->parent_id != $request->bidang_id) {
                         $fail('Seksi yang dipilih tidak sesuai dengan Bidang.');
                     }
-                }
+                },
             ],
-            'nomor_surat'    => 'nullable|string|max:255',
-            'perihal'        => 'required|string|max:500',
-            'tujuan'         => 'nullable|string|max:255',
-            'tanggal_surat'  => 'required|date',
-            'status'         => 'nullable|in:draft,final',
-            'file_dokumen'   => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
+            'nomor_surat' => 'nullable|string|max:255',
+            'perihal' => 'required|string|max:500',
+            'tujuan' => 'nullable|string|max:255',
+            'tanggal_surat' => 'required|date',
+            'status' => 'nullable|in:draft,final',
+            'file_dokumen' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
         ]);
 
         if ($request->hasFile('file_dokumen')) {
-            if ($surat->file_dokumen) {
-                Storage::disk('public')->delete($surat->file_dokumen);
-            }
             $currentUnitKerjaId = $validated['unit_kerja_id'] ?? $surat->unit_kerja_id ?? null;
             $tahun = date('Y', strtotime($validated['tanggal_surat'] ?? $surat->tanggal_surat));
             $folder = ArsipPathHelper::build($currentUnitKerjaId, 'keluar', $tahun) ?? 'surat-keluar';
-            $validated['file_dokumen'] = $request->file('file_dokumen')->store($folder, 'public');
+            // Simpan file baru terlebih dahulu, baru hapus lama
+            $newPath = $request->file('file_dokumen')->store($folder, 'public');
+            if ($surat->file_dokumen) {
+                Storage::disk('public')->delete($surat->file_dokumen);
+            }
+            $validated['file_dokumen'] = $newPath;
         } else {
             unset($validated['file_dokumen']);
         }
 
         $nomorSurat = $validated['nomor_surat'] ?? $surat->nomor_surat;
         $status = $validated['status'] ?? 'final';
-        
+
         // Auto-generate number if finalizing a draft and number is still empty
         if ($status === 'final' && empty($nomorSurat)) {
-            $nomorSurat = DocumentNumberService::generate($validated['klasifikasi_id'] ?? null, \Carbon\Carbon::parse($validated['tanggal_surat']));
+            $nomorSurat = DocumentNumberService::generate(
+                $validated['klasifikasi_id'] ?? null,
+                Carbon::parse($validated['tanggal_surat'])
+            );
         } elseif ($status === 'draft') {
-            $nomorSurat = null; // Pastikan nomor kosong jika kembali ke draft (sesuai aturan)
+            $nomorSurat = null; // Pastikan nomor kosong jika kembali ke draft
         }
-        
+
         $validated['nomor_surat'] = $nomorSurat;
 
         $surat->update($validated);
 
-        $logMessage = $surat->status === 'final' 
-            ? 'Memfinalisasi surat keluar: ' . $surat->nomor_surat 
+        $logMessage = $surat->status === 'final'
+            ? 'Memfinalisasi surat keluar: '.$surat->nomor_surat
             : 'Mengubah draft surat keluar';
 
         ActivityLog::create([
-            'user_id'   => auth()->id(),
-            'surat_id'  => $surat->id,
+            'user_id' => auth()->id(),
+            'surat_id' => $surat->id,
             'aktivitas' => $logMessage,
         ]);
+
+        if ($request->wantsJson()) {
+            $surat->load(['jenisSurat', 'klasifikasi', 'unitKerja.parent', 'creator']);
+
+            return response()->json([
+                'success' => true,
+                'message' => $surat->status === 'final'
+                    ? 'Surat keluar berhasil diterbitkan.'
+                    : 'Draft surat keluar berhasil diperbarui.',
+                'surat' => $this->formatSuratForJson($surat),
+            ]);
+        }
 
         return redirect()->route('surat-keluar.show', $surat)->with('status', 'Surat keluar berhasil diperbarui.');
     }
@@ -232,8 +276,8 @@ class SuratKeluarController extends Controller
         }
 
         ActivityLog::create([
-            'user_id'   => auth()->id(),
-            'surat_id'  => $surat->id,
+            'user_id' => auth()->id(),
+            'surat_id' => $surat->id,
             'aktivitas' => 'Menghapus draft surat keluar',
         ]);
 
@@ -249,14 +293,64 @@ class SuratKeluarController extends Controller
         // Prioritas: file_pdf > file_word > file_dokumen
         $filePath = $surat->file_pdf ?? $surat->file_word ?? $surat->file_dokumen;
 
-        if (!$filePath || !Storage::disk('public')->exists($filePath)) {
+        if (! $filePath || ! Storage::disk('public')->exists($filePath)) {
             return back()->with('error', 'File dokumen tidak ditemukan.');
         }
 
         $nomorSlug = $surat->nomor_surat ? str_replace('/', '-', $surat->nomor_surat) : $surat->id;
 
-        return Storage::disk('public')->download($filePath,
-            'Surat-Keluar-' . $nomorSlug . '.' . pathinfo($filePath, PATHINFO_EXTENSION)
+        return Storage::disk('public')->download(
+            $filePath,
+            'Surat-Keluar-'.$nomorSlug.'.'.pathinfo($filePath, PATHINFO_EXTENSION)
         );
+    }
+
+    /**
+     * Format data surat keluar untuk respons JSON modal.
+     * Tidak menyertakan template_surat_id karena template hanya dibaca di show.blade.
+     */
+    private function formatSuratForJson(Surat $surat): array
+    {
+        // Pilih file terbaik yang tersedia (prioritas: pdf > word > dokumen)
+        $bestFile = $surat->file_pdf ?? $surat->file_word ?? $surat->file_dokumen;
+        $bestFileBase = $bestFile ? basename($bestFile) : null;
+
+        return [
+            'id' => $surat->id,
+            'jenis_surat_id' => $surat->jenis_surat_id,
+            'jenis_surat_nama' => $surat->jenisSurat?->nama,
+            'jenis_surat_kode' => $surat->jenisSurat?->kode,
+            'klasifikasi_id' => $surat->klasifikasi_id,
+            'klasifikasi_nama' => $surat->klasifikasi?->nama,
+            'klasifikasi_kode' => $surat->klasifikasi?->kode,
+            'unit_kerja_id' => $surat->unit_kerja_id,
+            'unit_kerja_nama' => $surat->unitKerja?->nama,
+            'induk_unit_kerja_nama' => $surat->unitKerja?->parent?->nama,
+            'bidang_id' => $surat->unitKerja?->parent_id,
+            'nomor_surat' => $surat->nomor_surat,
+            'perihal' => $surat->perihal,
+            'tujuan' => $surat->tujuan,
+            'tanggal_surat' => $surat->tanggal_surat?->format('Y-m-d'),
+            'tanggal_surat_formatted' => $surat->tanggal_surat?->translatedFormat('d F Y'),
+            'status' => $surat->status,
+            'is_final' => $surat->status === 'final',
+            'has_template' => (bool) $surat->template_surat_id,
+            'template_nama' => $surat->template?->nama_template,
+            // Dokumen
+            'file_dokumen' => $surat->file_dokumen,
+            'file_word' => $surat->file_word,
+            'file_pdf' => $surat->file_pdf,
+            'file_dokumen_basename' => $surat->file_dokumen ? basename($surat->file_dokumen) : null,
+            'file_word_basename' => $surat->file_word ? basename($surat->file_word) : null,
+            'file_pdf_basename' => $surat->file_pdf ? basename($surat->file_pdf) : null,
+            'best_file_basename' => $bestFileBase,
+            'download_url' => $bestFile ? route('surat-keluar.download', $surat) : null,
+            // Metadata
+            'creator_name' => $surat->creator?->name,
+            'created_at_formatted' => $surat->created_at?->translatedFormat('d F Y, H:i'),
+            'show_url' => route('surat-keluar.show', $surat),
+            'edit_url' => route('surat-keluar.edit', $surat),
+            'destroy_url' => route('surat-keluar.destroy', $surat),
+        ];
     }
 }
