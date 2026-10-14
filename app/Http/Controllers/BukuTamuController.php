@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\BukuTamu;
 use App\Models\Pegawai;
 use App\Models\UnitKerja;
+use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class BukuTamuController extends Controller
@@ -19,7 +21,14 @@ class BukuTamuController extends Controller
         $pegawais = Pegawai::where('status_aktif', true)->orderBy('nama')->get();
         $unitKerjas = UnitKerja::orderBy('nama')->get();
 
-        return view('buku-tamu.create', compact('pegawais', 'unitKerjas'));
+        $sysLogoPath = SystemSetting::getSetting('instansi_logo');
+        $sysLogoUrl = ($sysLogoPath && Storage::disk('public')->exists($sysLogoPath))
+            ? asset('storage/' . $sysLogoPath)
+            : asset('logoDishub.png');
+        $sysAppName = SystemSetting::getSetting('app_name', 'SIPAS-DISHUB');
+        $sysInstansiNama = SystemSetting::getSetting('instansi_nama', 'Dinas Perhubungan Provinsi Riau');
+
+        return view('buku-tamu.create', compact('pegawais', 'unitKerjas', 'sysLogoUrl', 'sysAppName', 'sysInstansiNama'));
     }
 
     /**
@@ -68,7 +77,14 @@ class BukuTamuController extends Controller
      */
     public function sukses()
     {
-        return view('buku-tamu.sukses');
+        $sysLogoPath = SystemSetting::getSetting('instansi_logo');
+        $sysLogoUrl = ($sysLogoPath && Storage::disk('public')->exists($sysLogoPath))
+            ? asset('storage/' . $sysLogoPath)
+            : asset('logoDishub.png');
+        $sysAppName = SystemSetting::getSetting('app_name', 'SIPAS-DISHUB');
+        $sysInstansiNama = SystemSetting::getSetting('instansi_nama', 'Dinas Perhubungan Provinsi Riau');
+
+        return view('buku-tamu.sukses', compact('sysLogoUrl', 'sysAppName', 'sysInstansiNama'));
     }
 
     /**
@@ -76,6 +92,11 @@ class BukuTamuController extends Controller
      */
     public function index(Request $request)
     {
+        // Validasi rentang tanggal filter
+        if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date > $request->end_date) {
+            return redirect()->route('buku-tamu.index')->with('error', 'Tanggal mulai tidak boleh lebih besar dari tanggal selesai.');
+        }
+
         // Total keseluruhan (tanpa filter)
         $totalSemua = BukuTamu::count();
 
@@ -83,12 +104,11 @@ class BukuTamuController extends Controller
 
         // Base query builder closure untuk reuse filter yang sama
         $applyFilter = function ($q) use ($request) {
-            if ($request->filled('start_date') && $request->filled('end_date')) {
-                $q->whereBetween('tanggal', [$request->start_date, $request->end_date]);
-            } elseif ($request->filled('start_date')) {
-                $q->where('tanggal', '>=', $request->start_date);
-            } elseif ($request->filled('end_date')) {
-                $q->where('tanggal', '<=', $request->end_date);
+            if ($request->filled('start_date')) {
+                $q->whereDate('tanggal', '>=', $request->start_date);
+            }
+            if ($request->filled('end_date')) {
+                $q->whereDate('tanggal', '<=', $request->end_date);
             }
             return $q;
         };
@@ -112,7 +132,6 @@ class BukuTamuController extends Controller
         $chartValues = $chartData->pluck('total')->values()->toArray();
 
         // Pastikan SEMUA tanggal dalam rentang muncul di grafik (termasuk yang 0 kunjungan)
-        // Tentukan rentang: gunakan filter jika ada, atau min–max dari data
         if ($chartData->isNotEmpty()) {
             $dateStart = $request->filled('start_date')
                 ? \Carbon\Carbon::parse($request->start_date)
@@ -142,13 +161,26 @@ class BukuTamuController extends Controller
             $chartValues = $allValues;
         }
 
+        // Metrik ringkasan aktual (tanpa data dummy)
+        $totalHariIni = BukuTamu::whereDate('tanggal', now()->toDateString())->count();
+        $totalBulanIni = BukuTamu::whereYear('tanggal', now()->year)->whereMonth('tanggal', now()->month)->count();
+        $totalDenganSpt = (clone $applyFilter(BukuTamu::query()))->whereNotNull('spt_file')->where('spt_file', '!=', '')->count();
+        $uniqueDaysCount = (clone $applyFilter(BukuTamu::query()))->distinct('tanggal')->count('tanggal');
+        $avgPerHari = $uniqueDaysCount > 0 ? round($totalFilter / $uniqueDaysCount, 1) : 0;
+        $maxKunjunganHari = !empty($chartValues) ? max($chartValues) : 0;
+
         return view('buku-tamu.index', compact(
             'bukuTamu',
             'totalSemua',
             'totalFilter',
             'adaFilter',
             'chartLabels',
-            'chartValues'
+            'chartValues',
+            'totalHariIni',
+            'totalBulanIni',
+            'totalDenganSpt',
+            'avgPerHari',
+            'maxKunjunganHari'
         ));
     }
 
@@ -159,6 +191,45 @@ class BukuTamuController extends Controller
     {
         $bukuTamu->load(['pegawai', 'unitKerja']);
         return view('buku-tamu.show', compact('bukuTamu'));
+    }
+
+    /**
+     * Unduh berkas SPT kunjungan (Admin)
+     */
+    public function download(BukuTamu $bukuTamu)
+    {
+        if (!$bukuTamu->spt_file || !Storage::disk('public')->exists($bukuTamu->spt_file)) {
+            return back()->with('error', 'Berkas SPT tidak ditemukan di penyimpanan server.');
+        }
+
+        $extension = pathinfo($bukuTamu->spt_file, PATHINFO_EXTENSION);
+        $safeName = \Illuminate\Support\Str::slug($bukuTamu->nama ?: 'tamu');
+        $fileName = "SPT-{$safeName}-{$bukuTamu->id}.{$extension}";
+
+        return Storage::disk('public')->download($bukuTamu->spt_file, $fileName);
+    }
+
+    /**
+     * Hapus data kunjungan (Admin)
+     */
+    public function destroy(BukuTamu $bukuTamu)
+    {
+        try {
+            $filePath = $bukuTamu->spt_file;
+
+            DB::transaction(function () use ($bukuTamu) {
+                $bukuTamu->delete();
+            });
+
+            // Hapus berkas SPT fisik hanya setelah operasi database dipastikan berhasil
+            if ($filePath && Storage::disk('public')->exists($filePath)) {
+                Storage::disk('public')->delete($filePath);
+            }
+
+            return redirect()->route('buku-tamu.index')->with('status', 'Data kunjungan berhasil dihapus.');
+        } catch (\Throwable $e) {
+            return redirect()->route('buku-tamu.index')->with('error', 'Gagal menghapus data kunjungan: ' . $e->getMessage());
+        }
     }
 
     /**

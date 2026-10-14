@@ -72,6 +72,47 @@ class DateGroupHelper
     }
 
     /**
+     * Kelompokkan halaman aktif berdasarkan kolom tanggal tertentu (misalnya 'tanggal' pada Buku Tamu).
+     *
+     * @return array<int, array{key: string, prefix: ?string, label: string, count: int, items: array<int, array{item: mixed, surat: mixed, no: int, pos: int}>}>
+     */
+    public static function groupByDate(LengthAwarePaginator $paginator, string $dateColumn = 'tanggal', ?string $timezone = null): array
+    {
+        $timezone = self::timezone($timezone);
+        $today = Carbon::now($timezone)->startOfDay();
+        $todayKey = $today->toDateString();
+        $yesterdayKey = $today->copy()->subDay()->toDateString();
+
+        $firstItem = $paginator->firstItem() ?: 1;
+        $groups = [];
+        $position = 0;
+
+        foreach ($paginator as $item) {
+            $rawDate = $item->{$dateColumn} ?? $item->created_at;
+            $date = $rawDate instanceof Carbon
+                ? $rawDate->copy()->setTimezone($timezone)
+                : ($rawDate ? Carbon::parse($rawDate, $timezone) : null);
+            $day = $date ? $date->copy()->startOfDay() : null;
+            $key = $day ? $day->toDateString() : self::NO_DATE_KEY;
+
+            if (! isset($groups[$key])) {
+                $groups[$key] = self::makeGroup($day, $todayKey, $yesterdayKey);
+            }
+
+            $groups[$key]['items'][] = [
+                'item'  => $item,
+                'surat' => $item,
+                'no'    => $firstItem + $position,
+                'pos'   => $position + 1,
+            ];
+            $groups[$key]['count']++;
+            $position++;
+        }
+
+        return array_values($groups);
+    }
+
+    /**
      * Struktur kelompok "Hari Ini" tanpa data, dipakai sebagai template
      * header kelompok saat baris baru disisipkan lewat AJAX di sisi klien.
      */

@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kunjungan Berhasil - Dinas Perhubungan Provinsi Riau</title>
+    <title>Kunjungan Berhasil &ndash; {{ $sysInstansiNama ?? 'Dinas Perhubungan Provinsi Riau' }}</title>
+    <link rel="icon" type="image/png" href="{{ $sysLogoUrl ?? asset('logoDishub.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -312,7 +313,7 @@
         <div class="divider"></div>
 
         <div class="identity">
-            Dinas Perhubungan Provinsi Riau
+            {{ $sysInstansiNama ?? 'Dinas Perhubungan Provinsi Riau' }}
         </div>
 
         <a href="{{ route('buku-tamu.create') }}" class="btn-back">

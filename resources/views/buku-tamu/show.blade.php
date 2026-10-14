@@ -97,7 +97,7 @@
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                 Lihat SPT
                             </a>
-                            <a href="{{ $sptUrl }}" download
+                            <a href="{{ route('buku-tamu.download', $bukuTamu->id) }}"
                                style="display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:7px; font-size:13px; font-weight:600; color:#15803d; text-decoration:none;"
                                onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>

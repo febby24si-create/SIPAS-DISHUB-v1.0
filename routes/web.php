@@ -113,6 +113,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/buku-tamu/admin', [\App\Http\Controllers\BukuTamuController::class, 'index'])->name('buku-tamu.index');
         Route::get('/buku-tamu/qr', [\App\Http\Controllers\BukuTamuController::class, 'qr'])->name('buku-tamu.qr');
         Route::get('/buku-tamu/admin/{bukuTamu}', [\App\Http\Controllers\BukuTamuController::class, 'show'])->name('buku-tamu.show');
+        Route::get('/buku-tamu/admin/{bukuTamu}/download', [\App\Http\Controllers\BukuTamuController::class, 'download'])->name('buku-tamu.download');
+        Route::delete('/buku-tamu/admin/{bukuTamu}', [\App\Http\Controllers\BukuTamuController::class, 'destroy'])->name('buku-tamu.destroy');
 
         // Laporan
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
