@@ -1,3 +1,13 @@
+@php
+    $sysLogoPath = \App\Models\SystemSetting::getSetting('instansi_logo');
+    $sysLogoUrl = ($sysLogoPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($sysLogoPath))
+        ? asset('storage/' . $sysLogoPath)
+        : asset('logoDishub.png');
+    $sysAppName = \App\Models\SystemSetting::getSetting('app_name', 'SIPAS');
+    $sysInstansiNama = \App\Models\SystemSetting::getSetting('instansi_nama', 'Dinas Perhubungan Provinsi Riau');
+    $sysDefaultTheme = \App\Models\SystemSetting::getSetting('default_theme', 'light');
+    $sysDefaultAccent = \App\Models\SystemSetting::getSetting('default_accent', 'blue');
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
@@ -5,9 +15,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'SIPAS') }} – Dinas Perhubungan</title>
+        <title>{{ $sysAppName }} – {{ $sysInstansiNama }}</title>
 
-        <link rel="icon" type="image/png" href="{{ asset('logo-dishub.png') }}">
+        <link rel="icon" type="image/png" href="{{ $sysLogoUrl }}">
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -20,29 +30,36 @@
             (function() {
                 try {
                     var s = JSON.parse(localStorage.getItem('sipas-theme-settings') || '{}');
-                    var theme = s.theme || 'light';
+                    var theme = s.theme || '{{ $sysDefaultTheme }}';
                     var sidebar = s.sidebar || 'full';
                     var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
                     document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+                    if (isDark) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
                     document.documentElement.setAttribute('data-sidebar', sidebar);
                     // Accent variables
                     var accentMap = {
-                        blue:   { main:'#2563eb', dark:'#1d4ed8', soft:'#eff6ff', sb:'#1e40af' },
-                        indigo: { main:'#4f46e5', dark:'#4338ca', soft:'#eef2ff', sb:'#3730a3' },
-                        purple: { main:'#7c3aed', dark:'#6d28d9', soft:'#f5f3ff', sb:'#5b21b6' },
-                        red:    { main:'#dc2626', dark:'#b91c1c', soft:'#fef2f2', sb:'#991b1b' },
-                        orange: { main:'#ea580c', dark:'#c2410c', soft:'#fff7ed', sb:'#9a3412' },
-                        green:  { main:'#16a34a', dark:'#15803d', soft:'#f0fdf4', sb:'#166534' },
-                        teal:   { main:'#0d9488', dark:'#0f766e', soft:'#f0fdfa', sb:'#115e59' },
-                        cyan:   { main:'#0891b2', dark:'#0e7490', soft:'#ecfeff', sb:'#155e75' },
+                        blue:   { main:'#2563eb', dark:'#1d4ed8', soft:'#eff6ff', sb:'#1e40af', rgb:'37, 99, 235' },
+                        indigo: { main:'#4f46e5', dark:'#4338ca', soft:'#eef2ff', sb:'#3730a3', rgb:'79, 70, 229' },
+                        purple: { main:'#7c3aed', dark:'#6d28d9', soft:'#f5f3ff', sb:'#5b21b6', rgb:'124, 58, 237' },
+                        red:    { main:'#dc2626', dark:'#b91c1c', soft:'#fef2f2', sb:'#991b1b', rgb:'220, 38, 38' },
+                        orange: { main:'#ea580c', dark:'#c2410c', soft:'#fff7ed', sb:'#9a3412', rgb:'234, 88, 12' },
+                        green:  { main:'#16a34a', dark:'#15803d', soft:'#f0fdf4', sb:'#166534', rgb:'22, 163, 74' },
+                        teal:   { main:'#0d9488', dark:'#0f766e', soft:'#f0fdfa', sb:'#115e59', rgb:'13, 148, 136' },
+                        cyan:   { main:'#0891b2', dark:'#0e7490', soft:'#ecfeff', sb:'#155e75', rgb:'8, 145, 178' },
                     };
-                    var accent = s.accent || 'blue';
+                    var accent = s.accent || '{{ $sysDefaultAccent }}';
                     var c = accentMap[accent] || accentMap.blue;
                     var root = document.documentElement;
+                    var soft = isDark ? 'rgba(' + c.rgb + ', 0.18)' : c.soft;
                     root.style.setProperty('--tc-accent', c.main);
                     root.style.setProperty('--tc-accent-dark', c.dark);
-                    root.style.setProperty('--tc-accent-soft', c.soft);
+                    root.style.setProperty('--tc-accent-soft', soft);
                     root.style.setProperty('--tc-accent-sidebar', c.sb);
+                    root.style.setProperty('--tc-accent-rgb', c.rgb);
                     // Radius variables + data-radius attribute
                     var radiusMap = {
                         sharp:  { sm:'0px',  md:'0px',  lg:'0px'  },
@@ -58,6 +75,7 @@
                     root.setAttribute('data-radius', radius);
                 } catch(e) {
                     document.documentElement.setAttribute('data-theme', 'light');
+                    document.documentElement.classList.remove('dark');
                     document.documentElement.setAttribute('data-sidebar', 'full');
                     document.documentElement.setAttribute('data-radius', 'small');
                 }
@@ -65,7 +83,7 @@
         </script>
 
     </head>
-    <body class="font-sans antialiased" style="background:#f0f4f8;">
+    <body class="font-sans antialiased">
 
         {{-- ════════ MOBILE OVERLAY ════════ --}}
         <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeMobileSidebar()"></div>
@@ -75,13 +93,13 @@
             {{-- Logo / Brand --}}
             <div class="sidebar-logo">
                 <div class="sidebar-logo-icon" style="background:transparent; padding:0; width:auto; height:auto;">
-                    <img src="{{ asset('logoDishub.png') }}"
-                         alt="Logo Dishub"
+                    <img src="{{ $sysLogoUrl }}"
+                         alt="Logo {{ $sysAppName }}"
                          style="width:42px; height:42px; object-fit:contain; border-radius:8px;">
                 </div>
                 <div class="sidebar-logo-text">
-                    <span class="title">SIPAS</span>
-                    <span class="subtitle">Dinas Perhubungan Provinsi Riau</span>
+                    <span class="title">{{ $sysAppName }}</span>
+                    <span class="subtitle">{{ $sysInstansiNama }}</span>
                 </div>
                 {{-- Mobile close button --}}
                 <button class="sidebar-mobile-close" id="btn-sidebar-close" onclick="closeMobileSidebar()" title="Tutup menu" aria-label="Tutup sidebar">

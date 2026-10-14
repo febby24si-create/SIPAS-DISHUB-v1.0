@@ -123,11 +123,20 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('pengguna', PenggunaController::class)->except(['create', 'store', 'show', 'destroy']);
     });
 
-    // Pengaturan
-    Route::prefix('pengaturan')->name('pengaturan.')->group(function () {
+    // Pengaturan Umum (Khusus Admin)
+    Route::prefix('pengaturan')->name('pengaturan.')->middleware('role:admin')->group(function () {
         Route::get('/', [PengaturanController::class, 'index'])->name('index');
-        
-        // Pengaturan Kepegawaian
+        Route::put('identitas', [PengaturanController::class, 'updateIdentitas'])->name('identitas.update');
+        Route::delete('logo', [PengaturanController::class, 'resetLogo'])->name('logo.reset');
+        Route::put('preferensi', [PengaturanController::class, 'updatePreferensi'])->name('preferensi.update');
+        Route::put('tampilan', [PengaturanController::class, 'updateTampilan'])->name('tampilan.update');
+        Route::put('notifikasi', [PengaturanController::class, 'updateNotifikasi'])->name('notifikasi.update');
+        Route::post('banner', [PengaturanController::class, 'updateBanner'])->name('banner.update');
+        Route::delete('banner', [PengaturanController::class, 'resetBanner'])->name('banner.reset');
+    });
+
+    // Pengaturan Kepegawaian
+    Route::prefix('pengaturan')->name('pengaturan.')->group(function () {
         Route::get('kepegawaian', [\App\Http\Controllers\PengaturanKepegawaianController::class, 'index'])->name('kepegawaian.index');
         Route::put('kepegawaian', [\App\Http\Controllers\PengaturanKepegawaianController::class, 'update'])->name('kepegawaian.update');
         

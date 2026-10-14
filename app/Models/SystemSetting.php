@@ -19,4 +19,18 @@ class SystemSetting extends Model
         $setting = self::where('key', $key)->first();
         return $setting ? $setting->value : $default;
     }
+
+    /**
+     * Set or update a setting value by key.
+     */
+    public static function setSetting($key, $value, $description = null)
+    {
+        return self::updateOrCreate(
+            ['key' => $key],
+            [
+                'value' => $value,
+                'description' => $description ?? $key,
+            ]
+        );
+    }
 }

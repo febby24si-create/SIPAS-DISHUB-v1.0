@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\JenisSurat;
 use App\Models\KlasifikasiSurat;
+use App\Models\Role;
 use App\Models\Surat;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -22,7 +23,11 @@ class LaporanTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->create();
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $this->admin = User::factory()->create([
+            'role_id' => $adminRole->id,
+            'is_active' => true,
+        ]);
 
         $this->jenisSurat = JenisSurat::create([
             'kode' => 'UM',
@@ -219,5 +224,46 @@ class LaporanTest extends TestCase
         $this->assertEquals(1, $baris['masuk']);
         $this->assertEquals(1, $baris['keluar']);
         $this->assertEquals(2, $baris['total']);
+    }
+
+    // ─── TEST 11 ──────────────────────────────────────────────────────────────
+
+    public function test_laporan_view_memiliki_data_visualisasi_chart()
+    {
+        $this->buatSurat(['status' => 'final', 'arah' => 'masuk',  'jenis_surat_id' => $this->jenisSurat->id]);
+        $this->buatSurat(['status' => 'final', 'arah' => 'keluar', 'jenis_surat_id' => $this->jenisSurat->id]);
+
+        $response = $this->actingAs($this->admin)->get(route('laporan.index'));
+
+        $response->assertStatus(200);
+        $response->assertViewHasAll([
+            'chartJenisLabels',
+            'chartJenisFullLabels',
+            'chartJenisMasuk',
+            'chartJenisKeluar',
+            'trendLabels',
+            'trendMasuk',
+            'trendKeluar',
+            'trendSubtitle',
+        ]);
+
+        $labels = $response->viewData('chartJenisLabels');
+        $this->assertNotEmpty($labels);
+        $this->assertContains('UM', $labels);
+    }
+
+    // ─── TEST 12 ──────────────────────────────────────────────────────────────
+
+    public function test_halaman_cetak_laporan_dapat_diakses_dan_memuat_identitas_dishub()
+    {
+        $this->buatSurat(['status' => 'final', 'arah' => 'masuk', 'jenis_surat_id' => $this->jenisSurat->id]);
+
+        $response = $this->actingAs($this->admin)->get(route('laporan.print'));
+
+        $response->assertStatus(200);
+        $response->assertViewIs('laporan.print');
+        $response->assertSee('Dinas Perhubungan');
+        $response->assertSee('Pemerintah Provinsi Riau');
+        $response->assertSee('Laporan Rekapitulasi Persuratan Resmi');
     }
 }

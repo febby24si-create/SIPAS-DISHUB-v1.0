@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 400" width="1600" height="400">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a192f"/>
+      <stop offset="40%" stop-color="#0f2b5c"/>
+      <stop offset="80%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+
+    <!-- Highway Glow Gradient -->
+    <linearGradient id="roadGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#60a5fa" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#818cf8" stop-opacity="0.2"/>
+    </linearGradient>
+
+    <!-- Bridge Gradient -->
+    <linearGradient id="bridgeGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#1e293b" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.15"/>
+    </linearGradient>
+
+    <!-- Overlay Grid Pattern -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255, 255, 255, 0.03)" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- Base Background -->
+  <rect width="100%" height="100%" fill="url(#bgGrad)"/>
+  <rect width="100%" height="100%" fill="url(#grid)"/>
+
+  <!-- Subtle Ambient Glow Orbs -->
+  <circle cx="200" cy="80" r="180" fill="#2563eb" opacity="0.25" filter="blur(60px)"/>
+  <circle cx="1350" cy="120" r="220" fill="#38bdf8" opacity="0.2" filter="blur(70px)"/>
+  <circle cx="850" cy="300" r="200" fill="#1d4ed8" opacity="0.3" filter="blur(80px)"/>
+
+  <!-- Distant City/Infrastructure Silhouette -->
+  <path d="M 0 320 L 60 320 L 60 290 L 90 290 L 90 320 L 140 320 L 140 270 L 170 270 L 170 320 L 220 320 L 240 280 L 260 280 L 280 320 L 400 320 L 450 300 L 520 320 L 700 320 L 730 260 L 760 260 L 790 320 L 950 320 L 980 280 L 1020 280 L 1050 320 L 1200 320 L 1240 250 L 1280 250 L 1310 320 L 1600 320 L 1600 400 L 0 400 Z" fill="#071326" opacity="0.6"/>
+
+  <!-- Stylized Suspension Bridge (Inspired by Jembatan Siak Riau) -->
+  <g opacity="0.35">
+    <!-- Pylons -->
+    <polygon points="1120,400 1145,130 1155,130 1180,400 1160,400 1150,150 1140,400" fill="url(#bridgeGrad)"/>
+    <polygon points="1320,400 1345,130 1355,130 1380,400 1360,400 1350,150 1340,400" fill="url(#bridgeGrad)"/>
+    <!-- Cross Struts -->
+    <rect x="1136" y="220" width="28" height="6" fill="#38bdf8" opacity="0.4"/>
+    <rect x="1140" y="280" width="20" height="6" fill="#38bdf8" opacity="0.4"/>
+    <rect x="1336" y="220" width="28" height="6" fill="#38bdf8" opacity="0.4"/>
+    <rect x="1340" y="280" width="20" height="6" fill="#38bdf8" opacity="0.4"/>
+    <!-- Main Suspension Cables -->
+    <path d="M 980 350 Q 1150 130 1250 260 Q 1350 130 1520 350" fill="none" stroke="#60a5fa" stroke-width="2.5" opacity="0.7"/>
+    <!-- Stay Cables -->
+    <line x1="1150" y1="140" x2="1040" y2="350" stroke="#93c5fd" stroke-width="0.8" opacity="0.3"/>
+    <line x1="1150" y1="160" x2="1070" y2="350" stroke="#93c5fd" stroke-width="0.8" opacity="0.3"/>
+    <line x1="1150" y1="180" x2="1100" y2="350" stroke="#93c5fd" stroke-width="0.8" opacity="0.3"/>
+    <line x1="1150" y1="180" x2="1200" y2="350" stroke="#93c5fd" stroke-width="0.8" opacity="0.3"/>
+    <line x1="1150" y1="160" x2="1230" y2="350" stroke="#93c5fd" stroke-width="0.8" opacity="0.3"/>
+    <line x1="1350" y1="180" x2="1270" y2="350" stroke="#93c5fd" stroke-width="0.8" opacity="0.3"/>
+    <line x1="1350" y1="180" x2="1400" y2="350" stroke="#93c5fd" stroke-width="0.8" opacity="0.3"/>
+    <line x1="1350" y1="160" x2="1430" y2="350" stroke="#93c5fd" stroke-width="0.8" opacity="0.3"/>
+    <line x1="1350" y1="140" x2="1460" y2="350" stroke="#93c5fd" stroke-width="0.8" opacity="0.3"/>
+  </g>
+
+  <!-- Flowing Highway & Transportation Energy Lines -->
+  <path d="M -50 380 C 300 370, 600 290, 1050 330 C 1300 350, 1500 380, 1650 360" fill="none" stroke="url(#roadGlow)" stroke-width="4" opacity="0.8"/>
+  <path d="M -50 395 C 350 385, 650 310, 1100 345 C 1350 365, 1500 395, 1650 380" fill="none" stroke="#38bdf8" stroke-width="2" opacity="0.5"/>
+  <path d="M 0 350 C 400 340, 700 270, 1200 320 C 1400 340, 1550 360, 1650 340" fill="none" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="8 6" opacity="0.4"/>
+
+  <!-- Water Surface Reflection Base -->
+  <rect x="0" y="375" width="1600" height="25" fill="#040b17" opacity="0.7"/>
+</svg>

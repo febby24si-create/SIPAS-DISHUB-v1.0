@@ -339,9 +339,28 @@ function themeCustomizer() {
             }
             if (isDark) {
                 html.setAttribute('data-theme', 'dark');
+                html.classList.add('dark');
             } else {
                 html.setAttribute('data-theme', 'light');
+                html.classList.remove('dark');
             }
+            // Update accent soft color based on current dark/light state
+            const map = {
+                blue:   { main: '#2563eb', dark: '#1d4ed8', soft: '#eff6ff', sidebar: '#1e40af', rgb: '37, 99, 235' },
+                indigo: { main: '#4f46e5', dark: '#4338ca', soft: '#eef2ff', sidebar: '#3730a3', rgb: '79, 70, 229' },
+                purple: { main: '#7c3aed', dark: '#6d28d9', soft: '#f5f3ff', sidebar: '#5b21b6', rgb: '124, 58, 237' },
+                red:    { main: '#dc2626', dark: '#b91c1c', soft: '#fef2f2', sidebar: '#991b1b', rgb: '220, 38, 38' },
+                orange: { main: '#ea580c', dark: '#c2410c', soft: '#fff7ed', sidebar: '#9a3412', rgb: '234, 88, 12' },
+                green:  { main: '#16a34a', dark: '#15803d', soft: '#f0fdf4', sidebar: '#166534', rgb: '22, 163, 74' },
+                teal:   { main: '#0d9488', dark: '#0f766e', soft: '#f0fdfa', sidebar: '#115e59', rgb: '13, 148, 136' },
+                cyan:   { main: '#0891b2', dark: '#0e7490', soft: '#ecfeff', sidebar: '#155e75', rgb: '8, 145, 178' },
+            };
+            const c = map[this.settings.accent] || map.blue;
+            const soft = isDark ? `rgba(${c.rgb}, 0.18)` : c.soft;
+            html.style.setProperty('--tc-accent-soft', soft);
+            window.dispatchEvent(new CustomEvent('theme-changed', {
+                detail: { theme: this.settings.theme, isDark: isDark }
+            }));
         },
 
         // ── Accent ──
@@ -353,21 +372,27 @@ function themeCustomizer() {
 
         applyAccent() {
             const map = {
-                blue:   { main: '#2563eb', dark: '#1d4ed8', soft: '#eff6ff', sidebar: '#1e40af' },
-                indigo: { main: '#4f46e5', dark: '#4338ca', soft: '#eef2ff', sidebar: '#3730a3' },
-                purple: { main: '#7c3aed', dark: '#6d28d9', soft: '#f5f3ff', sidebar: '#5b21b6' },
-                red:    { main: '#dc2626', dark: '#b91c1c', soft: '#fef2f2', sidebar: '#991b1b' },
-                orange: { main: '#ea580c', dark: '#c2410c', soft: '#fff7ed', sidebar: '#9a3412' },
-                green:  { main: '#16a34a', dark: '#15803d', soft: '#f0fdf4', sidebar: '#166534' },
-                teal:   { main: '#0d9488', dark: '#0f766e', soft: '#f0fdfa', sidebar: '#115e59' },
-                cyan:   { main: '#0891b2', dark: '#0e7490', soft: '#ecfeff', sidebar: '#155e75' },
+                blue:   { main: '#2563eb', dark: '#1d4ed8', soft: '#eff6ff', sidebar: '#1e40af', rgb: '37, 99, 235' },
+                indigo: { main: '#4f46e5', dark: '#4338ca', soft: '#eef2ff', sidebar: '#3730a3', rgb: '79, 70, 229' },
+                purple: { main: '#7c3aed', dark: '#6d28d9', soft: '#f5f3ff', sidebar: '#5b21b6', rgb: '124, 58, 237' },
+                red:    { main: '#dc2626', dark: '#b91c1c', soft: '#fef2f2', sidebar: '#991b1b', rgb: '220, 38, 38' },
+                orange: { main: '#ea580c', dark: '#c2410c', soft: '#fff7ed', sidebar: '#9a3412', rgb: '234, 88, 12' },
+                green:  { main: '#16a34a', dark: '#15803d', soft: '#f0fdf4', sidebar: '#166534', rgb: '22, 163, 74' },
+                teal:   { main: '#0d9488', dark: '#0f766e', soft: '#f0fdfa', sidebar: '#115e59', rgb: '13, 148, 136' },
+                cyan:   { main: '#0891b2', dark: '#0e7490', soft: '#ecfeff', sidebar: '#155e75', rgb: '8, 145, 178' },
             };
             const c = map[this.settings.accent] || map.blue;
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const soft = isDark ? `rgba(${c.rgb}, 0.18)` : c.soft;
             const root = document.documentElement;
-            root.style.setProperty('--tc-accent',      c.main);
-            root.style.setProperty('--tc-accent-dark', c.dark);
-            root.style.setProperty('--tc-accent-soft', c.soft);
+            root.style.setProperty('--tc-accent',         c.main);
+            root.style.setProperty('--tc-accent-dark',    c.dark);
+            root.style.setProperty('--tc-accent-soft',    soft);
             root.style.setProperty('--tc-accent-sidebar', c.sidebar);
+            root.style.setProperty('--tc-accent-rgb',     c.rgb);
+            window.dispatchEvent(new CustomEvent('accent-changed', {
+                detail: { accent: this.settings.accent, colors: c }
+            }));
         },
 
         // ── Radius ──

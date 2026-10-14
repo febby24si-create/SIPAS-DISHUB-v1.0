@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Surat;
 use App\Models\PengajuanCuti;
 use App\Models\GajiBerkala;
+use App\Models\KenaikanPangkat;
+use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -22,7 +25,17 @@ class DashboardController extends Controller
         $totalKeluar = (clone $suratFinal)->where('arah', 'keluar')->count();
         $totalDraft  = Surat::where('status', 'draft')->count();
 
-        // (Kepegawaian metrics dihapus dari card atas, diganti grafik rekap di bawah)
+        // 2. METRIK KEPEGAWAIAN (DATA AKTUAL)
+        $cutiPending           = PengajuanCuti::whereIn('status', ['diajukan', 'verifikasi'])->count();
+        $kenaikanPangkatPending = KenaikanPangkat::whereIn('status', ['diajukan', 'diproses'])->count();
+        $gajiBerkalaPending    = GajiBerkala::whereIn('status', ['verifikasi', 'disetujui'])->count();
+
+        // Banner latar kustom / default
+        $bannerPath     = SystemSetting::getSetting('dashboard_banner_image');
+        $isCustomBanner = $bannerPath && Storage::disk('public')->exists($bannerPath);
+        $bannerUrl      = $isCustomBanner
+            ? asset('storage/' . $bannerPath)
+            : asset('images/default-banner.svg');
 
         // 3. AKTIVITAS TERBARU
         $aktivitasTerbaru = \App\Models\ActivityLog::with(['user', 'subject'])
@@ -135,7 +148,8 @@ class DashboardController extends Controller
             ->groupBy('jenis_surat_id')
             ->get();
 
-        $distribusiLabels = $distribusiRaw->map(fn ($r) => $r->jenisSurat?->nama ?? 'Lainnya')->toArray();
+        $distribusiLabels = $distribusiRaw->map(fn ($r) => $r->jenisSurat?->kode ?: ($r->jenisSurat?->nama ?? 'Lainnya'))->toArray();
+        $distribusiFullLabels = $distribusiRaw->map(fn ($r) => ($r->jenisSurat?->kode ? $r->jenisSurat->kode . ' — ' : '') . ($r->jenisSurat?->nama ?? 'Lainnya'))->toArray();
         $distribusiData   = $distribusiRaw->pluck('total')->map(fn ($v) => (int) $v)->toArray();
 
         // 6. GRAFIK SURAT BERDASARKAN KLASIFIKASI – top 8, hanya surat final
@@ -174,6 +188,11 @@ class DashboardController extends Controller
             'totalMasuk',
             'totalKeluar',
             'totalDraft',
+            'cutiPending',
+            'kenaikanPangkatPending',
+            'gajiBerkalaPending',
+            'bannerUrl',
+            'isCustomBanner',
             'aktivitasTerbaru',
             'trendLabels',
             'trendMasuk',
@@ -182,6 +201,7 @@ class DashboardController extends Controller
             'trendKgb',
             'periode',
             'distribusiLabels',
+            'distribusiFullLabels',
             'distribusiData',
             'klasifikasiLabels',
             'klasifikasiData',
