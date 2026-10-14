@@ -1,29 +1,30 @@
 <x-app-layout>
     <x-slot name="header">
         <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div style="width:40px; height:40px; background:#fdf4ff; border:1px solid #e9d5ff; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#7c3aed; flex-shrink:0;">
+            <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+                <div style="width:40px; height:40px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#1d4ed8; flex-shrink:0;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
                 </div>
-                <div>
-                    <div style="font-size:17px; font-weight:600; color:#1e293b; line-height:1.2;">Detail Arsip Digital</div>
-                    <div style="margin-top:2px; font-size:12.5px; color:#64748b;">Informasi lengkap arsip surat yang telah final</div>
+                <div style="min-width:0;">
+                    <div style="font-size:17px; font-weight:600; color:#1e293b; line-height:1.25;">Detail Arsip Digital</div>
+                    <div style="margin-top:3px; font-size:12.5px; color:#64748b; line-height:1.35;">Informasi lengkap arsip surat yang telah final</div>
                 </div>
             </div>
-            <a href="{{ route('arsip.index') }}" style="display:inline-flex; align-items:center; gap:8px; padding:10px 18px; background:white; border:1px solid #cbd5e1; color:#334155; border-radius:12px; font-size:13px; font-weight:600; text-decoration:none;">
+            <a href="{{ route('arsip.index') }}" style="display:inline-flex; align-items:center; gap:8px; padding:9px 16px; background:white; border:1px solid #cbd5e1; color:#334155; border-radius:10px; font-size:13px; font-weight:600; text-decoration:none; white-space:nowrap;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                 Kembali ke Arsip Digital
             </a>
         </div>
     </x-slot>
 
-    <div style="display:flex; flex-direction:column; gap:24px;">
+    <div class="arsip-show" style="display:flex; flex-direction:column; gap:24px;">
 
         {{-- Header Status & Nomor --}}
-        <div style="background:linear-gradient(135deg, #1e293b, #0f172a); border-radius:24px; padding:32px; color:white; position:relative; overflow:hidden;">
+        {{-- Kartu status: navy polos (tanpa gradien dekoratif), aksen cahaya mengikuti arah surat. --}}
+        <div style="background:#1e293b; border-radius:20px; padding:32px; color:white; position:relative; overflow:hidden;">
             <div style="position:relative; z-index:2;">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
-                    <span style="display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,0.2); padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; letter-spacing:0.5px; backdrop-filter:blur(4px);">
+                    <span style="display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.18); padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; letter-spacing:0.5px;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
                         STATUS: FINAL – TERSIMPAN DI ARSIP
                     </span>
@@ -47,8 +48,8 @@
             <div style="position:absolute; top:-50%; right:-10%; width:300px; height:300px; background:radial-gradient(circle, {{ $glowColor }} 0%, rgba(0,0,0,0) 70%); border-radius:50%; z-index:1;"></div>
         </div>
 
-        {{-- Grid Info --}}
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(400px, 1fr)); gap:24px;">
+        {{-- Grid Info: minmax(min(400px,100%)) agar tidak meluber pada layar sempit --}}
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(400px,100%), 1fr)); gap:24px;">
             
             {{-- Informasi Surat --}}
             <div style="background:white; border-radius:20px; border:1px solid rgba(0,0,0,0.06); padding:24px;">
@@ -67,7 +68,7 @@
                         </span>
                         <div style="color:#334155; font-size:14px; font-weight:500;">{{ $surat->perihal }}</div>
                     </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:16px;">
                         <div>
                             <span style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:#94a3b8; margin-bottom:4px; text-transform:uppercase;">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.83z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
@@ -144,7 +145,7 @@
                         Informasi Pengajuan Cuti
                     </h3>
                     <div style="display:flex; flex-direction:column; gap:16px;">
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:16px;">
                             <div>
                                 <span style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:#94a3b8; margin-bottom:4px; text-transform:uppercase;">
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -222,7 +223,7 @@
         </div>
 
         {{-- Dokumen & Lampiran --}}
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(400px, 1fr)); gap:24px;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(400px,100%), 1fr)); gap:24px;">
             {{-- Dokumen Surat --}}
             <div style="background:white; border-radius:20px; border:1px solid rgba(0,0,0,0.06); padding:24px;">
                 <h3 style="font-size:16px; font-weight:600; color:#1e293b; margin:0 0 20px 0; display:flex; align-items:center; gap:10px;">
@@ -312,7 +313,9 @@
                 </h3>
             </div>
             
-            <table class="data-table" style="width:100%;">
+            {{-- Wrapper scroll: tabel log tetap terbaca pada layar sempit. --}}
+            <div class="table-wrapper">
+            <table class="data-table" style="width:100%; min-width:640px;">
                 <thead>
                     <tr>
                         <th style="width:180px;">
@@ -366,7 +369,16 @@
                     @endforelse
                 </tbody>
             </table>
+            </div>
         </div>
 
     </div>
+
+    {{-- Fokus keyboard yang terlihat untuk tombol/tautan pada halaman detail --}}
+    <style>
+        .arsip-show a:focus-visible {
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+        }
+    </style>
 </x-app-layout>

@@ -1382,6 +1382,13 @@ html {
         background: var(--page-bg);
 
         border-bottom: 1px solid var(--border);
+
+        /* Pemisah atas: awal kelompok tanggal terlihat jelas dari baris data. */
+        border-top: 1px solid var(--border);
+    }
+
+    .data-table tbody tr.dtg-row:first-child {
+        border-top: none;
     }
 
     .data-table tbody tr.dtg-row:hover {
@@ -2220,6 +2227,13 @@ html {
 
     .topbar {
         min-height: 58px;
+
+        /* Layar sempit: judul dan klaster kanan (tanggal, notifikasi,
+           pengaturan) boleh turun baris agar tidak saling menumpuk. */
+        flex-wrap: wrap;
+        row-gap: 8px;
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
     }
 
     .page-header {
